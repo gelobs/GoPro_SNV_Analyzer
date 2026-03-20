@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Video GoPro Analyzer x DNIT SNV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0D1117;--surface:#161B22;--surface2:#1C2128;--surface3:#21262D;
+  --border:#30363D;--border2:#3D444D;
+  --primary:#1F6FEB;--primary2:#388BFD;
+  --accent:#F78166;--success:#3FB950;--warning:#D29922;--danger:#DA3633;
+  --text:#E6EDF3;--text2:#8B949E;--text3:#6E7681;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--sans);background:var(--bg);color:var(--text);
+  display:grid;
+  grid-template-rows:52px 1fr 36px;
+  grid-template-columns:300px 1fr;
+  grid-template-areas:"hdr hdr" "side main" "ftr ftr";
+  height:100vh;overflow:hidden;
+}
+
+/* HEADER */
+header{
+  grid-area:hdr;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:14px;z-index:10;
+}
+.logo{
+  width:36px;height:36px;background:var(--primary);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.logo svg{width:20px;height:20px}
+.htitle{display:flex;flex-direction:column;gap:1px}
+.htitle h1{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.05em}
+.htitle span{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+.hspace{flex:1}
+.hstatus{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--text2)}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--text3);transition:background .3s}
+.sdot.running{background:var(--warning);animation:pulse 1.2s infinite}
+.sdot.done{background:var(--success)}
+.sdot.error{background:var(--danger)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* SIDEBAR */
+aside{
+  grid-area:side;background:var(--surface);border-right:1px solid var(--border);
+  overflow-y:auto;display:flex;flex-direction:column;
+}
+aside::-webkit-scrollbar{width:4px}
+aside::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.ssec{border-bottom:1px solid var(--border);padding:14px 16px}
+.ssec:last-child{border-bottom:none}
+.stitle{
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;
+}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px}
+select,input[type=text],input[type=number]{
+  width:100%;background:var(--bg);border:1px solid var(--border);
+  color:var(--text);font-family:var(--mono);font-size:11px;
+  padding:6px 8px;border-radius:4px;appearance:none;outline:none;
+  transition:border-color .2s;
+}
+select:focus,input:focus{border-color:var(--primary)}
+select option{background:var(--surface2)}
+.irow{display:flex;align-items:center;gap:4px}
+.irow input{flex:1;text-align:center}
+.spbtn{
+  width:26px;height:26px;background:var(--surface3);border:1px solid var(--border);
+  border-radius:4px;color:var(--text2);font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:background .15s,color .15s;font-family:var(--mono);
+}
+.spbtn:hover{background:var(--border);color:var(--text)}
+.ibox{
+  background:var(--bg);border:1px solid var(--border);border-radius:4px;
+  padding:8px 10px;font-family:var(--mono);font-size:10px;color:var(--text2);
+  line-height:1.7;
+}
+.irow2{display:flex;justify-content:space-between;gap:8px}
+.ival{color:var(--text);text-align:right}
+.iempty{color:var(--text3);font-style:italic}
+.velbox{
+  background:var(--bg);border:1px solid var(--border);border-radius:4px;
+  padding:6px 10px;display:flex;align-items:baseline;gap:6px;
+}
+.velnum{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--primary2)}
+.velunit{font-size:11px;color:var(--text3)}
+.velsub{font-size:10px;color:var(--text3);margin-left:auto}
+.brow{display:flex;gap:6px;margin-top:4px}
+.btn{
+  flex:1;padding:7px 0;border:1px solid var(--border);border-radius:4px;
+  font-family:var(--mono);font-size:11px;font-weight:500;cursor:pointer;
+  transition:all .15s;text-align:center;letter-spacing:.05em;background:transparent;
+}
+.btn-p{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn-p:hover{background:var(--primary2);border-color:var(--primary2)}
+.btn-p:disabled{background:var(--surface3);border-color:var(--border);color:var(--text3);cursor:not-allowed}
+.btn-d{color:var(--danger)}
+.btn-d:hover{background:rgba(218,54,51,.12)}
+.btn-n{color:var(--text2)}
+.btn-n:hover{background:var(--surface3)}
+.advtoggle{
+  display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;
+  font-size:11px;color:var(--text2);padding:8px 16px;border-top:1px solid var(--border);
+}
+.advtoggle:hover{color:var(--text)}
+.advicon{font-size:10px;transition:transform .2s}
+.advopen .advicon{transform:rotate(90deg)}
+.advbody{display:none;padding:0 0 8px}
+.advbody.open{display:block}
+.tgroup{margin-bottom:14px}
+.tgtitle{
+  font-size:9px;color:var(--primary);letter-spacing:.1em;text-transform:uppercase;
+  font-weight:600;margin-bottom:6px;padding-bottom:4px;
+  border-bottom:1px solid rgba(31,111,235,.2);
+}
+.tfield{
+  display:grid;grid-template-columns:1fr 80px;
+  gap:6px;align-items:center;margin-bottom:6px;
+}
+.tfield label{font-size:10px;color:var(--text2)}
+.tfield input{padding:4px 6px;font-size:11px;text-align:right}
+.abrow{display:flex;gap:6px;padding:0 16px 12px}
+.abrow .btn{font-size:10px;padding:5px 0}
+
+/* MAIN */
+main{
+  grid-area:main;overflow:hidden;display:flex;flex-direction:column;
+  background:var(--bg);
+}
+.tabbar{
+  display:flex;align-items:center;background:var(--surface);
+  border-bottom:1px solid var(--border);padding:0 16px;gap:0;flex-shrink:0;
+}
+.tab{
+  font-family:var(--mono);font-size:11px;color:var(--text3);
+  padding:12px 16px;cursor:pointer;border-bottom:2px solid transparent;
+  transition:all .15s;white-space:nowrap;
+}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--primary2);border-bottom-color:var(--primary2)}
+.mcontent{flex:1;overflow-y:auto;padding:20px}
+.mcontent::-webkit-scrollbar{width:5px}
+.mcontent::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.tpanel{display:none}
+.tpanel.active{display:block}
+
+/* LOG */
+.logbox{
+  background:#090D12;border:1px solid var(--border);border-radius:6px;
+  padding:12px 14px;font-family:var(--mono);font-size:11px;
+  line-height:1.8;height:calc(100vh - 180px);overflow-y:auto;
+}
+.logbox::-webkit-scrollbar{width:4px}
+.logbox::-webkit-scrollbar-thumb{background:var(--border2)}
+.lline{display:flex;gap:8px;align-items:flex-start}
+.ltime{color:var(--text3);flex-shrink:0;min-width:54px}
+.lmsg{flex:1;white-space:pre-wrap;word-break:break-all}
+.l-info .lmsg{color:var(--text2)}
+.l-ok   .lmsg{color:var(--success)}
+.l-aviso .lmsg{color:var(--warning)}
+.l-erro  .lmsg{color:var(--danger)}
+.lempty{color:var(--text3);font-style:italic;padding:40px 0;text-align:center}
+
+/* DASHBOARD */
+.dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.kpilbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.kpival{font-family:var(--mono);font-size:24px;font-weight:600;color:var(--text)}
+.kpisub{font-size:10px;color:var(--text3);margin-top:3px}
+.kpi.green{border-color:rgba(63,185,80,.3)}.kpi.green .kpival{color:var(--success)}
+.kpi.red{border-color:rgba(218,54,51,.3)}.kpi.red .kpival{color:var(--danger)}
+.kpi.blue{border-color:rgba(31,111,235,.3)}.kpi.blue .kpival{color:var(--primary2)}
+.kpi.amber{border-color:rgba(210,153,34,.3)}.kpi.amber .kpival{color:var(--warning)}
+.ccard{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px}
+.ctitle{
+  font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text2);
+  margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em;
+}
+.kmrow{
+  display:grid;grid-template-columns:80px 1fr 90px 110px 70px;
+  align-items:center;gap:8px;font-family:var(--mono);font-size:10px;
+  padding:4px 0;border-bottom:1px solid var(--border);
+}
+.kmrow:last-child{border-bottom:none}
+.kmrow.hdr{color:var(--text3);font-size:9px;text-transform:uppercase;letter-spacing:.06em}
+.kmlbl{color:var(--text2)}
+.kmbw{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden}
+.kmb{height:100%;border-radius:4px;transition:width .4s}
+.kmb.ok{background:var(--success)}.kmb.snv{background:var(--danger)}
+.kmb.insuf{background:var(--warning)}.kmb.inc{background:var(--text3)}
+.badge{
+  display:inline-block;padding:1px 7px;border-radius:3px;
+  font-family:var(--mono);font-size:9px;font-weight:600;
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.b-ok{background:rgba(63,185,80,.15);color:var(--success)}
+.b-snv{background:rgba(218,54,51,.15);color:var(--danger)}
+.b-insuf{background:rgba(210,153,34,.15);color:var(--warning)}
+.b-inc{background:rgba(110,118,129,.15);color:var(--text3)}
+.b-exc{background:rgba(56,139,253,.15);color:var(--primary2)}
+.b-bom{background:rgba(63,185,80,.15);color:var(--success)}
+.b-ace{background:rgba(210,153,34,.15);color:var(--warning)}
+.b-deg{background:rgba(218,54,51,.15);color:var(--danger)}
+.dtable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+.dtable th{
+  text-align:left;color:var(--text3);font-size:9px;text-transform:uppercase;
+  letter-spacing:.06em;padding:6px 10px;border-bottom:1px solid var(--border);font-weight:500;
+}
+.dtable td{
+  padding:7px 10px;border-bottom:1px solid var(--border);
+  color:var(--text2);vertical-align:middle;
+}
+.dtable tr:last-child td{border-bottom:none}
+.dtable tr:hover td{background:var(--surface2)}
+.tr{text-align:right}
+.evlist{display:flex;flex-direction:column;gap:8px}
+.evcard{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:6px;padding:10px 14px;border-left:3px solid var(--text3);
+}
+.evcard.critica{border-left-color:var(--danger)}
+.evcard.alta{border-left-color:var(--warning)}
+.evcard.moderada{border-left-color:var(--text3)}
+.evhdr{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.evtipo{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.evkm{font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:auto}
+.evdesc{font-size:11px;color:var(--text2);line-height:1.5}
+.evmet{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px}
+.empty{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:60px 20px;gap:12px;text-align:center;
+}
+.emicon{font-size:32px;opacity:.3}
+.emtxt{font-size:12px;color:var(--text3);max-width:300px;line-height:1.6}
+.spark{display:flex;align-items:flex-end;gap:2px;height:40px}
+.sparkb{flex:1;background:var(--primary);opacity:.6;border-radius:2px 2px 0 0;min-height:2px}
+
+/* FOOTER */
+footer{
+  grid-area:ftr;background:var(--surface);border-top:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:20px;
+  font-family:var(--mono);font-size:10px;color:var(--text3);
+}
+footer .fsep{color:var(--border2)}
+footer .fhi{color:var(--text2)}
+
+/* MAPA */
+#mapLeaflet { height: calc(100vh - 290px); border-radius: 6px; border: 1px solid var(--border); }
+@keyframes evtPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+.evt-critica { animation: evtPulse 1.4s ease-in-out infinite; }
+.snv-compare-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; gap: 12px; flex-wrap: wrap;
+}
+.snv-compare-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.snv-compare-right { display: flex; align-items: center; }
+.snv-compare-label { font-family: var(--mono); font-size: 11px; color: var(--text2); white-space: nowrap; }
+.snv-compare-sel {
+  width: 260px; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); font-family: var(--mono); font-size: 11px;
+  padding: 5px 8px; border-radius: 4px; appearance: none; outline: none;
+}
+.snv-compare-sel:focus { border-color: var(--primary); }
+.snv-compare-btn { flex: none; padding: 5px 14px; font-size: 11px; }
+.snv-status {
+  font-family: var(--mono); font-size: 10px; color: var(--text3);
+  max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.snv-status.ok     { color: var(--success); }
+.snv-status.erro   { color: var(--danger); }
+.snv-status.loading { color: var(--warning); }
+.map-controls {
+  display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;
+}
+.map-legend {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 10px; color: var(--text2);
+  padding: 8px 12px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; margin-bottom: 10px;
+}
+.leg-item { display: flex; align-items: center; gap: 5px; }
+.leg-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.leg-line { width: 18px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+.map-stat {
+  display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.mstat {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 14px;
+  font-family: var(--mono); font-size: 11px;
+}
+.mstat-val { font-size: 18px; font-weight: 600; }
+.mstat-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+
+/* TOOLTIP */
+.leaflet-tooltip-dark {
+  background: #1C2128;
+  border: 1px solid #3D444D;
+  color: #8B949E;
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  white-space: nowrap;
+}
+.leaflet-tooltip-dark::before { border-right-color: #3D444D; }
+.leaflet-popup-content-wrapper {
+  background: #1C2128; color: #E6EDF3;
+  border: 1px solid #3D444D; border-radius: 6px;
+}
+.leaflet-popup-tip { background: #1C2128; }
+.leaflet-popup-content { margin: 10px 14px; }
+#tip{
+  position:fixed;background:#1C2128;border:1px solid var(--border2);
+  color:var(--text2);font-family:var(--mono);font-size:10px;line-height:1.5;
+  padding:7px 11px;border-radius:5px;max-width:240px;white-space:pre-wrap;
+  z-index:9999;pointer-events:none;opacity:0;transition:opacity .15s;
+  box-shadow:0 4px 12px rgba(0,0,0,.4);
+}
+#tip.show{opacity:1}
+</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
+      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+      <path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+    </svg>
+  </div>
+  <div class="htitle">
+    <h1>Video GoPro Analyzer X DNIT SNV</h1>
+    <span>Sistema de Validação de Trajetória GPS × SNV/DNIT</span>
+  </div>
+  <div class="hspace"></div>
+  <div class="hstatus">
+    <div class="sdot" id="sdot"></div>
+    <span id="stxt">Aguardando</span>
+  </div>
+</header>
+
+<aside>
+  <div class="ssec">
+    <div class="stitle">Processar</div>
+
+    <div class="field">
+      <label data-tip="Shapefile do SNV (DNIT)\nBusca recursiva em todo o projeto">SNV — Sistema Nacional de Viação</label>
+      <select id="selSnv" onchange="onSnvChange()">
+        <option value="">Carregando...</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label data-tip="Arquivo de vídeo GoPro (.MP4)\nBusca recursiva em todo o projeto">Vídeo GoPro</label>
+      <select id="selMp4" onchange="onMp4Change()">
+        <option value="">Carregando...</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label data-tip="Pasta de destino dos arquivos gerados\n(.geojson e .csv)">Diretório de saída</label>
+      <input type="text" id="inpSaida" value="output\validacao">
+    </div>
+
+    <div class="field">
+      <label data-tip="Comprimento de cada segmento de análise\nMenor = mais detalhado">Tamanho do segmento (km)</label>
+      <div class="irow">
+        <button class="spbtn" onclick="spin('segKm',-0.5)">−</button>
+        <input type="number" id="segKm" value="1.0" min="0.5" max="5" step="0.5">
+        <button class="spbtn" onclick="spin('segKm',0.5)">+</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label data-tip="Velocidade mediana calculada automaticamente\nao selecionar o vídeo">Velocidade de referência</label>
+      <div class="velbox">
+        <span class="velnum" id="velnum">—</span>
+        <span class="velunit">km/h</span>
+        <span class="velsub" id="velsub">mediana calculada</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ssec">
+    <div class="stitle">Câmera GoPro</div>
+    <div class="ibox" id="infoGopro"><span class="iempty">Selecione um vídeo</span></div>
+  </div>
+
+  <div class="ssec">
+    <div class="stitle">SNV Selecionado</div>
+    <div class="ibox" id="infoSnv"><span class="iempty">Selecione um shapefile</span></div>
+  </div>
+
+  <div class="ssec">
+    <div class="brow">
+      <button class="btn btn-p" id="btnP" onclick="processar()" disabled>Processar</button>
+      <button class="btn btn-d"  id="btnC" onclick="cancelar()" style="display:none">Cancelar</button>
+      <button class="btn btn-n"  onclick="limpar()">Limpar</button>
+    </div>
+  </div>
+
+  <div class="advtoggle" id="advT" onclick="toggleAdv()">
+    <span class="advicon">▶</span>
+    <span>Configurações Avançadas</span>
+  </div>
+
+  <div class="advbody" id="advB">
+    <div class="ssec" style="padding-top:10px">
+
+      <div class="tgroup">
+        <div class="tgtitle">Limiares Físicos — gp12_features.py</div>
+        <div class="tfield"><label data-tip="GPSP acima deste valor = sinal ruim (DOP > 2.5)">GPSP ruim</label><input type="number" id="t_gpsp_ruim" value="250"></div>
+        <div class="tfield"><label data-tip="Velocidade máxima em m/s (~216 km/h)">Vel. máx. (m/s)</label><input type="number" id="t_max_vel" value="60"></div>
+        <div class="tfield"><label data-tip="Aceleração máxima em m/s²">Acel. máx. (m/s²)</label><input type="number" id="t_max_acel" value="15"></div>
+        <div class="tfield"><label data-tip="Salto impossível entre frames @ 18Hz (m/s)">Salto frame (m/s)</label><input type="number" id="t_salto_frame" value="40"></div>
+      </div>
+
+      <div class="tgroup">
+        <div class="tgtitle">Limiares de Detecção — diagnostico_camera.py</div>
+        <div class="tfield"><label data-tip="Gap > Xs = interrupção crítica no stream">Gap crítico (s)</label><input type="number" id="t_gap_crit" value="30"></div>
+        <div class="tfield"><label data-tip="Gap > Xs = interrupção moderada">Gap moderado (s)</label><input type="number" id="t_gap_mod" value="5"></div>
+        <div class="tfield"><label data-tip="Pontos consecutivos sem variação = GPS bloqueado">Pontos sem variação</label><input type="number" id="t_pts_var" value="54"></div>
+        <div class="tfield"><label data-tip="Janela de amostras para análise de bateria">Janela bateria (N)</label><input type="number" id="t_jan_bat" value="180"></div>
+        <div class="tfield"><label data-tip="Aumento de GPSP indicativo de bateria fraca">ΔGPSP bateria</label><input type="number" id="t_delta_gpsp" value="150"></div>
+        <div class="tfield"><label data-tip="Queda relativa de velocidade no fim (0–1)">Queda vel. bateria</label><input type="number" id="t_queda_vel" value="0.40" step="0.05"></div>
+        <div class="tfield"><label data-tip="Velocidade mínima ao fim = encerramento abrupto (m/s)">Vel. encerramento</label><input type="number" id="t_vel_enc" value="5.0"></div>
+        <div class="tfield"><label data-tip="Salto máximo entre pontos adjacentes (m)">Salto máx. pontos (m)</label><input type="number" id="t_salto_m" value="25.0"></div>
+        <div class="tfield"><label data-tip="Vel. média mínima por segmento (m/s)">Vel. mín. segmento</label><input type="number" id="t_vel_min" value="3.0"></div>
+        <div class="tfield"><label data-tip="Vel. média máxima por segmento (m/s)">Vel. máx. segmento</label><input type="number" id="t_vel_max" value="55.5"></div>
+      </div>
+
+      <div class="tgroup">
+        <div class="tgtitle">GPSP e Raio de Confiança — avaliador_qualidade.py</div>
+        <div class="tfield"><label data-tip="GPSP máximo para sinal Excelente (DOP < 2.0)">GPSP Excelente (≤)</label><input type="number" id="t_gpsp_exc" value="200"></div>
+        <div class="tfield"><label data-tip="GPSP máximo para sinal Bom (DOP < 5.0)">GPSP Bom (≤)</label><input type="number" id="t_gpsp_bom" value="500"></div>
+        <div class="tfield"><label data-tip="GPSP máximo para sinal Aceitável (DOP < 10.0)">GPSP Aceitável (≤)</label><input type="number" id="t_gpsp_ace" value="1000"></div>
+        <div class="tfield"><label data-tip="Raio de confiança posicional — Excelente (m)">Raio Excelente (m)</label><input type="number" id="t_raio_exc" value="5"></div>
+        <div class="tfield"><label data-tip="Raio de confiança posicional — Bom (m)">Raio Bom (m)</label><input type="number" id="t_raio_bom" value="15"></div>
+        <div class="tfield"><label data-tip="Raio de confiança posicional — Aceitável (m)">Raio Aceitável (m)</label><input type="number" id="t_raio_ace" value="50"></div>
+        <div class="tfield"><label data-tip="Raio de confiança posicional — Degradado (m)">Raio Degradado (m)</label><input type="number" id="t_raio_deg" value="200"></div>
+        <div class="tfield"><label data-tip="Distância máxima (m) para SNV desatualizado">Limiar SNV desatual. (m)</label><input type="number" id="t_dist_snv" value="100"></div>
+      </div>
+    </div>
+
+    <div class="abrow">
+      <button class="btn btn-p" onclick="aplicarAdv()" style="flex:2">Aplicar</button>
+      <button class="btn btn-n" onclick="resetDef()" style="flex:1">Reset</button>
+    </div>
+  </div>
+</aside>
+
+<main>
+  <div class="tabbar">
+    <div class="tab active" onclick="swTab('log',this)">Log</div>
+    <div class="tab" onclick="swTab('dash',this)">Dashboard</div>
+    <div class="tab" onclick="swTab('conf',this)">Conformidade SNV</div>
+    <div class="tab" onclick="swTab('qual',this)">Qualidade GPS</div>
+    <div class="tab" onclick="swTab('cam',this)">Câmera</div>
+    <div class="tab" onclick="swTab('tab',this)">Tabela Detalhada</div>
+    <div class="tab" onclick="swTab('mapa',this)">Mapa</div>
+  </div>
+  <div class="mcontent">
+    <div id="p-log" class="tpanel active">
+      <div class="logbox" id="logbox">
+        <div class="lempty">Nenhum processamento realizado.<br>Configure os parâmetros e clique em Processar.</div>
+      </div>
+    </div>
+    <div id="p-dash" class="tpanel"><div id="d-dash"><div class="empty"><div class="emicon">◈</div><div class="emtxt">Dashboard será exibido após o processamento.</div></div></div></div>
+    <div id="p-conf" class="tpanel"><div id="d-conf"><div class="empty"><div class="emicon">◈</div><div class="emtxt">Conformidade SNV por segmento.</div></div></div></div>
+    <div id="p-qual" class="tpanel"><div id="d-qual"><div class="empty"><div class="emicon">◈</div><div class="emtxt">Qualidade do sinal GPS por segmento.</div></div></div></div>
+    <div id="p-cam"  class="tpanel"><div id="d-cam" ><div class="empty"><div class="emicon">◈</div><div class="emtxt">Diagnóstico de câmera e gravação.</div></div></div></div>
+    <div id="p-tab"  class="tpanel"><div id="d-tab" ><div class="empty"><div class="emicon">◈</div><div class="emtxt">Tabela detalhada por segmento.</div></div></div></div>
+    <div id="p-mapa" class="tpanel"><div id="d-mapa"><div class="empty"><div class="emicon">◈</div><div class="emtxt">Mapa será exibido após o processamento.</div></div></div></div>
+  </div>
+</main>
+
+<footer>
+  <span>DNIT SNV</span><span class="fsep">|</span>
+  <span class="fhi">Video GoPro Analyzer</span><span class="fsep">|</span>
+  <span>v1.0.0</span><span class="fsep">|</span>
+  <span>Python 3.13 + Flask + GeoPandas</span><span class="fsep">|</span>
+  <span id="ftxt">—</span>
+</footer>
+
+<div id="tip"></div>
+
+<script>
+// ── Estado global ─────────────────────────────────────────────
+const S = { rodando:false, velMediana:null, avancado:{}, defaults:{}, resultado:null };
+
+// ── Init ──────────────────────────────────────────────────────
+window.addEventListener("DOMContentLoaded", async () => {
+  await carregarDefaults();
+  await carregarListas();
+  initTooltip();
+});
+
+async function carregarDefaults() {
+  try {
+    const r = await fetch("/api/defaults");
+    S.defaults = await r.json();
+  } catch(e) { console.error("defaults:", e); }
+}
+
+async function carregarListas() {
+  let debug = {};
+  try {
+    const r = await fetch("/api/debug");
+    debug = await r.json();
+    console.log("[DEBUG]", debug);
+    document.getElementById("ftxt").textContent =
+      (debug.mp4_count||0) + " MP4 | " + (debug.shp_count||0) + " SHP | " + (debug.BASE_DIR||"");
+  } catch(e) {
+    console.error("debug:", e);
+  }
+
+  const selSnv = document.getElementById("selSnv");
+  selSnv.innerHTML = '<option value="">— Selecione o SNV —</option>';
+  (debug.shp_encontrados || []).forEach(f => {
+    const o = document.createElement("option");
+    o.value = f.name; o.dataset.path = f.path;
+    o.textContent = f.name + "  [" + shortP(f.path) + "]";
+    selSnv.appendChild(o);
+  });
+  if (!(debug.shp_encontrados||[]).length) {
+    selSnv.innerHTML += '<option disabled>Nenhum .shp encontrado</option>';
+  }
+
+  const selMp4 = document.getElementById("selMp4");
+  selMp4.innerHTML = '<option value="">— Selecione o vídeo —</option>';
+  (debug.mp4_encontrados || []).forEach(f => {
+    const o = document.createElement("option");
+    o.value = f.name; o.dataset.path = f.path;
+    o.textContent = f.name + "  [" + shortP(f.path) + "]";
+    selMp4.appendChild(o);
+  });
+  if (!(debug.mp4_encontrados||[]).length) {
+    selMp4.innerHTML += '<option disabled>Nenhum .MP4 encontrado</option>';
+  }
+}
+
+// ── Seleções ──────────────────────────────────────────────────
+async function onSnvChange() {
+  const sel = document.getElementById("selSnv");
+  const shp = sel.value;
+  const shpPath = sel.options[sel.selectedIndex]?.dataset?.path || "";
+  if (!shp) { document.getElementById("infoSnv").innerHTML = '<span class="iempty">Selecione um shapefile</span>'; checkReady(); return; }
+  document.getElementById("infoSnv").innerHTML = '<span class="iempty">Carregando...</span>';
+  try {
+    const r = await fetch("/api/info_snv", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({shp, path:shpPath}) });
+    const d = await r.json();
+    document.getElementById("infoSnv").innerHTML = d.erro
+      ? '<span style="color:var(--danger)">'+esc(d.erro)+'</span>'
+      : infoHtml([["Segmentos",d.num_segmentos?.toLocaleString("pt-BR")||"?"],["CRS",d.crs||"?"],["Atualização",d.data_atualizacao||"?"],["Rodovias",(d.rodovias||[]).slice(0,5).join(", ")||"?"],["Tamanho",d.tamanho_kb+" KB"]]);
+  } catch(e) { document.getElementById("infoSnv").innerHTML='<span style="color:var(--danger)">'+esc(e.message)+'</span>'; }
+  checkReady();
+}
+
+async function onMp4Change() {
+  const sel = document.getElementById("selMp4");
+  const mp4 = sel.value;
+  const mp4Path = sel.options[sel.selectedIndex]?.dataset?.path || "";
+  if (!mp4) {
+    document.getElementById("infoGopro").innerHTML = '<span class="iempty">Selecione um vídeo</span>';
+    document.getElementById("velnum").textContent = "—";
+    S.velMediana = null; checkReady(); return;
+  }
+  document.getElementById("infoGopro").innerHTML = '<span class="iempty">Lendo metadados...</span>';
+  document.getElementById("velnum").textContent = "…";
+  try {
+    const [ir, vr] = await Promise.all([
+      fetch("/api/info_gopro",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({mp4, path:mp4Path}) }).then(r=>r.json()),
+      fetch("/api/velocidade_mediana",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({mp4, path:mp4Path}) }).then(r=>r.json()),
+    ]);
+    document.getElementById("infoGopro").innerHTML = ir.erro
+      ? '<span style="color:var(--danger)">'+esc(ir.erro)+'</span>'
+      : infoHtml([["Modelo",ir.modelo||"—"],["Firmware",ir.firmware||"—"],["Duração",ir.duracao_fmt||"—"],["Resolução",ir.resolucao||"—"],["FPS",(ir.fps||"—")+" fps"],["Gravado",ir.criacao?.substring(0,10)||"—"],["Tamanho",(ir.tamanho_mb||"?")+" MB"]]);
+    if (vr.velocidade_kmh) {
+      S.velMediana = vr.velocidade_kmh;
+      document.getElementById("velnum").textContent = vr.velocidade_kmh;
+    } else {
+      document.getElementById("velnum").textContent = "—";
+    }
+  } catch(e) { console.error(e); }
+  checkReady();
+}
+
+function checkReady() {
+  const ok = !!document.getElementById("selMp4").value && !!document.getElementById("selSnv").value;
+  document.getElementById("btnP").disabled = !ok;
+}
+
+// ── Processamento ─────────────────────────────────────────────
+async function processar() {
+  if (S.rodando) return;
+  const selMp4 = document.getElementById("selMp4");
+  const selSnv = document.getElementById("selSnv");
+  const params = {
+    mp4: selMp4.value, mp4_path: selMp4.options[selMp4.selectedIndex]?.dataset?.path||"",
+    shp: selSnv.value, shp_path: selSnv.options[selSnv.selectedIndex]?.dataset?.path||"",
+    saida: document.getElementById("inpSaida").value,
+    tamanho_seg_km: parseFloat(document.getElementById("segKm").value),
+    velocidade_kmh: S.velMediana || 80,
+    avancado: S.avancado,
+  };
+  S.rodando = true;
+  document.getElementById("btnP").style.display = "none";
+  document.getElementById("btnC").style.display = "";
+  setStatus("running","Processando…");
+  swTab("log", document.querySelector(".tab"));
+  document.getElementById("logbox").innerHTML = "";
+  await fetch("/api/processar",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(params) });
+  const es = new EventSource("/api/log_stream");
+  es.onmessage = e => {
+    const d = JSON.parse(e.data);
+    if (d.tipo==="ping") return;
+    if (d.tipo==="fim") { es.close(); finalizar(); return; }
+    addLog(d.tipo, d.msg);
+  };
+}
+
+async function cancelar() {
+  await fetch("/api/cancelar",{method:"POST"});
+}
+
+async function finalizar() {
+  S.rodando = false;
+  document.getElementById("btnP").style.display = "";
+  document.getElementById("btnC").style.display = "none";
+  try {
+    const r = await fetch("/api/resultado");
+    const d = await r.json();
+    console.log("[RESULTADO]", d);
+
+    if (d.erro) {
+      addLog("erro", "Erro ao carregar resultado: " + d.erro);
+      setStatus("error", "Erro");
+      return;
+    }
+
+    if (!d.segmentos || !d.segmentos.length) {
+      const msg = d.aviso || "Nenhum segmento no CSV. Verifique o log para detalhes.";
+      addLog("aviso", msg);
+      if (d.csv_path) addLog("info", "CSV encontrado: " + d.csv_path + " (" + (d.total_linhas||0) + " linhas)");
+      setStatus("error", "Sem dados");
+      return;
+    }
+
+    S.resultado = d;
+    document.getElementById("ftxt").textContent =
+      d.arquivo + " | " + d.segmentos.length + " segmentos";
+    renderDash(d); renderConf(d); renderQual(d); renderCam(d); renderTab(d);
+    // Pré-carrega o mapa em background (não bloqueia UI)
+    renderMapa(d).catch(e => console.warn("Mapa:", e));
+    setStatus("done", "Concluído — " + d.segmentos.length + " segmentos");
+
+    // Muda automaticamente para o Dashboard
+    const tabDash = document.querySelectorAll(".tab")[1];
+    swTab("dash", tabDash);
+
+  } catch(e) {
+    addLog("erro", "Exceção ao carregar resultado: " + e.message);
+    setStatus("error", "Erro");
+  }
+}
+
+function addLog(tipo, msg) {
+  const el = document.getElementById("logbox");
+  el.querySelector(".lempty")?.remove();
+  const now = new Date();
+  const t = [now.getHours(),now.getMinutes(),now.getSeconds()].map(n=>String(n).padStart(2,"0")).join(":");
+  const div = document.createElement("div");
+  div.className = "lline l-"+tipo;
+  div.innerHTML = '<span class="ltime">'+t+'</span><span class="lmsg">'+esc(msg)+'</span>';
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Renders ───────────────────────────────────────────────────
+function renderDash(d) {
+  const segs = d.segmentos||[], evts = d.eventos||[];
+  const tot = segs.length;
+  const nOk  = segs.filter(s=>s.conformidade==="dentro_da_tolerancia").length;
+  const nSnv = segs.filter(s=>s.conformidade==="snv_desatualizado").length;
+  const nCrit= evts.filter(e=>(e.justificativa||"").includes("CRÍTICA")).length;
+  const vels = segs.map(s=>parseFloat(s.vel_media_kmh)||0).filter(Boolean);
+  const dmax = Math.max(...segs.map(s=>parseFloat(s.dist_max_m)||0),1);
+  const kpis = `<div class="dgrid">
+    <div class="kpi ${nOk===tot?"green":"blue"}"><div class="kpilbl">Conforme</div><div class="kpival">${tot?Math.round(nOk/tot*100):0}%</div><div class="kpisub">${nOk} de ${tot} segmentos</div></div>
+    <div class="kpi ${nSnv>0?"red":"green"}"><div class="kpilbl">SNV Desatualizado</div><div class="kpival">${nSnv}</div><div class="kpisub">segmento(s)</div></div>
+    <div class="kpi blue"><div class="kpilbl">Vel. Mediana</div><div class="kpival">${mediana(vels).toFixed(0)}</div><div class="kpisub">km/h</div></div>
+    <div class="kpi ${nCrit>0?"amber":"green"}"><div class="kpilbl">Eventos Câmera</div><div class="kpival">${evts.length}</div><div class="kpisub">${nCrit} crítico(s)</div></div>
+  </div>`;
+  const rows = segs.map(s=>{
+    const c=s.conformidade||"";
+    const bc=c.includes("toleran")?"ok":c.includes("snv")?"snv":c.includes("insuf")?"insuf":"inc";
+    const pct=Math.min(100,((parseFloat(s.dist_max_m)||0)/dmax)*100);
+    return `<div class="kmrow">
+      <span class="kmlbl">km ${(s.km_inicio||0).toFixed(1)}–${(s.km_fim||0).toFixed(1)}</span>
+      <div class="kmbw"><div class="kmb ${bc}" style="width:${pct.toFixed(0)}%"></div></div>
+      <span style="text-align:right;font-family:var(--mono);font-size:10px">${(s.dist_max_m||0).toFixed(0)}m</span>
+      <span style="text-align:center">${badgeConf(c)}</span>
+      <span style="text-align:right;font-family:var(--mono);font-size:10px">${(parseFloat(s.vel_media_kmh)||0).toFixed(0)} km/h</span>
+    </div>`;
+  }).join("");
+  const vmax = Math.max(...vels,1);
+  const spark = `<div class="ccard"><div class="ctitle">Velocidade média por segmento (km/h)</div>
+    <div class="spark">${vels.map(v=>`<div class="sparkb" style="height:${Math.max(4,(v/vmax)*100).toFixed(0)}%" title="${v.toFixed(0)} km/h"></div>`).join("")}</div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:var(--mono);font-size:10px;color:var(--text3)">
+      <span>km ${segs[0]?.km_inicio?.toFixed(1)||0}</span>
+      <span>${mediana(vels).toFixed(0)} km/h mediana</span>
+      <span>km ${segs[segs.length-1]?.km_fim?.toFixed(1)||0}</span>
+    </div></div>`;
+  document.getElementById("d-dash").innerHTML = kpis +
+    `<div class="ccard"><div class="ctitle">Distância máxima ao SNV por segmento</div>
+    <div class="kmrow hdr"><span>Segmento</span><span>Barra</span><span>Dist. máx.</span><span>Conformidade</span><span>Vel.</span></div>
+    ${rows}</div>` + spark;
+}
+
+function renderConf(d) {
+  const rows = (d.segmentos||[]).map(s=>`<tr>
+    <td style="font-family:var(--mono);white-space:nowrap">km ${(s.km_inicio||0).toFixed(1)}–${(s.km_fim||0).toFixed(1)}</td>
+    <td>${badgeConf(s.conformidade||"")}</td>
+    <td class="tr">${(s.dist_media_m||0).toFixed(1)} m</td>
+    <td class="tr">${(s.dist_max_m||0).toFixed(1)} m</td>
+    <td class="tr">${(s.dist_p95_m||0).toFixed(1)} m</td>
+    <td class="tr">${s.raio_conf_m||"—"} m</td>
+    <td style="text-align:center">${s.sistematico==="True"||s.sistematico===true?"Sim":"Não"}</td>
+    <td style="max-width:260px;font-size:10px;color:var(--text2);line-height:1.4">${esc(s.justificativa||"")}</td>
+  </tr>`).join("");
+  document.getElementById("d-conf").innerHTML = `<div class="ccard"><div class="ctitle">Conformidade da trajetória com o SNV/DNIT</div>
+    <div style="overflow-x:auto"><table class="dtable">
+      <tr><th>Segmento</th><th>Conformidade</th><th>Dist. Méd.</th><th>Dist. Máx.</th><th>P95</th><th>Raio Conf.</th><th>Sistemático</th><th>Justificativa</th></tr>
+      ${rows}</table></div></div>`;
+}
+
+function renderQual(d) {
+  const rows = (d.segmentos||[]).map(s=>`<tr>
+    <td style="font-family:var(--mono);white-space:nowrap">km ${(s.km_inicio||0).toFixed(1)}–${(s.km_fim||0).toFixed(1)}</td>
+    <td>${badgeIQ(s.iq_sinal||"")}</td>
+    <td class="tr">${(s.gpsp_medio||0).toFixed(0)}</td>
+    <td class="tr">${(s.dop_medio||0).toFixed(2)}</td>
+    <td class="tr">${(s.pct_fix_3d||0).toFixed(0)}%</td>
+    <td class="tr">${(s.pct_anomalos||0).toFixed(1)}%</td>
+    <td class="tr">${s.raio_conf_m||"—"} m</td>
+    <td class="tr">${(s.vel_media_kmh||0).toFixed(0)} km/h</td>
+  </tr>`).join("");
+  document.getElementById("d-qual").innerHTML = `<div class="ccard"><div class="ctitle">Índice de qualidade do sinal GPS (GPMF @ 18Hz)</div>
+    <div style="overflow-x:auto"><table class="dtable">
+      <tr><th>Segmento</th><th>IQ</th><th>GPSP</th><th>DOP</th><th>Fix 3D</th><th>Anomalias</th><th>Raio Conf.</th><th>Vel.</th></tr>
+      ${rows}</table></div></div>`;
+}
+
+function renderCam(d) {
+  const evts = d.eventos||[];
+  if (!evts.length) {
+    document.getElementById("d-cam").innerHTML = `<div class="ccard"><div class="ctitle">Diagnóstico de gravação — câmera GoPro</div>
+      <div style="color:var(--success);font-family:var(--mono);font-size:12px;padding:20px 0">✓ Nenhum evento detectado. Gravação íntegra.</div></div>`;
+    return;
+  }
+  const cards = evts.map(e=>{
+    const j = e.justificativa||"";
+    const sev = j.includes("CRÍTICA")?"critica":j.includes("ALTA")?"alta":"moderada";
+    const parts = j.split("|");
+    const desc = parts[0]?.replace(/\[.*?\]\s*/,"").trim()||"";
+    const met  = (parts.find(p=>p.includes("Métrica"))||"").replace("Métrica:","").trim();
+    const acao = (parts.find(p=>p.includes("Ação"))||"").replace("Ação:","").trim();
+    return `<div class="evcard ${sev}">
+      <div class="evhdr"><span class="evtipo">${esc(e.conformidade||"evento")}</span><span class="evkm">km ${(e.km_inicio||0).toFixed(1)}–${(e.km_fim||0).toFixed(1)}</span></div>
+      <div class="evdesc">${esc(desc)}</div>
+      ${met?`<div class="evmet">${esc(met)}</div>`:""}
+      ${acao?`<div class="evmet" style="color:var(--warning)">${esc(acao)}</div>`:""}
+    </div>`;
+  }).join("");
+  document.getElementById("d-cam").innerHTML = `<div class="ccard"><div class="ctitle">Diagnóstico de gravação — câmera GoPro</div><div class="evlist">${cards}</div></div>`;
+}
+
+function renderTab(d) {
+  const rows = (d.segmentos||[]).map(s=>`<tr>
+    <td style="font-family:var(--mono);white-space:nowrap">km ${(s.km_inicio||0).toFixed(1)}–${(s.km_fim||0).toFixed(1)}</td>
+    <td>${badgeIQ(s.iq_sinal||"")}</td>
+    <td class="tr">${(s.dop_medio||0).toFixed(2)}</td>
+    <td class="tr">${(s.pct_fix_3d||0).toFixed(0)}%</td>
+    <td>${badgeConf(s.conformidade||"")}</td>
+    <td class="tr">${(s.dist_media_m||0).toFixed(1)}</td>
+    <td class="tr">${(s.dist_max_m||0).toFixed(1)}</td>
+    <td class="tr">${(s.dist_p95_m||0).toFixed(1)}</td>
+    <td class="tr">${(s.vel_media_kmh||0).toFixed(0)}</td>
+    <td class="tr">${s.n_amostras||0}</td>
+  </tr>`).join("");
+  document.getElementById("d-tab").innerHTML = `<div class="ccard"><div class="ctitle">Tabela detalhada por segmento km a km</div>
+    <div style="overflow-x:auto"><table class="dtable">
+      <tr><th>Segmento</th><th>IQ GPS</th><th>DOP</th><th>Fix 3D</th><th>Conformidade</th><th>Dist.Méd(m)</th><th>Dist.Máx(m)</th><th>P95(m)</th><th>Vel(km/h)</th><th>N amostras</th></tr>
+      ${rows}</table></div></div>`;
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function badgeConf(v) {
+  const m={"dentro_da_tolerancia":["ok","Conforme"],"snv_desatualizado":["snv","SNV desatual."],"sinal_gps_insuficiente":["insuf","GPS insuf."],"inconclusivo":["inc","Inconclusivo"]};
+  const[c,l]=m[v]||["inc",v||"—"];
+  return `<span class="badge b-${c}">${l}</span>`;
+}
+function badgeIQ(v) {
+  const m={"excelente":["exc","Excelente"],"bom":["bom","Bom"],"aceitavel":["ace","Aceitável"],"degradado":["deg","Degradado"]};
+  const[c,l]=m[v]||["inc",v||"—"];
+  return `<span class="badge b-${c}">${l}</span>`;
+}
+function infoHtml(rows) {
+  return rows.map(([k,v])=>`<div class="irow2"><span>${k}</span><span class="ival">${esc(String(v||"—"))}</span></div>`).join("");
+}
+function swTab(name, btn) {
+  document.querySelectorAll(".tpanel").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.getElementById("p-"+name).classList.add("active");
+  if(btn) btn.classList.add("active");
+  if(name === "mapa") onTabMapa();
+}
+function spin(id, d) {
+  const el=document.getElementById(id);
+  const v=parseFloat(el.value)+d;
+  el.value=Math.min(parseFloat(el.max||9999),Math.max(parseFloat(el.min||0.5),Math.round(v*10)/10));
+}
+function toggleAdv() {
+  const b=document.getElementById("advB"),t=document.getElementById("advT");
+  b.classList.toggle("open"); t.classList.toggle("advopen");
+}
+function setStatus(tipo,txt) {
+  document.getElementById("sdot").className="sdot "+tipo;
+  document.getElementById("stxt").textContent=txt;
+}
+function aplicarAdv() {
+  S.avancado={
+    gpsp_ruim:getN("t_gpsp_ruim"),max_velocidade:getN("t_max_vel"),
+    max_aceleracao:getN("t_max_acel"),gap_critico_s:getN("t_gap_crit"),
+    gap_moderado_s:getN("t_gap_mod"),pontos_sem_variacao:getN("t_pts_var"),
+    janela_bateria_n:getN("t_jan_bat"),delta_gpsp_bateria:getN("t_delta_gpsp"),
+    queda_vel_bateria:getN("t_queda_vel"),vel_encerramento_ms:getN("t_vel_enc"),
+    salto_max_m:getN("t_salto_m"),vel_minima_ms:getN("t_vel_min"),
+    vel_maxima_ms:getN("t_vel_max"),gpsp_excelente:getN("t_gpsp_exc"),
+    gpsp_bom:getN("t_gpsp_bom"),gpsp_aceitavel:getN("t_gpsp_ace"),
+    dist_snv_desatualizado_m:getN("t_dist_snv"),
+  };
+  addLog("ok","Configurações avançadas aplicadas.");
+}
+function resetDef() {
+  const d=S.defaults;
+  const m={t_gpsp_ruim:"gpsp_ruim",t_max_vel:"max_velocidade",t_max_acel:"max_aceleracao",
+    t_gap_crit:"gap_critico_s",t_gap_mod:"gap_moderado_s",t_pts_var:"pontos_sem_variacao",
+    t_jan_bat:"janela_bateria_n",t_delta_gpsp:"delta_gpsp_bateria",t_queda_vel:"queda_vel_bateria",
+    t_vel_enc:"vel_encerramento_ms",t_salto_m:"salto_max_m",t_vel_min:"vel_minima_ms",
+    t_vel_max:"vel_maxima_ms",t_gpsp_exc:"gpsp_excelente",t_gpsp_bom:"gpsp_bom",
+    t_gpsp_ace:"gpsp_aceitavel",t_raio_exc:"raio_excelente",t_raio_bom:"raio_bom",
+    t_raio_ace:"raio_aceitavel",t_raio_deg:"raio_degradado",t_dist_snv:"dist_snv_desatualizado_m"};
+  Object.entries(m).forEach(([id,key])=>{ if(d[key]!==undefined) document.getElementById(id).value=d[key]; });
+  S.avancado={};
+}
+function limpar() {
+  document.getElementById("selMp4").value="";
+  document.getElementById("selSnv").value="";
+  document.getElementById("infoGopro").innerHTML='<span class="iempty">Selecione um vídeo</span>';
+  document.getElementById("infoSnv").innerHTML='<span class="iempty">Selecione um shapefile</span>';
+  document.getElementById("velnum").textContent="—";
+  document.getElementById("logbox").innerHTML='<div class="lempty">Log limpo.</div>';
+  document.getElementById("btnP").disabled=true;
+  setStatus("idle","Aguardando");
+}
+function getN(id) { const v=parseFloat(document.getElementById(id).value); return isNaN(v)?null:v; }
+function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function mediana(a) { if(!a.length)return 0; const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+function shortP(p) { if(!p)return""; const parts=p.replace(/\\/g,"/").split("/"); return parts.slice(-2).join("/"); }
+
+// ── Mapa Leaflet ─────────────────────────────────────────────
+let _map = null;
+let _layers = { segmentos: null, pontos: null, eventos: null };
+
+const COR_CONF = {
+  "dentro_da_tolerancia":   "#3FB950",
+  "snv_desatualizado":      "#DA3633",
+  "sinal_gps_insuficiente": "#D29922",
+  "inconclusivo":           "#6E7681",
+};
+const COR_IQ = {
+  "excelente":  "#388BFD",
+  "bom":        "#3FB950",
+  "aceitavel":  "#D29922",
+  "degradado":  "#DA3633",
+};
+const COR_SEV = {
+  "crítica":   "#DA3633",
+  "alta":      "#D29922",
+  "moderada":  "#6E7681",
+};
+
+async function renderMapa(d) {
+  const segs = d.segmentos||[];
+  const nOk  = segs.filter(s=>s.conformidade==="dentro_da_tolerancia").length;
+  const nSnv = segs.filter(s=>s.conformidade==="snv_desatualizado").length;
+  const nIns = segs.filter(s=>s.conformidade==="sinal_gps_insuficiente").length;
+  const dmax = Math.max(...segs.map(s=>parseFloat(s.dist_max_m)||0)).toFixed(0);
+
+  // Monta opções de SNV (do seletor principal + mais qualquer outro encontrado)
+  const selSnvEl = document.getElementById("selSnv");
+  let snvOpts = "";
+  for (const opt of selSnvEl.options) {
+    if (!opt.value) continue;
+    const sel = opt.value === selSnvEl.value ? "selected" : "";
+    snvOpts += `<option value="${opt.value}" data-path="${opt.dataset.path||""}" ${sel}>${opt.textContent}</option>`;
+  }
+
+  document.getElementById("d-mapa").innerHTML = `
+    <div class="map-stat">
+      <div class="mstat"><div class="mstat-val" style="color:var(--success)">${nOk}</div><div class="mstat-lbl">Conforme</div></div>
+      <div class="mstat"><div class="mstat-val" style="color:var(--danger)">${nSnv}</div><div class="mstat-lbl">SNV Desatualizado</div></div>
+      <div class="mstat"><div class="mstat-val" style="color:var(--warning)">${nIns}</div><div class="mstat-lbl">GPS Insuficiente</div></div>
+      <div class="mstat"><div class="mstat-val" style="color:var(--text)">${dmax}m</div><div class="mstat-lbl">Desvio Máx.</div></div>
+    </div>
+
+    <!-- Seletor de SNV para comparação -->
+    <div class="snv-compare-bar">
+      <div class="snv-compare-left">
+        <span class="snv-compare-label">Comparar com SNV:</span>
+        <select id="mapSnvSel" onchange="onMapSnvChange()" class="snv-compare-sel">
+          <option value="">— Nenhum —</option>
+          ${snvOpts}
+        </select>
+        <button class="btn btn-p snv-compare-btn" id="btnCarregarSnv"
+                onclick="carregarSNVnoMapa()" title="Carregar SNV no mapa">
+          Carregar
+        </button>
+        <button class="btn btn-n snv-compare-btn" id="btnRemoverSnv"
+                onclick="removerSNV()" style="display:none" title="Remover SNV do mapa">
+          Remover
+        </button>
+      </div>
+      <div class="snv-compare-right">
+        <span id="snvMapStatus" class="snv-status"></span>
+      </div>
+    </div>
+
+    <!-- Legenda -->
+    <div class="map-legend">
+      <strong style="color:var(--text2);margin-right:4px">GoPro:</strong>
+      <span class="leg-item"><span class="leg-line" style="background:#3FB950"></span>Conforme</span>
+      <span class="leg-item"><span class="leg-line" style="background:#DA3633"></span>SNV desatualizado</span>
+      <span class="leg-item"><span class="leg-line" style="background:#D29922"></span>GPS insuficiente</span>
+      <span class="leg-item"><span class="leg-line" style="background:#6E7681"></span>Inconclusivo</span>
+      <span style="margin-left:6px;color:var(--text3)">|</span>
+      <strong style="color:var(--text2);margin:0 4px">SNV:</strong>
+      <span class="leg-item"><span class="leg-line" style="background:#FF69B4;border:1px dashed #888"></span>Traçado SNV</span>
+      <span style="margin-left:6px;color:var(--text3)">|</span>
+      <strong style="color:var(--text2);margin:0 4px">GPS:</strong>
+      <span class="leg-item"><span class="leg-dot" style="background:#DA3633;border:2px solid #fff;width:12px;height:12px"></span>Crítico ✗</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#D29922;border:2px solid #fff;width:12px;height:12px"></span>Alto ⚠</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#6E7681;border:2px solid #fff;width:12px;height:12px"></span>Moderado</span>
+      <span style="margin-left:6px;color:var(--text3)">|</span>
+      <strong style="color:var(--text2);margin:0 4px">GPS:</strong>
+      <span class="leg-item"><span class="leg-dot" style="background:#388BFD"></span>Excelente</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#3FB950"></span>Bom</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#D29922"></span>Aceitável</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#DA3633"></span>Degradado</span>
+    </div>
+
+    <!-- Controles de camada -->
+    <div class="map-controls">
+      <label style="font-family:var(--mono);font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="ckSeg" checked onchange="toggleLayer('segmentos')"> Segmentos GoPro
+      </label>
+      <label style="font-family:var(--mono);font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="ckPts" checked onchange="toggleLayer('pontos')"> Pontos GPS
+      </label>
+      <label style="font-family:var(--mono);font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="ckEvt" checked onchange="toggleLayer('eventos_camera')"> Eventos Câmera
+      </label>
+      <label style="font-family:var(--mono);font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="ckSnv" checked onchange="toggleLayer('snv')"> Traçado SNV
+      </label>
+      <button class="btn btn-n" style="flex:none;padding:4px 12px;font-size:10px" onclick="fitMapa()">Centralizar</button>
+    </div>
+    <div id="mapLeaflet"></div>`;
+
+  // Inicializa Leaflet
+  if (_map) { _map.remove(); _map = null; }
+  _map = L.map("mapLeaflet", { zoomControl: true });
+
+  // Tile OpenStreetMap
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap contributors",
+    maxZoom: 19,
+  }).addTo(_map);
+
+  // Carrega camadas
+  await Promise.all([
+    carregarCamada("segmentos"),
+    carregarCamada("pontos"),
+    carregarCamada("eventos_camera"),
+  ]);
+
+  // Fit nos segmentos
+  fitMapa();
+}
+
+async function carregarCamada(tipo) {
+  if (!_map) return;
+  try {
+    const r = await fetch("/api/geojson/" + tipo);
+    if (!r.ok) return;
+    const gj = await r.json();
+    if (gj.erro || !gj.features?.length) return;
+
+    if (_layers[tipo]) { _map.removeLayer(_layers[tipo]); _layers[tipo] = null; }
+
+    if (tipo === "segmentos") {
+      _layers[tipo] = L.geoJSON(gj, {
+        style: f => {
+          const conf = f.properties?.conformidade || "";
+          const cor  = COR_CONF[conf] || "#6E7681";
+          return { color: cor, weight: 5, opacity: 0.85 };
+        },
+        onEachFeature: (f, layer) => {
+          const p = f.properties || {};
+          const conf  = p.conformidade || "—";
+          const iq    = p.iq_sinal    || "—";
+          const dmed  = p.dist_media_m != null ? parseFloat(p.dist_media_m).toFixed(1)+"m" : "—";
+          const dmax  = p.dist_max_m  != null ? parseFloat(p.dist_max_m).toFixed(1)+"m"  : "—";
+          const vel   = p.vel_media_kmh != null ? parseFloat(p.vel_media_kmh).toFixed(0)+" km/h" : "—";
+          const km    = `km ${parseFloat(p.km_inicio||0).toFixed(1)}–${parseFloat(p.km_fim||0).toFixed(1)}`;
+          layer.bindPopup(`
+            <div style="font-family:monospace;font-size:12px;min-width:200px">
+              <strong>${km}</strong><br>
+              <span style="color:${COR_CONF[p.conformidade]||'#aaa'}">${conf.replace(/_/g," ")}</span><br>
+              IQ GPS: ${iq} | DOP: ${p.dop_medio != null ? parseFloat(p.dop_medio).toFixed(2) : "—"}<br>
+              Dist. média: ${dmed} | Dist. máx: ${dmax}<br>
+              Velocidade: ${vel}<br>
+              ${p.justificativa ? '<hr style="margin:4px 0"><small>'+esc(p.justificativa)+'</small>' : ''}
+            </div>`);
+          layer.on("mouseover", () => layer.setStyle({weight:8,opacity:1}));
+          layer.on("mouseout",  () => _layers["segmentos"]?.resetStyle(layer));
+        }
+      }).addTo(_map);
+
+    } else if (tipo === "pontos") {
+      _layers[tipo] = L.geoJSON(gj, {
+        pointToLayer: (f, latlng) => {
+          const iq  = f.properties?.iq_sinal || "";
+          const cor = COR_IQ[iq] || "#888";
+          return L.circleMarker(latlng, {
+            radius: 5,
+            fillColor: cor,
+            color: "transparent",
+            weight: 0,
+            fillOpacity: 0.55,
+          });
+        },
+        onEachFeature: (f, layer) => {
+          const p = f.properties || {};
+          layer.bindTooltip(
+            `km ${parseFloat(p.km||0).toFixed(2)} | IQ: ${p.iq_sinal||"—"} | DOP: ${p.dop != null ? parseFloat(p.dop).toFixed(2) : "—"} | ${p.vel_kmh != null ? parseFloat(p.vel_kmh).toFixed(0)+"km/h" : ""}`,
+            {sticky:true, className:"leaflet-tooltip-dark"}
+          );
+        }
+      });
+      _layers[tipo].addTo(_map);  // sempre adiciona; toggleLayer controla visibilidade
+
+    } else if (tipo === "eventos_camera") {
+      _layers[tipo] = L.geoJSON(gj, {
+        pointToLayer: (f, latlng) => {
+          const props = f.properties || {};
+          // Normaliza severidade — aceita com/sem acento, maiúsculas
+          const sevRaw = (props.severidade || props.evento || "").toLowerCase();
+          const sev = sevRaw.includes("criti") ? "crítica"
+                    : sevRaw.includes("alta")  ? "alta"
+                    : "moderada";
+          const cor = COR_SEV[sev] || "#6E7681";
+          const ico = sev === "crítica" ? "✗" : sev === "alta" ? "⚠" : "!";
+          // divIcon com tamanho grande e sombra forte — sempre visível
+          const icon = L.divIcon({
+            html: `<div style="
+              width:32px;height:32px;border-radius:50%;
+              background:${cor};
+              border:3px solid rgba(255,255,255,0.9);
+              display:flex;align-items:center;justify-content:center;
+              font-size:15px;font-weight:900;color:#fff;
+              box-shadow:0 0 0 3px ${cor}55,0 3px 10px rgba(0,0,0,.7);
+              cursor:pointer;
+            ">${ico}</div>`,
+            className: "",
+            iconSize:   [32, 32],
+            iconAnchor: [16, 16],
+          });
+          return L.marker(latlng, { icon, zIndexOffset: 2000 });
+        },
+        onEachFeature: (f, layer) => {
+          const p = f.properties || {};
+          const sevRaw = (p.severidade || "").toLowerCase();
+          const sev  = sevRaw.includes("criti") ? "crítica" : sevRaw.includes("alta") ? "alta" : "moderada";
+          const cor  = COR_SEV[sev] || "#888";
+          const km   = `km ${parseFloat(p.km_inicio||0).toFixed(1)}–${parseFloat(p.km_fim||0).toFixed(1)}`;
+          const tipo2 = (p.evento || p.conformidade || "evento").replace(/_/g," ");
+          layer.bindPopup(`
+            <div style="font-family:monospace;font-size:12px;min-width:200px">
+              <div style="background:${cor};color:#fff;padding:4px 8px;margin:-8px -12px 8px;border-radius:4px 4px 0 0;font-weight:700">
+                ${sev.toUpperCase()} — ${km}
+              </div>
+              <strong>${esc(tipo2)}</strong><br>
+              <small style="color:#aaa">${esc(p.descricao||p.justificativa||"")}</small>
+              ${p.metrica ? `<br><code style="font-size:10px;color:#ccc">${esc(p.metrica)}</code>` : ""}
+            </div>`);
+          layer.on("click", () => layer.openPopup());
+        }
+      }).addTo(_map);
+      console.log(`[MAPA] ${gj.features.length} evento(s) de câmera carregado(s)`);
+    }
+  } catch(e) {
+    console.error("carregarCamada", tipo, e);
+  }
+}
+
+function toggleLayer(tipo) {
+  if (!_map || !_layers[tipo]) return;
+  const checks = {segmentos:"ckSeg", pontos:"ckPts", eventos_camera:"ckEvt", snv:"ckSnv"};
+  const checked = document.getElementById(checks[tipo])?.checked;
+  if (checked) {
+    _layers[tipo].addTo(_map);
+  } else {
+    _map.removeLayer(_layers[tipo]);
+  }
+}
+
+async function onTabMapa() {
+  if (!_map && S.resultado) {
+    await renderMapa(S.resultado);
+  } else if (_map) {
+    setTimeout(() => _map.invalidateSize(), 100);
+  }
+}
+
+function fitMapa() {
+  if (!_map) return;
+  const l = _layers["segmentos"] || _layers["snv"] || _layers["pontos"];
+  if (l) {
+    try { _map.fitBounds(l.getBounds(), {padding:[20,20]}); } catch(e){}
+  }
+}
+
+// Quando muda o seletor de SNV no mapa — apenas habilita/desabilita botão
+function onMapSnvChange() {
+  const sel = document.getElementById("mapSnvSel");
+  document.getElementById("btnCarregarSnv").disabled = !sel.value;
+}
+
+// Carrega o SNV selecionado no mapa
+async function carregarSNVnoMapa() {
+  const sel = document.getElementById("mapSnvSel");
+  if (!sel.value) return;
+
+  const shp     = sel.value;
+  const shpPath = sel.options[sel.selectedIndex]?.dataset?.path || "";
+
+  setSnvStatus("loading", "Carregando traçado SNV...");
+  document.getElementById("btnCarregarSnv").disabled = true;
+
+  // Calcula bbox atual do mapa para filtrar o SNV
+  let bbox = null;
+  if (_map) {
+    const b = _map.getBounds();
+    bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+  }
+
+  try {
+    const r = await fetch("/api/snv_geojson", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({shp, path: shpPath, bbox}),
+    });
+    const data = await r.json();
+
+    if (data.erro) {
+      setSnvStatus("erro", "Erro: " + data.erro);
+      document.getElementById("btnCarregarSnv").disabled = false;
+      return;
+    }
+
+    // Remove camada anterior
+    if (_layers["snv"]) { _map.removeLayer(_layers["snv"]); _layers["snv"] = null; }
+
+    // Adiciona nova camada SNV com estilo tracejado amarelo
+    _layers["snv"] = L.geoJSON(data.geojson, {
+      style: () => ({
+        color: "#FF69B4",
+        weight: 2.5,
+        opacity: 0.85,
+        dashArray: "6 4",
+      }),
+      onEachFeature: (f, layer) => {
+        const p = f.properties || {};
+        const nome = Object.values(p).filter(Boolean).join(" · ") || "Segmento SNV";
+        layer.bindTooltip(
+          `<strong>SNV:</strong> ${esc(String(nome))}`,
+          {sticky: true, className: "leaflet-tooltip-dark"}
+        );
+        layer.bindPopup(`
+          <div style="font-family:monospace;font-size:12px;min-width:160px">
+            <strong style="color:#FF69B4">Traçado SNV</strong><br>
+            ${Object.entries(p).filter(([,v])=>v!=null).map(([k,v])=>`${k}: ${esc(String(v))}`).join("<br>")}
+          </div>`);
+        layer.on("mouseover", () => layer.setStyle({weight:5,opacity:1}));
+        layer.on("mouseout",  () => _layers["snv"]?.resetStyle(layer));
+      }
+    }).addTo(_map);
+
+    const n = data.features;
+    setSnvStatus("ok", `✓ ${shp} — ${n} segmento(s) carregado(s)`);
+    document.getElementById("btnRemoverSnv").style.display = "";
+    document.getElementById("btnCarregarSnv").style.display = "none";
+
+    // Atualiza o checkbox
+    const ckSnv = document.getElementById("ckSnv");
+    if (ckSnv) ckSnv.checked = true;
+
+  } catch(e) {
+    setSnvStatus("erro", "Erro ao carregar: " + e.message);
+    document.getElementById("btnCarregarSnv").disabled = false;
+  }
+}
+
+function removerSNV() {
+  if (_layers["snv"] && _map) {
+    _map.removeLayer(_layers["snv"]);
+    _layers["snv"] = null;
+  }
+  setSnvStatus("", "");
+  document.getElementById("btnRemoverSnv").style.display = "none";
+  document.getElementById("btnCarregarSnv").style.display = "";
+  document.getElementById("btnCarregarSnv").disabled = false;
+}
+
+function setSnvStatus(tipo, msg) {
+  const el = document.getElementById("snvMapStatus");
+  if (!el) return;
+  el.className = "snv-status " + tipo;
+  el.textContent = msg;
+}
+
+// ── Tooltip ────────────────────────────────────────────────────
+function initTooltip() {
+  const tip = document.getElementById("tip");
+  let timer = null;
+  document.addEventListener("mouseover", e => {
+    const el = e.target.closest("[data-tip]");
+    if (!el) return;
+    clearTimeout(timer);
+    tip.textContent = el.getAttribute("data-tip");
+    tip.classList.add("show");
+    moveTip(e, tip);
+  });
+  document.addEventListener("mousemove", e => {
+    if (tip.classList.contains("show")) moveTip(e, tip);
+  });
+  document.addEventListener("mouseout", e => {
+    if (e.target.closest("[data-tip]")) timer = setTimeout(() => tip.classList.remove("show"), 80);
+  });
+}
+function moveTip(e, tip) {
+  const mg=14, W=window.innerWidth, H=window.innerHeight;
+  const tw=tip.offsetWidth||220, th=tip.offsetHeight||50;
+  let x=e.clientX+mg; if(x+tw>W-4) x=e.clientX-tw-mg; if(x<4) x=4;
+  let y=e.clientY-th/2; if(y+th>H-4) y=H-th-4; if(y<4) y=4;
+  tip.style.left=x+"px"; tip.style.top=y+"px";
+}
+</script>
+</body>
+</html>
