@@ -3,6 +3,7 @@ app.py  —  Servidor Flask para a interface web do Video GoPro Analyzer x DNIT 
 Uso: python app.py
 Acesse: http://localhost:5000
 """
+from backend.service import *
 import json
 import os
 import queue
@@ -619,3 +620,5 @@ if __name__ == "__main__":
     print("  Servidor: http://localhost:5000")
     print("=" * 55)
     app.run(debug=False, host="0.0.0.0", port=5000, threaded=True)
+
+print("Backend carregado com sucesso")
