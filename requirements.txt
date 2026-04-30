@@ -3,7 +3,7 @@
 # Comando: pip install -r requirements.txt
 
 # GPS / vídeo GoPro (compatível Python 3.13)
-gopro2gpx>=0.1.5
+gopro2gpx==0.1
 gpxpy>=1.6.2
 ffmpeg-python>=0.2.0
 
