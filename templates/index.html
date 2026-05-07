@@ -61,13 +61,28 @@ aside::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 }
 .field{margin-bottom:10px}
 .field label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px}
-select,input[type=text],input[type=number]{
+select,input[type=text],input[type=number],input[type=file]{
   width:100%;background:var(--bg);border:1px solid var(--border);
   color:var(--text);font-family:var(--mono);font-size:11px;
   padding:6px 8px;border-radius:4px;appearance:none;outline:none;
   transition:border-color .2s;
 }
 select:focus,input:focus{border-color:var(--primary)}
+input[type=file]::file-selector-button {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text2);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 10px;
+  margin-right: 8px;
+  padding: 4px 8px;
+}
+input[type=file]::file-selector-button:hover {
+  background: var(--border);
+  color: var(--text);
+}
 select option{background:var(--surface2)}
 .irow{display:flex;align-items:center;gap:4px}
 .irow input{flex:1;text-align:center}
@@ -301,6 +316,46 @@ footer .fhi{color:var(--text2)}
 .mstat-val { font-size: 18px; font-weight: 600; }
 .mstat-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
 
+/* CORTE DE VIDEO */
+.cut-wrap {
+  max-width: 760px;
+}
+.cut-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.cut-grid .wide {
+  grid-column: 1 / -1;
+}
+.cut-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.cut-actions .btn {
+  flex: none;
+  padding: 7px 16px;
+}
+.cut-status {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.cut-status.ok {
+  color: var(--success);
+}
+.cut-status.erro {
+  color: var(--danger);
+}
+.cut-status.loading {
+  color: var(--warning);
+}
+
 /* TOOLTIP */
 .leaflet-tooltip-dark {
   background: #1C2128;
@@ -468,6 +523,7 @@ footer .fhi{color:var(--text2)}
     <div class="tab" onclick="swTab('cam',this)">Câmera</div>
     <div class="tab" onclick="swTab('tab',this)">Tabela Detalhada</div>
     <div class="tab" onclick="swTab('mapa',this)">Mapa</div>
+    <div class="tab" onclick="swTab('corte',this)">Corte de Video</div>
   </div>
   <div class="mcontent">
     <div id="p-log" class="tpanel active">
@@ -481,6 +537,35 @@ footer .fhi{color:var(--text2)}
     <div id="p-cam"  class="tpanel"><div id="d-cam" ><div class="empty"><div class="emicon">◈</div><div class="emtxt">Diagnóstico de câmera e gravação.</div></div></div></div>
     <div id="p-tab"  class="tpanel"><div id="d-tab" ><div class="empty"><div class="emicon">◈</div><div class="emtxt">Tabela detalhada por segmento.</div></div></div></div>
     <div id="p-mapa" class="tpanel"><div id="d-mapa"><div class="empty"><div class="emicon">◈</div><div class="emtxt">Mapa será exibido após o processamento.</div></div></div></div>
+    <div id="p-corte" class="tpanel">
+      <div class="cut-wrap">
+        <div class="ccard">
+          <div class="ctitle">Corte de Video</div>
+          <div class="cut-grid">
+            <div class="field wide">
+              <label>Video de entrada</label>
+              <input type="file" id="cutVideoFile" accept="video/mp4,.mp4">
+            </div>
+            <div class="field">
+              <label>Inicio (MM:SS)</label>
+              <input type="text" id="cutStart" value="00:00">
+            </div>
+            <div class="field">
+              <label>Fim (MM:SS)</label>
+              <input type="text" id="cutEnd" value="00:10">
+            </div>
+            <div class="field wide">
+              <label>Pasta de saida</label>
+              <input type="text" id="cutOutputDir" value="output\cortes">
+            </div>
+          </div>
+          <div class="cut-actions">
+            <button class="btn btn-p" id="cutBtn" onclick="cortarVideo()">Cortar</button>
+            <span class="cut-status" id="cutStatus">Selecione um MP4, informe o intervalo e a pasta de saida.</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -631,6 +716,48 @@ async function processar() {
 
 async function cancelar() {
   await fetch("/api/cancelar",{method:"POST"});
+}
+
+async function cortarVideo() {
+  const fileInput = document.getElementById("cutVideoFile");
+  const status = document.getElementById("cutStatus");
+  const btn = document.getElementById("cutBtn");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    status.className = "cut-status erro";
+    status.textContent = "Selecione um arquivo MP4.";
+    return;
+  }
+
+  const form = new FormData();
+  form.append("video", file);
+  form.append("start_time", document.getElementById("cutStart").value.trim());
+  form.append("end_time", document.getElementById("cutEnd").value.trim());
+  form.append("output_dir", document.getElementById("cutOutputDir").value.trim());
+
+  btn.disabled = true;
+  status.className = "cut-status loading";
+  status.textContent = "Cortando video com FFmpeg...";
+
+  try {
+    const r = await fetch("/api/cortar_video", { method:"POST", body:form });
+    const d = await r.json();
+
+    if (!r.ok || !d.success) {
+      status.className = "cut-status erro";
+      status.textContent = d.message || "Falha ao cortar o video.";
+      return;
+    }
+
+    status.className = "cut-status ok";
+    status.textContent = d.message || ("Arquivo gerado em: " + d.output_path);
+  } catch(e) {
+    status.className = "cut-status erro";
+    status.textContent = e.message;
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function finalizar() {

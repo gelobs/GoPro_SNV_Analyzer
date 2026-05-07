@@ -11,9 +11,11 @@ import subprocess
 import sys
 import threading
 import time
+import uuid
 from pathlib import Path
 
 from flask import Flask, Response, jsonify, render_template, request, stream_with_context
+from werkzeug.utils import secure_filename
 
 # ── Paths do projeto (resolve() garante caminho absoluto) ────────────────────
 BASE_DIR = Path(__file__).resolve().parent
@@ -22,9 +24,10 @@ DATA_DIR = BASE_DIR / "data"
 SNV_DIR  = DATA_DIR / "snv"
 RAW_DIR  = DATA_DIR / "raw"
 OUT_DIR  = BASE_DIR / "output"
+CUT_UPLOAD_DIR = RAW_DIR / "_corte_uploads"
 
 # Cria pastas se não existirem
-for d in [SNV_DIR, RAW_DIR, OUT_DIR]:
+for d in [SNV_DIR, RAW_DIR, OUT_DIR, CUT_UPLOAD_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
 app = Flask(__name__, template_folder=str(BASE_DIR / "templates"))
@@ -403,6 +406,56 @@ def cancelar():
     _log_queue.put({"tipo": "aviso", "msg": "Processamento cancelado pelo usuário."})
     _log_queue.put({"tipo": "fim", "msg": ""})
     return jsonify({"status": "cancelado"})
+
+
+@app.route("/api/cortar_video", methods=["POST"])
+def cortar_video_api():
+    """Corta um video enviado pela aba Corte de Video."""
+    video = request.files.get("video")
+    output_dir_raw = request.form.get("output_dir", "output/cortes").strip()
+    start_time = request.form.get("start_time", "").strip()
+    end_time = request.form.get("end_time", "").strip()
+
+    if not video or not video.filename:
+        return jsonify({"success": False, "message": "Selecione um video."}), 400
+
+    filename = secure_filename(video.filename)
+    if not filename.lower().endswith(".mp4"):
+        return jsonify({"success": False, "message": "Selecione um arquivo .mp4."}), 400
+
+    output_dir = Path(output_dir_raw)
+    if not output_dir.is_absolute():
+        output_dir = BASE_DIR / output_dir
+
+    input_path = CUT_UPLOAD_DIR / f"{uuid.uuid4().hex}_{filename}"
+    output_path = output_dir / f"{Path(filename).stem}_cortado_{uuid.uuid4().hex[:8]}.mp4"
+
+    try:
+        video.save(input_path)
+
+        from backend.ffmpeg_service import cut_video
+
+        logs = []
+        ok, details = cut_video(
+            input_path=str(input_path),
+            output_path=str(output_path),
+            start_time=start_time,
+            end_time=end_time,
+            log=logs.append,
+        )
+        return jsonify(
+            {
+                "success": ok,
+                "message": details,
+                "output_path": str(output_path) if ok else None,
+                "logs": logs,
+            }
+        ), 200 if ok else 400
+    finally:
+        try:
+            input_path.unlink(missing_ok=True)
+        except PermissionError:
+            pass
 
 
 @app.route("/api/log_stream")
