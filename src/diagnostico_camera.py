@@ -28,6 +28,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from pyproj import Geod
 
 
 class EventoCamera(Enum):
@@ -37,6 +38,7 @@ class EventoCamera(Enum):
     ENCERRAMENTO_ABRUPTO = "encerramento_abrupto"
     DESCONTINUIDADE      = "descontinuidade_espacial"
     VELOCIDADE_ATIPICA   = "velocidade_atipica"
+    AZIMUTE_IRREGULAR    = "azimute_irregular"
 
 
 class Severidade(Enum):
@@ -67,6 +69,10 @@ VEL_ENCERRAMENTO_MS   =  5.0   # câmera em movimento ao fim da gravação (m/s)
 SALTO_MAX_M           = 25.0   # deslocamento impossível entre pontos adjacentes
 VEL_MINIMA_MS         =  3.0   # < 3 m/s em todo o segmento = parada/anomalia
 VEL_MAXIMA_MS         = 55.5   # > 200 km/h = spike impossível em rodovia
+AZIMUTE_DIST_MAX_M    =  1.0   # virada brusca em distancia curta = oscilacao GPS
+AZIMUTE_MIN_GRAUS     = 20.0
+AZIMUTE_PASSO_MIN_M   =  0.05
+AZIMUTE_INTERVALO_S   =  1.0
 
 
 def diagnosticar(df: pd.DataFrame,
@@ -86,6 +92,7 @@ def diagnosticar(df: pd.DataFrame,
     eventos += _detectar_bateria(df)
     eventos += _detectar_encerramento_abrupto(df)
     eventos += _detectar_descontinuidades(df, tamanho_seg_km)
+    eventos += _detectar_azimute_irregular(df)
     eventos += _detectar_velocidade_atipica(df, vel_referencia_ms, tamanho_seg_km)
 
     eventos.sort(key=lambda e: (e.km_inicio, e.severidade.value))
@@ -309,6 +316,69 @@ def _detectar_descontinuidades(df: pd.DataFrame,
         seg_ant = seg
         km_ant  = km
         km += tamanho_seg_km
+    return eventos
+
+
+def _detectar_azimute_irregular(df: pd.DataFrame) -> list:
+    """
+    Detecta oscilacao brusca de azimute em deslocamentos muito curtos.
+
+    A regra reaproveita a mesma ideia do diagnostico de telemetria GPS:
+    se dois passos consecutivos somam pouca distancia, mas a direcao muda
+    muitos graus, o ponto intermediario pode indicar jitter/buffer irregular
+    no GPS ou multipath.
+    """
+    if len(df) < 3:
+        return []
+
+    eventos = []
+    geod = Geod(ellps="WGS84")
+    pontos = df[["lat", "lon"]].to_numpy()
+    segmentos = []
+
+    for index, (first, second) in enumerate(zip(pontos, pontos[1:])):
+        azimuth, _, distance = geod.inv(first[1], first[0], second[1], second[0])
+        if distance >= AZIMUTE_PASSO_MIN_M:
+            segmentos.append((azimuth % 360, distance, index))
+
+    ultimo_evento_ts = None
+    for previous, current in zip(segmentos, segmentos[1:]):
+        delta = abs((current[0] - previous[0] + 180) % 360 - 180)
+        distance = previous[1] + current[1]
+        if distance > AZIMUTE_DIST_MAX_M or delta + 0.001 < AZIMUTE_MIN_GRAUS:
+            continue
+
+        sample_index = previous[2] + 1
+        row = df.iloc[sample_index]
+        timestamp = row["timestamp"]
+        if ultimo_evento_ts is not None:
+            dt = (timestamp - ultimo_evento_ts).total_seconds()
+            if dt < AZIMUTE_INTERVALO_S:
+                continue
+        ultimo_evento_ts = timestamp
+
+        km = float(row["km"])
+        sev = Severidade.ALTA if delta >= 90 else Severidade.MODERADA
+        eventos.append(EventoDiagnostico(
+            evento     = EventoCamera.AZIMUTE_IRREGULAR,
+            severidade = sev,
+            km_inicio  = round(max(km - 0.02, 0), 2),
+            km_fim     = round(km + 0.02, 2),
+            descricao  = (
+                f"Mudanca brusca de azimute de {delta:.0f} graus "
+                f"com deslocamento de apenas {distance:.2f}m"
+            ),
+            metrica    = (
+                f"azimute anterior = {previous[0]:.1f} graus | "
+                f"azimute atual = {current[0]:.1f} graus | "
+                f"distancia combinada = {distance:.2f}m"
+            ),
+            acao       = (
+                "Revisar a telemetria neste trecho. Pode haver jitter no GPS, "
+                "multipath, ou irregularidade no buffer GPMF da GoPro."
+            ),
+        ))
+
     return eventos
 
 

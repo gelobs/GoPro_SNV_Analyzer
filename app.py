@@ -43,6 +43,7 @@ def no_cache(response):
 # Fila de log para streaming SSE
 _log_queue: queue.Queue = queue.Queue()
 _processo_atual: dict = {"proc": None, "rodando": False}
+_cut_jobs: dict = {}
 
 
 # ── Mapa firmware GoPro → nome do modelo ─────────────────────────────────────
@@ -408,18 +409,56 @@ def cancelar():
     return jsonify({"status": "cancelado"})
 
 
+@app.route("/api/escolher_pasta_corte", methods=["POST"])
+def escolher_pasta_corte():
+    """Abre o seletor de pasta local para definir a saida dos videos cortados."""
+    pasta_inicial_raw = (request.json or {}).get("pasta", "output/cortes")
+    pasta_inicial = Path(pasta_inicial_raw)
+    if not pasta_inicial.is_absolute():
+        pasta_inicial = BASE_DIR / pasta_inicial
+
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        selected = filedialog.askdirectory(
+            title="Escolha a pasta de saida dos videos cortados",
+            initialdir=str(pasta_inicial if pasta_inicial.exists() else BASE_DIR),
+            mustexist=False,
+        )
+        root.destroy()
+    except Exception as exc:
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+    if not selected:
+        return jsonify({"success": False, "message": "Selecao cancelada."}), 200
+
+    return jsonify({"success": True, "path": selected})
+
+
 @app.route("/api/cortar_video", methods=["POST"])
 def cortar_video_api():
-    """Corta um video enviado pela aba Corte de Video."""
+    """Inicia o corte de um video enviado pela aba Corte de Video."""
     video = request.files.get("video")
+    source_path_raw = request.form.get("source_path", "").strip()
     output_dir_raw = request.form.get("output_dir", "output/cortes").strip()
     start_time = request.form.get("start_time", "").strip()
     end_time = request.form.get("end_time", "").strip()
 
-    if not video or not video.filename:
+    if not source_path_raw and (not video or not video.filename):
         return jsonify({"success": False, "message": "Selecione um video."}), 400
 
-    filename = secure_filename(video.filename)
+    if source_path_raw:
+        source_path = Path(source_path_raw)
+        if not source_path.exists() or not source_path.is_file():
+            return jsonify({"success": False, "message": f"Video nao encontrado: {source_path}"}), 400
+        filename = secure_filename(source_path.name)
+    else:
+        filename = secure_filename(video.filename)
+
     if not filename.lower().endswith(".mp4"):
         return jsonify({"success": False, "message": "Selecione um arquivo .mp4."}), 400
 
@@ -428,34 +467,105 @@ def cortar_video_api():
         output_dir = BASE_DIR / output_dir
 
     input_path = CUT_UPLOAD_DIR / f"{uuid.uuid4().hex}_{filename}"
-    output_path = output_dir / f"{Path(filename).stem}_cortado_{uuid.uuid4().hex[:8]}.mp4"
+    output_path = output_dir / f"{Path(filename).stem}_corte_{uuid.uuid4().hex[:8]}.mp4"
+    job_id = uuid.uuid4().hex
 
-    try:
+    if source_path_raw:
+        input_path = source_path
+    else:
         video.save(input_path)
 
-        from backend.ffmpeg_service import cut_video
+    _cut_jobs[job_id] = {
+        "done": False,
+        "success": None,
+        "message": "Corte na fila.",
+        "output_path": None,
+        "output_paths": [],
+        "progress": 5,
+        "step": "Preparando arquivo.",
+        "logs": [],
+        "delete_input": not bool(source_path_raw),
+    }
 
-        logs = []
-        ok, details = cut_video(
+    thread = threading.Thread(
+        target=_executar_corte_video,
+        args=(job_id, input_path, output_path, start_time, end_time),
+        daemon=True,
+    )
+    thread.start()
+    return jsonify({"success": True, "job_id": job_id})
+
+
+@app.route("/api/cortar_video_status/<job_id>")
+def cortar_video_status(job_id):
+    job = _cut_jobs.get(job_id)
+    if not job:
+        return jsonify({"success": False, "message": "Corte nao encontrado."}), 404
+
+    return jsonify(job)
+
+
+def _executar_corte_video(
+    job_id: str,
+    input_path: Path,
+    output_path: Path,
+    start_time: str,
+    end_time: str,
+) -> None:
+    from backend.ffmpeg_cut_service import split_video_on_cut
+
+    def log_step(message: str) -> None:
+        job = _cut_jobs[job_id]
+        job["logs"].append(message)
+        job["step"] = message
+        job["progress"] = max(int(job["progress"]), _cut_progress_from_message(message))
+
+    try:
+        ok, details, output_paths = split_video_on_cut(
             input_path=str(input_path),
             output_path=str(output_path),
             start_time=start_time,
             end_time=end_time,
-            log=logs.append,
+            log=log_step,
         )
-        return jsonify(
-            {
-                "success": ok,
-                "message": details,
-                "output_path": str(output_path) if ok else None,
-                "logs": logs,
-            }
-        ), 200 if ok else 400
+        job = _cut_jobs[job_id]
+        job["done"] = True
+        job["success"] = ok
+        job["message"] = details
+        job["output_path"] = output_paths[0] if ok and output_paths else None
+        job["output_paths"] = output_paths if ok else []
+        job["progress"] = 100 if ok else int(job["progress"])
+        job["step"] = "Corte finalizado." if ok else "Falha no corte."
+    except Exception as exc:
+        job = _cut_jobs[job_id]
+        job["done"] = True
+        job["success"] = False
+        job["message"] = str(exc)
+        job["step"] = "Falha no corte."
     finally:
-        try:
-            input_path.unlink(missing_ok=True)
-        except PermissionError:
-            pass
+        if _cut_jobs[job_id].get("delete_input", True):
+            try:
+                input_path.unlink(missing_ok=True)
+            except PermissionError:
+                pass
+
+
+def _cut_progress_from_message(message: str) -> int:
+    checks = [
+        ("Validando tempos", 10),
+        ("Verificando arquivo", 20),
+        ("Verificando espaco", 30),
+        ("Inspecionando video", 45),
+        ("Cortando segmento", 70),
+        ("Juntando segmentos", 88),
+        ("Limpando arquivos", 96),
+        ("Corte finalizado", 100),
+    ]
+    for marker, progress in checks:
+        if marker in message:
+            return progress
+
+    return 5
 
 
 @app.route("/api/log_stream")
@@ -567,13 +677,20 @@ def _executar_pipeline(params: dict):
         script_path = BASE_DIR / "_validar_temp.py"
         script_path.write_text(script, encoding="utf-8")
 
+        env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["PYTHONUTF8"] = "1"
+
         proc = subprocess.Popen(
             [sys.executable, str(script_path)],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             bufsize=1,
             cwd=str(BASE_DIR),
+            env=env,
         )
         _processo_atual["proc"] = proc
 

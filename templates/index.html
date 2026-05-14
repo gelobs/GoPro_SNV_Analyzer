@@ -144,6 +144,59 @@ select option{background:var(--surface2)}
 .tfield input{padding:4px 6px;font-size:11px;text-align:right}
 .abrow{display:flex;gap:6px;padding:0 16px 12px}
 .abrow .btn{font-size:10px;padding:5px 0}
+.side-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.side-tab {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text2);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 7px 6px;
+  text-align: center;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.side-tab:hover {
+  background: var(--surface3);
+  color: var(--text);
+}
+.side-tab.active {
+  border-color: var(--primary);
+  color: var(--primary2);
+}
+.side-mode {
+  display: none;
+}
+.side-mode.active {
+  display: block;
+}
+.cut-unavailable {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text2);
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 10px;
+}
+.cut-file-name {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  overflow: hidden;
+  padding: 6px 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* MAIN */
 main{
@@ -329,6 +382,11 @@ footer .fhi{color:var(--text2)}
 .cut-grid .wide {
   grid-column: 1 / -1;
 }
+aside .cut-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .cut-actions {
   display: flex;
   gap: 8px;
@@ -354,6 +412,45 @@ footer .fhi{color:var(--text2)}
 }
 .cut-status.loading {
   color: var(--warning);
+}
+.cut-progress {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  height: 10px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+.cut-progress-bar {
+  background: var(--primary);
+  height: 100%;
+  transition: width .25s ease, background .25s ease;
+  width: 0%;
+}
+.cut-progress-bar.ok {
+  background: var(--success);
+}
+.cut-progress-bar.erro {
+  background: var(--danger);
+}
+.cut-step {
+  color: var(--text3);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.5;
+  margin-top: 8px;
+}
+.cut-output-row {
+  display: flex;
+  gap: 6px;
+}
+.cut-output-row input {
+  flex: 1;
+}
+.cut-output-row .btn {
+  flex: none;
+  padding: 6px 12px;
+  white-space: nowrap;
 }
 
 /* TOOLTIP */
@@ -407,7 +504,12 @@ footer .fhi{color:var(--text2)}
 <aside>
   <div class="ssec">
     <div class="stitle">Processar</div>
+    <div class="side-tabs">
+      <button class="side-tab active" type="button" onclick="swSideMode('processamento',this)">Processamento</button>
+      <button class="side-tab" type="button" onclick="swSideMode('corte',this)">Corte de Video</button>
+    </div>
 
+    <div id="side-processamento" class="side-mode active">
     <div class="field">
       <label data-tip="Shapefile do SNV (DNIT)\nBusca recursiva em todo o projeto">SNV — Sistema Nacional de Viação</label>
       <select id="selSnv" onchange="onSnvChange()">
@@ -444,19 +546,58 @@ footer .fhi{color:var(--text2)}
         <span class="velsub" id="velsub">mediana calculada</span>
       </div>
     </div>
+    </div>
+
+    <div id="side-corte" class="side-mode">
+      <div class="cut-unavailable" id="cutUnavailable">
+        Processe um vídeo na aba Processamento primeiro.
+      </div>
+      <div id="cutControls" style="display:none">
+      <div class="field">
+        <label>Video de entrada</label>
+        <div class="cut-file-name" id="cutInheritedFileName">Nenhum video selecionado</div>
+        <input type="file" id="cutVideoFile" accept="video/mp4,.mp4" style="display:none">
+        <input type="hidden" id="cutVideoPath">
+        <div class="cut-step" id="cutLinkedVideo">Nenhum video herdado do processamento.</div>
+      </div>
+      <div class="field">
+        <label>Inicio do trecho removido (MM:SS)</label>
+        <input type="text" id="cutStart" value="00:10">
+      </div>
+      <div class="field">
+        <label>Fim do trecho removido (MM:SS)</label>
+        <input type="text" id="cutEnd" value="00:20">
+      </div>
+      <div class="field">
+        <label>Pasta de saida</label>
+        <div class="cut-output-row">
+          <input type="text" id="cutOutputDir" value="output\cortes">
+          <button class="btn btn-n" type="button" onclick="escolherPastaCorte()">Escolher...</button>
+        </div>
+      </div>
+      <div class="cut-actions">
+        <button class="btn btn-p" id="cutBtn" onclick="cortarVideo()">Cortar</button>
+      </div>
+      <span class="cut-status" id="cutStatus">Selecione um MP4, informe o trecho a remover e a pasta de saida.</span>
+      <div class="cut-progress">
+        <div class="cut-progress-bar" id="cutProgressBar"></div>
+      </div>
+      <div class="cut-step" id="cutStep">Aguardando corte.</div>
+      </div>
+    </div>
   </div>
 
-  <div class="ssec">
+  <div class="ssec side-processamento-extra">
     <div class="stitle">Câmera GoPro</div>
     <div class="ibox" id="infoGopro"><span class="iempty">Selecione um vídeo</span></div>
   </div>
 
-  <div class="ssec">
+  <div class="ssec side-processamento-extra">
     <div class="stitle">SNV Selecionado</div>
     <div class="ibox" id="infoSnv"><span class="iempty">Selecione um shapefile</span></div>
   </div>
 
-  <div class="ssec">
+  <div class="ssec side-processamento-extra">
     <div class="brow">
       <button class="btn btn-p" id="btnP" onclick="processar()" disabled>Processar</button>
       <button class="btn btn-d"  id="btnC" onclick="cancelar()" style="display:none">Cancelar</button>
@@ -464,12 +605,12 @@ footer .fhi{color:var(--text2)}
     </div>
   </div>
 
-  <div class="advtoggle" id="advT" onclick="toggleAdv()">
+  <div class="advtoggle side-processamento-extra" id="advT" onclick="toggleAdv()">
     <span class="advicon">▶</span>
     <span>Configurações Avançadas</span>
   </div>
 
-  <div class="advbody" id="advB">
+  <div class="advbody side-processamento-extra" id="advB">
     <div class="ssec" style="padding-top:10px">
 
       <div class="tgroup">
@@ -523,7 +664,6 @@ footer .fhi{color:var(--text2)}
     <div class="tab" onclick="swTab('cam',this)">Câmera</div>
     <div class="tab" onclick="swTab('tab',this)">Tabela Detalhada</div>
     <div class="tab" onclick="swTab('mapa',this)">Mapa</div>
-    <div class="tab" onclick="swTab('corte',this)">Corte de Video</div>
   </div>
   <div class="mcontent">
     <div id="p-log" class="tpanel active">
@@ -537,35 +677,6 @@ footer .fhi{color:var(--text2)}
     <div id="p-cam"  class="tpanel"><div id="d-cam" ><div class="empty"><div class="emicon">◈</div><div class="emtxt">Diagnóstico de câmera e gravação.</div></div></div></div>
     <div id="p-tab"  class="tpanel"><div id="d-tab" ><div class="empty"><div class="emicon">◈</div><div class="emtxt">Tabela detalhada por segmento.</div></div></div></div>
     <div id="p-mapa" class="tpanel"><div id="d-mapa"><div class="empty"><div class="emicon">◈</div><div class="emtxt">Mapa será exibido após o processamento.</div></div></div></div>
-    <div id="p-corte" class="tpanel">
-      <div class="cut-wrap">
-        <div class="ccard">
-          <div class="ctitle">Corte de Video</div>
-          <div class="cut-grid">
-            <div class="field wide">
-              <label>Video de entrada</label>
-              <input type="file" id="cutVideoFile" accept="video/mp4,.mp4">
-            </div>
-            <div class="field">
-              <label>Inicio (MM:SS)</label>
-              <input type="text" id="cutStart" value="00:00">
-            </div>
-            <div class="field">
-              <label>Fim (MM:SS)</label>
-              <input type="text" id="cutEnd" value="00:10">
-            </div>
-            <div class="field wide">
-              <label>Pasta de saida</label>
-              <input type="text" id="cutOutputDir" value="output\cortes">
-            </div>
-          </div>
-          <div class="cut-actions">
-            <button class="btn btn-p" id="cutBtn" onclick="cortarVideo()">Cortar</button>
-            <span class="cut-status" id="cutStatus">Selecione um MP4, informe o intervalo e a pasta de saida.</span>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </main>
 
@@ -655,6 +766,7 @@ async function onMp4Change() {
   const sel = document.getElementById("selMp4");
   const mp4 = sel.value;
   const mp4Path = sel.options[sel.selectedIndex]?.dataset?.path || "";
+  syncCutVideoFromProcessing(mp4, mp4Path);
   if (!mp4) {
     document.getElementById("infoGopro").innerHTML = '<span class="iempty">Selecione um vídeo</span>';
     document.getElementById("velnum").textContent = "—";
@@ -678,6 +790,29 @@ async function onMp4Change() {
     }
   } catch(e) { console.error(e); }
   checkReady();
+}
+
+function syncCutVideoFromProcessing(mp4, mp4Path) {
+  const cutPath = document.getElementById("cutVideoPath");
+  const linked = document.getElementById("cutLinkedVideo");
+  const status = document.getElementById("cutStatus");
+  const controls = document.getElementById("cutControls");
+  const unavailable = document.getElementById("cutUnavailable");
+  const inheritedName = document.getElementById("cutInheritedFileName");
+  if (!cutPath || !linked) return;
+
+  cutPath.value = mp4Path || "";
+  if (controls) controls.style.display = mp4Path ? "" : "none";
+  if (unavailable) unavailable.style.display = mp4Path ? "none" : "";
+  if (inheritedName) inheritedName.textContent = mp4 || "Nenhum video selecionado";
+  linked.textContent = mp4Path
+    ? "Usando video do processamento: " + shortP(mp4Path)
+    : "Nenhum video herdado do processamento.";
+
+  if (mp4Path && status && !document.getElementById("cutVideoFile").files.length) {
+    status.className = "cut-status";
+    status.textContent = "Video pronto para corte: " + mp4;
+  }
 }
 
 function checkReady() {
@@ -718,46 +853,131 @@ async function cancelar() {
   await fetch("/api/cancelar",{method:"POST"});
 }
 
+async function escolherPastaCorte() {
+  const input = document.getElementById("cutOutputDir");
+  const status = document.getElementById("cutStatus");
+  const step = document.getElementById("cutStep");
+
+  status.className = "cut-status loading";
+  status.textContent = "Abrindo seletor de pasta...";
+  step.textContent = "Escolha onde salvar os videos finais.";
+
+  try {
+    const r = await fetch("/api/escolher_pasta_corte", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({pasta: input.value.trim()}),
+    });
+    const d = await r.json();
+
+    if (d.success && d.path) {
+      input.value = d.path;
+      status.className = "cut-status ok";
+      status.textContent = "Pasta selecionada: " + d.path;
+      step.textContent = "Pasta de saida atualizada.";
+    } else {
+      status.className = "cut-status";
+      status.textContent = d.message || "Selecao cancelada.";
+      step.textContent = "Aguardando corte.";
+    }
+  } catch(e) {
+    status.className = "cut-status erro";
+    status.textContent = e.message;
+    step.textContent = "Nao foi possivel abrir o seletor de pasta.";
+  }
+}
+
 async function cortarVideo() {
   const fileInput = document.getElementById("cutVideoFile");
   const status = document.getElementById("cutStatus");
   const btn = document.getElementById("cutBtn");
+  const progressBar = document.getElementById("cutProgressBar");
+  const step = document.getElementById("cutStep");
   const file = fileInput.files[0];
+  const sourcePath = document.getElementById("cutVideoPath").value.trim();
 
-  if (!file) {
+  if (!file && !sourcePath) {
     status.className = "cut-status erro";
     status.textContent = "Selecione um arquivo MP4.";
+    progressBar.className = "cut-progress-bar erro";
+    progressBar.style.width = "0%";
+    step.textContent = "Nenhum video selecionado.";
     return;
   }
 
   const form = new FormData();
-  form.append("video", file);
+  if (file) form.append("video", file);
+  if (sourcePath) form.append("source_path", sourcePath);
   form.append("start_time", document.getElementById("cutStart").value.trim());
   form.append("end_time", document.getElementById("cutEnd").value.trim());
   form.append("output_dir", document.getElementById("cutOutputDir").value.trim());
 
   btn.disabled = true;
   status.className = "cut-status loading";
-  status.textContent = "Cortando video com FFmpeg...";
+  status.textContent = "Iniciando corte com FFmpeg...";
+  progressBar.className = "cut-progress-bar";
+  progressBar.style.width = "5%";
+  step.textContent = "Enviando video para o backend.";
 
   try {
     const r = await fetch("/api/cortar_video", { method:"POST", body:form });
     const d = await r.json();
 
-    if (!r.ok || !d.success) {
+    if (!r.ok || !d.success || !d.job_id) {
       status.className = "cut-status erro";
       status.textContent = d.message || "Falha ao cortar o video.";
+      progressBar.className = "cut-progress-bar erro";
       return;
     }
 
-    status.className = "cut-status ok";
-    status.textContent = d.message || ("Arquivo gerado em: " + d.output_path);
+    await acompanharCorteVideo(d.job_id);
   } catch(e) {
     status.className = "cut-status erro";
     status.textContent = e.message;
+    progressBar.className = "cut-progress-bar erro";
   } finally {
     btn.disabled = false;
   }
+}
+
+async function acompanharCorteVideo(jobId) {
+  const status = document.getElementById("cutStatus");
+  const progressBar = document.getElementById("cutProgressBar");
+  const step = document.getElementById("cutStep");
+
+  while (true) {
+    const r = await fetch("/api/cortar_video_status/" + jobId);
+    const d = await r.json();
+    const progress = Math.max(0, Math.min(100, d.progress || 0));
+
+    progressBar.style.width = progress + "%";
+    step.textContent = d.step || "Processando corte.";
+
+    if (d.done) {
+      if (d.success) {
+        progressBar.className = "cut-progress-bar ok";
+        progressBar.style.width = "100%";
+        status.className = "cut-status ok";
+        const paths = d.output_paths || [];
+        status.textContent = paths.length
+          ? "Arquivos gerados:\n" + paths.join("\n")
+          : (d.message || ("Arquivo gerado em: " + d.output_path));
+      } else {
+        progressBar.className = "cut-progress-bar erro";
+        status.className = "cut-status erro";
+        status.textContent = d.message || "Falha ao cortar o video.";
+      }
+      return;
+    }
+
+    status.className = "cut-status loading";
+    status.textContent = "Cortando video com FFmpeg... " + progress + "%";
+    await sleep(700);
+  }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function finalizar() {
@@ -951,6 +1171,15 @@ function swTab(name, btn) {
   document.getElementById("p-"+name).classList.add("active");
   if(btn) btn.classList.add("active");
   if(name === "mapa") onTabMapa();
+}
+function swSideMode(name, btn) {
+  document.querySelectorAll(".side-mode").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".side-tab").forEach(t=>t.classList.remove("active"));
+  document.getElementById("side-"+name).classList.add("active");
+  if(btn) btn.classList.add("active");
+  document.querySelectorAll(".side-processamento-extra").forEach(el => {
+    el.style.display = name === "processamento" ? "" : "none";
+  });
 }
 function spin(id, d) {
   const el=document.getElementById(id);
