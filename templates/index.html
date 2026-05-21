@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Video GoPro Analyzer x DNIT SNV</title>
+<title>Vídeo GoPro Analyzer x DNIT SNV</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -368,6 +368,24 @@ footer .fhi{color:var(--text2)}
 }
 .mstat-val { font-size: 18px; font-weight: 600; }
 .mstat-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+.map-event-nav {
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(13,17,23,.92); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.35);
+}
+.map-event-btn, .map-event-main {
+  border: 1px solid var(--border); background: var(--surface2); color: var(--text);
+  font-family: var(--mono); font-size: 11px; border-radius: 4px; cursor: pointer;
+}
+.map-event-btn { width: 26px; height: 26px; font-size: 16px; line-height: 1; }
+.map-event-main { height: 26px; padding: 0 9px; }
+.map-event-btn:hover, .map-event-main:hover { border-color: var(--primary); color: #fff; }
+.map-event-summary {
+  margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border);
+  font-family: var(--mono); font-size: 10px; color: var(--text2);
+}
+.map-event-summary div { display: flex; justify-content: space-between; gap: 12px; line-height: 1.55; }
+.map-event-summary strong { color: var(--text); font-weight: 600; }
 
 /* CORTE DE VIDEO */
 .cut-wrap {
@@ -452,6 +470,41 @@ aside .cut-grid {
   padding: 6px 12px;
   white-space: nowrap;
 }
+.cut-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(1,4,9,.68);
+  padding: 20px;
+}
+.cut-confirm-box {
+  width: min(420px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  padding: 18px;
+}
+.cut-confirm-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.cut-confirm-text {
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+.cut-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
 
 /* TOOLTIP */
 .leaflet-tooltip-dark {
@@ -491,7 +544,7 @@ aside .cut-grid {
     </svg>
   </div>
   <div class="htitle">
-    <h1>Video GoPro Analyzer X DNIT SNV</h1>
+    <h1>Vídeo GoPro Analyzer X DNIT SNV</h1>
     <span>Sistema de Validação de Trajetória GPS × SNV/DNIT</span>
   </div>
   <div class="hspace"></div>
@@ -506,7 +559,7 @@ aside .cut-grid {
     <div class="stitle">Processar</div>
     <div class="side-tabs">
       <button class="side-tab active" type="button" onclick="swSideMode('processamento',this)">Processamento</button>
-      <button class="side-tab" type="button" onclick="swSideMode('corte',this)">Corte de Video</button>
+      <button class="side-tab" type="button" onclick="swSideMode('corte',this)">Corte de Vídeo</button>
     </div>
 
     <div id="side-processamento" class="side-mode active">
@@ -554,22 +607,22 @@ aside .cut-grid {
       </div>
       <div id="cutControls" style="display:none">
       <div class="field">
-        <label>Video de entrada</label>
-        <div class="cut-file-name" id="cutInheritedFileName">Nenhum video selecionado</div>
+        <label>Vídeo de entrada</label>
+        <div class="cut-file-name" id="cutInheritedFileName">Nenhum vídeo selecionado</div>
         <input type="file" id="cutVideoFile" accept="video/mp4,.mp4" style="display:none">
         <input type="hidden" id="cutVideoPath">
-        <div class="cut-step" id="cutLinkedVideo">Nenhum video herdado do processamento.</div>
+        <div class="cut-step" id="cutLinkedVideo">Nenhum vídeo herdado do processamento.</div>
       </div>
       <div class="field">
         <label>Inicio do trecho removido (MM:SS)</label>
-        <input type="text" id="cutStart" value="00:10">
+        <input type="text" id="cutStart" value="00:00">
       </div>
       <div class="field">
         <label>Fim do trecho removido (MM:SS)</label>
-        <input type="text" id="cutEnd" value="00:20">
+        <input type="text" id="cutEnd" value="">
       </div>
       <div class="field">
-        <label>Pasta de saida</label>
+        <label>Pasta de saída</label>
         <div class="cut-output-row">
           <input type="text" id="cutOutputDir" value="output\cortes">
           <button class="btn btn-n" type="button" onclick="escolherPastaCorte()">Escolher...</button>
@@ -578,7 +631,7 @@ aside .cut-grid {
       <div class="cut-actions">
         <button class="btn btn-p" id="cutBtn" onclick="cortarVideo()">Cortar</button>
       </div>
-      <span class="cut-status" id="cutStatus">Selecione um MP4, informe o trecho a remover e a pasta de saida.</span>
+      <span class="cut-status" id="cutStatus">Selecione um MP4, informe o trecho a remover e a pasta de saída.</span>
       <div class="cut-progress">
         <div class="cut-progress-bar" id="cutProgressBar"></div>
       </div>
@@ -630,6 +683,7 @@ aside .cut-grid {
         <div class="tfield"><label data-tip="Aumento de GPSP indicativo de bateria fraca">ΔGPSP bateria</label><input type="number" id="t_delta_gpsp" value="150"></div>
         <div class="tfield"><label data-tip="Queda relativa de velocidade no fim (0–1)">Queda vel. bateria</label><input type="number" id="t_queda_vel" value="0.40" step="0.05"></div>
         <div class="tfield"><label data-tip="Velocidade mínima ao fim = encerramento abrupto (m/s)">Vel. encerramento</label><input type="number" id="t_vel_enc" value="5.0"></div>
+        <div class="tfield"><label data-tip="Ignora encerramento abrupto nos ultimos X km da rota">Tol. fim rota (km)</label><input type="number" id="t_tol_fim" value="0.05" step="0.01"></div>
         <div class="tfield"><label data-tip="Salto máximo entre pontos adjacentes (m)">Salto máx. pontos (m)</label><input type="number" id="t_salto_m" value="25.0"></div>
         <div class="tfield"><label data-tip="Vel. média mínima por segmento (m/s)">Vel. mín. segmento</label><input type="number" id="t_vel_min" value="3.0"></div>
         <div class="tfield"><label data-tip="Vel. média máxima por segmento (m/s)">Vel. máx. segmento</label><input type="number" id="t_vel_max" value="55.5"></div>
@@ -682,7 +736,7 @@ aside .cut-grid {
 
 <footer>
   <span>DNIT SNV</span><span class="fsep">|</span>
-  <span class="fhi">Video GoPro Analyzer</span><span class="fsep">|</span>
+  <span class="fhi">Vídeo GoPro Analyzer</span><span class="fsep">|</span>
   <span>v1.0.0</span><span class="fsep">|</span>
   <span>Python 3.13 + Flask + GeoPandas</span><span class="fsep">|</span>
   <span id="ftxt">—</span>
@@ -690,9 +744,20 @@ aside .cut-grid {
 
 <div id="tip"></div>
 
+<div class="cut-confirm-backdrop" id="cutConfirmModal">
+  <div class="cut-confirm-box">
+    <div class="cut-confirm-title">Confirmar corte de vídeo</div>
+    <div class="cut-confirm-text" id="cutConfirmText"></div>
+    <div class="cut-confirm-actions">
+      <button class="btn btn-n" type="button" id="cutConfirmCancel">Cancelar</button>
+      <button class="btn btn-p" type="button" id="cutConfirmOk">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Estado global ─────────────────────────────────────────────
-const S = { rodando:false, velMediana:null, avancado:{}, defaults:{}, resultado:null };
+const S = { rodando:false, velMediana:null, avancado:{}, defaults:{}, resultado:null, temposCorteGps:[] };
 
 // ── Init ──────────────────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", async () => {
@@ -782,6 +847,7 @@ async function onMp4Change() {
     document.getElementById("infoGopro").innerHTML = ir.erro
       ? '<span style="color:var(--danger)">'+esc(ir.erro)+'</span>'
       : infoHtml([["Modelo",ir.modelo||"—"],["Firmware",ir.firmware||"—"],["Duração",ir.duracao_fmt||"—"],["Resolução",ir.resolucao||"—"],["FPS",(ir.fps||"—")+" fps"],["Gravado",ir.criacao?.substring(0,10)||"—"],["Tamanho",(ir.tamanho_mb||"?")+" MB"]]);
+    if (!ir.erro) syncCutVideoFromProcessing(mp4, mp4Path, ir.duracao_s);
     if (vr.velocidade_kmh) {
       S.velMediana = vr.velocidade_kmh;
       document.getElementById("velnum").textContent = vr.velocidade_kmh;
@@ -792,27 +858,189 @@ async function onMp4Change() {
   checkReady();
 }
 
-function syncCutVideoFromProcessing(mp4, mp4Path) {
+function fmtCutTime(totalSeconds) {
+  const total = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+}
+
+function fmtVideoDuration(totalSeconds) {
+  const total = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  if (hours > 0) {
+    return String(hours).padStart(2, "0") + ":" +
+      String(minutes).padStart(2, "0") + ":" +
+      String(seconds).padStart(2, "0");
+  }
+  return String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0");
+}
+
+function timestampMs(valor) {
+  const parsed = Date.parse(valor);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function primeiroTimestampPontos(gj) {
+  const tempos = (gj.features || [])
+    .map(f => timestampMs(f.properties?.timestamp))
+    .filter(t => t !== null);
+  return tempos.length ? Math.min(...tempos) : null;
+}
+
+function tempoVideoDoPonto(timestamp, primeiroTimestamp) {
+  const atual = timestampMs(timestamp);
+  if (atual === null || primeiroTimestamp === null) return "-";
+  return fmtVideoDuration((atual - primeiroTimestamp) / 1000);
+}
+
+function segundosVideoDoPonto(timestamp, primeiroTimestamp) {
+  const atual = timestampMs(timestamp);
+  if (atual === null || primeiroTimestamp === null) return null;
+  return Math.max(0, (atual - primeiroTimestamp) / 1000);
+}
+
+function parseCutTime(valor) {
+  const match = String(valor || "").trim().match(/^(\d+):(\d{2})$/);
+  if (!match) return null;
+  const seconds = Number(match[2]);
+  if (seconds >= 60) return null;
+  return Number(match[1]) * 60 + seconds;
+}
+
+function usarTempoGpsParaCorte(totalSeconds, botao=null) {
+  const seconds = Number(totalSeconds);
+  if (!Number.isFinite(seconds) || seconds < 0) return;
+
+  if (botao) {
+    botao.classList.remove("btn-p");
+    botao.classList.add("btn-s");
+    botao.textContent = "Selecionado";
+    botao.disabled = true;
+  }
+
+  S.temposCorteGps.push(seconds);
+  if (S.temposCorteGps.length > 2) {
+    S.temposCorteGps = S.temposCorteGps.slice(-2);
+  }
+
+  const status = document.getElementById("cutStatus");
+  const step = document.getElementById("cutStep");
+  const startInput = document.getElementById("cutStart");
+  const endInput = document.getElementById("cutEnd");
+
+  if (S.temposCorteGps.length === 1) {
+    if (status) {
+      status.className = "cut-status";
+      status.textContent = "Primeiro ponto de corte selecionado: " + fmtCutTime(seconds);
+    }
+    if (step) step.textContent = "Selecione outro ponto GPS e clique em Cortar vídeo.";
+    return;
+  }
+
+  const inicio = Math.min(...S.temposCorteGps);
+  const fim = Math.max(...S.temposCorteGps);
+  if (startInput) startInput.value = fmtCutTime(inicio);
+  if (endInput) endInput.value = fmtCutTime(fim);
+  if (status) {
+    status.className = "cut-status ok";
+    status.textContent = "Trecho preenchido pelos pontos GPS: " + fmtCutTime(inicio) + " até " + fmtCutTime(fim);
+  }
+  if (step) step.textContent = "Confira os tempos e clique em Cortar para executar.";
+}
+
+function confirmarCorteVideo(duracaoCorte, inicio, fim) {
+  const modal = document.getElementById("cutConfirmModal");
+  const text = document.getElementById("cutConfirmText");
+  const ok = document.getElementById("cutConfirmOk");
+  const cancel = document.getElementById("cutConfirmCancel");
+  if (!modal || !text || !ok || !cancel) return Promise.resolve(true);
+
+  text.innerHTML = `
+    O trecho entre <strong>${esc(inicio)}</strong> e <strong>${esc(fim)}</strong> será removido.<br>
+    Tempo total cortado: <strong>${fmtVideoDuration(duracaoCorte)}</strong>.`;
+  modal.style.display = "flex";
+
+  return new Promise(resolve => {
+    const fechar = resposta => {
+      modal.style.display = "none";
+      ok.onclick = null;
+      cancel.onclick = null;
+      modal.onclick = null;
+      resolve(resposta);
+    };
+    ok.onclick = () => fechar(true);
+    cancel.onclick = () => fechar(false);
+    modal.onclick = event => {
+      if (event.target === modal) fechar(false);
+    };
+  });
+}
+
+function duracaoVideoCorteSelecionado() {
+  const endInput = document.getElementById("cutEnd");
+  const duration = Number(endInput?.dataset?.videoDuration || 0);
+  return Number.isFinite(duration) && duration > 0 ? duration : null;
+}
+
+function syncCutVideoFromProcessing(mp4, mp4Path, durationSeconds=null) {
   const cutPath = document.getElementById("cutVideoPath");
   const linked = document.getElementById("cutLinkedVideo");
   const status = document.getElementById("cutStatus");
   const controls = document.getElementById("cutControls");
   const unavailable = document.getElementById("cutUnavailable");
   const inheritedName = document.getElementById("cutInheritedFileName");
+  const startInput = document.getElementById("cutStart");
+  const endInput = document.getElementById("cutEnd");
   if (!cutPath || !linked) return;
 
   cutPath.value = mp4Path || "";
   if (controls) controls.style.display = mp4Path ? "" : "none";
   if (unavailable) unavailable.style.display = mp4Path ? "none" : "";
-  if (inheritedName) inheritedName.textContent = mp4 || "Nenhum video selecionado";
+  if (inheritedName) inheritedName.textContent = mp4 || "Nenhum vídeo selecionado";
   linked.textContent = mp4Path
-    ? "Usando video do processamento: " + shortP(mp4Path)
-    : "Nenhum video herdado do processamento.";
+    ? "Usando vídeo do processamento: " + shortP(mp4Path)
+    : "Nenhum vídeo herdado do processamento.";
+
+  if (mp4Path && startInput) startInput.value = "00:00";
+  if (mp4Path && endInput && durationSeconds !== null) {
+    endInput.value = fmtCutTime(durationSeconds);
+    endInput.dataset.videoDuration = String(durationSeconds);
+  } else if (!mp4Path && endInput) {
+    endInput.value = "";
+    endInput.dataset.videoDuration = "";
+  }
 
   if (mp4Path && status && !document.getElementById("cutVideoFile").files.length) {
     status.className = "cut-status";
-    status.textContent = "Video pronto para corte: " + mp4;
+    status.textContent = "Vídeo pronto para corte: " + mp4;
   }
+}
+
+function resetarEstadoCorteVideo() {
+  const status = document.getElementById("cutStatus");
+  const progressBar = document.getElementById("cutProgressBar");
+  const step = document.getElementById("cutStep");
+  const btn = document.getElementById("cutBtn");
+  const fileInput = document.getElementById("cutVideoFile");
+  const mp4 = document.getElementById("selMp4")?.value || "";
+
+  if (progressBar) {
+    progressBar.className = "cut-progress-bar";
+    progressBar.style.width = "0%";
+  }
+  if (btn) btn.disabled = false;
+  if (status) {
+    status.className = "cut-status";
+    status.textContent = mp4
+      ? "Vídeo pronto para corte: " + mp4
+      : "Selecione um MP4, informe o trecho a remover e a pasta de saída.";
+  }
+  if (step) step.textContent = "Aguardando corte.";
+  if (fileInput) fileInput.value = "";
+  S.temposCorteGps = [];
 }
 
 function checkReady() {
@@ -833,6 +1061,7 @@ async function processar() {
     velocidade_kmh: S.velMediana || 80,
     avancado: S.avancado,
   };
+  resetarEstadoCorteVideo();
   S.rodando = true;
   document.getElementById("btnP").style.display = "none";
   document.getElementById("btnC").style.display = "";
@@ -860,7 +1089,7 @@ async function escolherPastaCorte() {
 
   status.className = "cut-status loading";
   status.textContent = "Abrindo seletor de pasta...";
-  step.textContent = "Escolha onde salvar os videos finais.";
+  step.textContent = "Escolha onde salvar os vídeos finais.";
 
   try {
     const r = await fetch("/api/escolher_pasta_corte", {
@@ -874,16 +1103,16 @@ async function escolherPastaCorte() {
       input.value = d.path;
       status.className = "cut-status ok";
       status.textContent = "Pasta selecionada: " + d.path;
-      step.textContent = "Pasta de saida atualizada.";
+      step.textContent = "Pasta de saída atualizada.";
     } else {
       status.className = "cut-status";
-      status.textContent = d.message || "Selecao cancelada.";
+      status.textContent = d.message || "Seleção cancelada.";
       step.textContent = "Aguardando corte.";
     }
   } catch(e) {
     status.className = "cut-status erro";
     status.textContent = e.message;
-    step.textContent = "Nao foi possivel abrir o seletor de pasta.";
+    step.textContent = "Não foi possível abrir o seletor de pasta.";
   }
 }
 
@@ -901,15 +1130,51 @@ async function cortarVideo() {
     status.textContent = "Selecione um arquivo MP4.";
     progressBar.className = "cut-progress-bar erro";
     progressBar.style.width = "0%";
-    step.textContent = "Nenhum video selecionado.";
+    step.textContent = "Nenhum vídeo selecionado.";
+    return;
+  }
+
+  const startTime = document.getElementById("cutStart").value.trim();
+  const endTime = document.getElementById("cutEnd").value.trim();
+  const startSeconds = parseCutTime(startTime);
+  const endSeconds = parseCutTime(endTime);
+  const videoDuration = duracaoVideoCorteSelecionado();
+  if (startSeconds === null || endSeconds === null || (startSeconds === 0 && endSeconds === 0)) {
+    status.className = "cut-status erro";
+    status.textContent = "Informe tempos válidos no formato M:SS.";
+    progressBar.className = "cut-progress-bar erro";
+    progressBar.style.width = "0%";
+    step.textContent = "Tempos de corte inválidos.";
+    return;
+  }
+
+  const corteAteFinal = endSeconds === 0 && startSeconds > 0;
+  const fimEfetivo = corteAteFinal ? videoDuration : endSeconds;
+  if (fimEfetivo === null || fimEfetivo <= startSeconds) {
+    status.className = "cut-status erro";
+    status.textContent = corteAteFinal
+      ? "Não foi possível identificar a duração do vídeo para cortar até o final."
+      : "Informe tempos válidos, com fim maior que começo.";
+    progressBar.className = "cut-progress-bar erro";
+    progressBar.style.width = "0%";
+    step.textContent = "Tempos de corte inválidos.";
+    return;
+  }
+
+  const fimConfirmacao = corteAteFinal ? "fim do vídeo" : endTime;
+  const confirmado = await confirmarCorteVideo(fimEfetivo - startSeconds, startTime, fimConfirmacao);
+  if (!confirmado) {
+    status.className = "cut-status";
+    status.textContent = "Corte cancelado.";
+    step.textContent = "Aguardando corte.";
     return;
   }
 
   const form = new FormData();
   if (file) form.append("video", file);
   if (sourcePath) form.append("source_path", sourcePath);
-  form.append("start_time", document.getElementById("cutStart").value.trim());
-  form.append("end_time", document.getElementById("cutEnd").value.trim());
+  form.append("start_time", startTime);
+  form.append("end_time", endTime);
   form.append("output_dir", document.getElementById("cutOutputDir").value.trim());
 
   btn.disabled = true;
@@ -917,7 +1182,7 @@ async function cortarVideo() {
   status.textContent = "Iniciando corte com FFmpeg...";
   progressBar.className = "cut-progress-bar";
   progressBar.style.width = "5%";
-  step.textContent = "Enviando video para o backend.";
+  step.textContent = "Enviando vídeo para o backend.";
 
   try {
     const r = await fetch("/api/cortar_video", { method:"POST", body:form });
@@ -925,7 +1190,7 @@ async function cortarVideo() {
 
     if (!r.ok || !d.success || !d.job_id) {
       status.className = "cut-status erro";
-      status.textContent = d.message || "Falha ao cortar o video.";
+      status.textContent = d.message || "Falha ao cortar o vídeo.";
       progressBar.className = "cut-progress-bar erro";
       return;
     }
@@ -962,22 +1227,48 @@ async function acompanharCorteVideo(jobId) {
         status.textContent = paths.length
           ? "Arquivos gerados:\n" + paths.join("\n")
           : (d.message || ("Arquivo gerado em: " + d.output_path));
+        limparResultadoProcessamentoAposCorte();
       } else {
         progressBar.className = "cut-progress-bar erro";
         status.className = "cut-status erro";
-        status.textContent = d.message || "Falha ao cortar o video.";
+        status.textContent = d.message || "Falha ao cortar o vídeo.";
       }
       return;
     }
 
     status.className = "cut-status loading";
-    status.textContent = "Cortando video com FFmpeg... " + progress + "%";
+    status.textContent = "Cortando vídeo com FFmpeg... " + progress + "%";
     await sleep(700);
   }
 }
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function painelVazio(texto) {
+  return `<div class="empty"><div class="emicon">◈</div><div class="emtxt">${texto}</div></div>`;
+}
+
+function limparResultadoProcessamentoAposCorte() {
+  S.resultado = null;
+  if (_map) {
+    _map.remove();
+    _map = null;
+  }
+  _layers = { segmentos: null, pontos: null, eventos: null };
+  _eventosMapa = [];
+  _eventoAtual = 0;
+  _eventoNavControl = null;
+
+  document.getElementById("d-dash").innerHTML = painelVazio("Dashboard será exibido após novo processamento.");
+  document.getElementById("d-conf").innerHTML = painelVazio("Conformidade SNV será exibida após novo processamento.");
+  document.getElementById("d-qual").innerHTML = painelVazio("Qualidade GPS será exibida após novo processamento.");
+  document.getElementById("d-cam").innerHTML = painelVazio("Diagnóstico de câmera será exibido após novo processamento.");
+  document.getElementById("d-tab").innerHTML = painelVazio("Tabela detalhada será exibida após novo processamento.");
+  document.getElementById("d-mapa").innerHTML = painelVazio("Mapa será exibido após novo processamento.");
+  document.getElementById("ftxt").textContent = "Resultados limpos após corte";
+  setStatus("idle", "Reprocesse o vídeo");
 }
 
 async function finalizar() {
@@ -1201,6 +1492,7 @@ function aplicarAdv() {
     gap_moderado_s:getN("t_gap_mod"),pontos_sem_variacao:getN("t_pts_var"),
     janela_bateria_n:getN("t_jan_bat"),delta_gpsp_bateria:getN("t_delta_gpsp"),
     queda_vel_bateria:getN("t_queda_vel"),vel_encerramento_ms:getN("t_vel_enc"),
+    encerramento_tol_final_km:getN("t_tol_fim"),
     salto_max_m:getN("t_salto_m"),vel_minima_ms:getN("t_vel_min"),
     vel_maxima_ms:getN("t_vel_max"),gpsp_excelente:getN("t_gpsp_exc"),
     gpsp_bom:getN("t_gpsp_bom"),gpsp_aceitavel:getN("t_gpsp_ace"),
@@ -1213,7 +1505,7 @@ function resetDef() {
   const m={t_gpsp_ruim:"gpsp_ruim",t_max_vel:"max_velocidade",t_max_acel:"max_aceleracao",
     t_gap_crit:"gap_critico_s",t_gap_mod:"gap_moderado_s",t_pts_var:"pontos_sem_variacao",
     t_jan_bat:"janela_bateria_n",t_delta_gpsp:"delta_gpsp_bateria",t_queda_vel:"queda_vel_bateria",
-    t_vel_enc:"vel_encerramento_ms",t_salto_m:"salto_max_m",t_vel_min:"vel_minima_ms",
+    t_vel_enc:"vel_encerramento_ms",t_tol_fim:"encerramento_tol_final_km",t_salto_m:"salto_max_m",t_vel_min:"vel_minima_ms",
     t_vel_max:"vel_maxima_ms",t_gpsp_exc:"gpsp_excelente",t_gpsp_bom:"gpsp_bom",
     t_gpsp_ace:"gpsp_aceitavel",t_raio_exc:"raio_excelente",t_raio_bom:"raio_bom",
     t_raio_ace:"raio_aceitavel",t_raio_deg:"raio_degradado",t_dist_snv:"dist_snv_desatualizado_m"};
@@ -1238,6 +1530,9 @@ function shortP(p) { if(!p)return""; const parts=p.replace(/\\/g,"/").split("/")
 // ── Mapa Leaflet ─────────────────────────────────────────────
 let _map = null;
 let _layers = { segmentos: null, pontos: null, eventos: null };
+let _eventosMapa = [];
+let _eventoAtual = 0;
+let _eventoNavControl = null;
 
 const COR_CONF = {
   "dentro_da_tolerancia":   "#3FB950",
@@ -1329,7 +1624,7 @@ async function renderMapa(d) {
     <!-- Controles de camada -->
     <div class="map-controls">
       <label style="font-family:var(--mono);font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer">
-        <input type="checkbox" id="ckSeg" checked onchange="toggleLayer('segmentos')"> Segmentos GoPro
+        <input type="checkbox" id="ckSeg" onchange="toggleLayer('segmentos')"> Segmentos GoPro
       </label>
       <label style="font-family:var(--mono);font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer">
         <input type="checkbox" id="ckPts" checked onchange="toggleLayer('pontos')"> Pontos GPS
@@ -1346,12 +1641,16 @@ async function renderMapa(d) {
 
   // Inicializa Leaflet
   if (_map) { _map.remove(); _map = null; }
-  _map = L.map("mapLeaflet", { zoomControl: true });
+  _eventosMapa = [];
+  _eventoAtual = 0;
+  _eventoNavControl = null;
+  _map = L.map("mapLeaflet", { zoomControl: true, maxZoom: 40 });
 
   // Tile OpenStreetMap
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap contributors",
-    maxZoom: 19,
+    maxZoom: 40,
+    maxNativeZoom: 19,
   }).addTo(_map);
 
   // Carrega camadas
@@ -1360,9 +1659,14 @@ async function renderMapa(d) {
     carregarCamada("pontos"),
     carregarCamada("eventos_camera"),
   ]);
+  if (_layers["pontos"]) _layers["pontos"].bringToFront();
 
   // Fit nos segmentos
   fitMapa();
+  setTimeout(() => {
+    _map?.invalidateSize();
+    fitMapa();
+  }, 100);
 }
 
 async function carregarCamada(tipo) {
@@ -1402,9 +1706,11 @@ async function carregarCamada(tipo) {
           layer.on("mouseover", () => layer.setStyle({weight:8,opacity:1}));
           layer.on("mouseout",  () => _layers["segmentos"]?.resetStyle(layer));
         }
-      }).addTo(_map);
+      });
+      if (document.getElementById("ckSeg")?.checked) _layers[tipo].addTo(_map);
 
     } else if (tipo === "pontos") {
+      const primeiroTimestamp = primeiroTimestampPontos(gj);
       _layers[tipo] = L.geoJSON(gj, {
         pointToLayer: (f, latlng) => {
           const iq  = f.properties?.iq_sinal || "";
@@ -1419,15 +1725,41 @@ async function carregarCamada(tipo) {
         },
         onEachFeature: (f, layer) => {
           const p = f.properties || {};
+          const duracaoVideo = tempoVideoDoPonto(p.timestamp, primeiroTimestamp);
+          const segundosVideo = segundosVideoDoPonto(p.timestamp, primeiroTimestamp);
+          const km = parseFloat(p.km || 0).toFixed(2);
+          const iq = p.iq_sinal || "—";
+          const dop = p.dop != null ? parseFloat(p.dop).toFixed(2) : "—";
+          const vel = p.vel_kmh != null ? parseFloat(p.vel_kmh).toFixed(0)+" km/h" : "—";
+          const distSnv = p.dist_snv_m != null ? parseFloat(p.dist_snv_m).toFixed(1)+"m" : "—";
           layer.bindTooltip(
             `km ${parseFloat(p.km||0).toFixed(2)} | IQ: ${p.iq_sinal||"—"} | DOP: ${p.dop != null ? parseFloat(p.dop).toFixed(2) : "—"} | ${p.vel_kmh != null ? parseFloat(p.vel_kmh).toFixed(0)+"km/h" : ""}`,
             {sticky:true, className:"leaflet-tooltip-dark"}
           );
+          layer.bindTooltip(
+            `km ${km} | Vídeo: ${duracaoVideo} | IQ: ${iq} | DOP: ${dop} | ${vel}`,
+            {sticky:true, className:"leaflet-tooltip-dark"}
+          );
+          layer.bindPopup(`
+            <div style="font-family:monospace;font-size:12px;min-width:190px">
+              <strong>Ponto GPS</strong><br>
+              Duração no vídeo: <strong>${duracaoVideo}</strong><br>
+              km: ${km}<br>
+              Velocidade: ${vel}<br>
+              IQ GPS: ${iq} | DOP: ${dop}<br>
+              Dist. SNV: ${distSnv}
+              <button class="btn btn-p" type="button" style="margin-top:8px;width:100%;padding:5px 8px;font-size:10px"
+                onclick="usarTempoGpsParaCorte(${segundosVideo ?? "null"}, this)">
+                Cortar vídeo
+              </button>
+            </div>`);
         }
       });
       _layers[tipo].addTo(_map);  // sempre adiciona; toggleLayer controla visibilidade
 
     } else if (tipo === "eventos_camera") {
+      _eventosMapa = [];
+      agruparEventosSobrepostos(gj);
       _layers[tipo] = L.geoJSON(gj, {
         pointToLayer: (f, latlng) => {
           const props = f.properties || {};
@@ -1439,18 +1771,36 @@ async function carregarCamada(tipo) {
           const cor = COR_SEV[sev] || "#6E7681";
           const ico = sev === "crítica" ? "✗" : sev === "alta" ? "⚠" : "!";
           // divIcon com tamanho grande e sombra forte — sempre visível
+          const eventosGrupo = Array.isArray(props.eventos_grupo) && props.eventos_grupo.length ? props.eventos_grupo : [props];
+          const temVeiculoParado = eventosGrupo.some(ev => (ev.evento || "").toLowerCase() === "veiculo_parado");
+          const corIcone = cor;
+          const raioIcone = "50%";
+          const textoIcone = ico;
+          const bordaIcone = temVeiculoParado ? "3px solid #F85149" : "3px solid rgba(255,255,255,0.9)";
+          const sombraIcone = `0 0 0 3px ${cor}55,0 3px 10px rgba(0,0,0,.7)`;
+          const badge = eventosGrupo.length > 1
+            ? `<span style="
+                position:absolute;right:-6px;top:-7px;
+                min-width:18px;height:18px;padding:0 4px;border-radius:999px;
+                background:#F85149;border:2px solid #fff;color:#fff;
+                display:flex;align-items:center;justify-content:center;
+                font-size:10px;font-weight:900;line-height:1;
+                box-shadow:0 2px 6px rgba(0,0,0,.55);
+              ">${eventosGrupo.length}</span>`
+            : "";
           const icon = L.divIcon({
             html: `<div style="
-              width:32px;height:32px;border-radius:50%;
-              background:${cor};
-              border:3px solid rgba(255,255,255,0.9);
+              position:relative;
+              width:32px;height:32px;border-radius:${raioIcone};
+              background:${corIcone};
+              border:${bordaIcone};
               display:flex;align-items:center;justify-content:center;
               font-size:15px;font-weight:900;color:#fff;
-              box-shadow:0 0 0 3px ${cor}55,0 3px 10px rgba(0,0,0,.7);
+              box-shadow:${sombraIcone};
               cursor:pointer;
-            ">${ico}</div>`,
+            ">${textoIcone}${badge}</div>`,
             className: "",
-            iconSize:   [32, 32],
+            iconSize:   [42, 42],
             iconAnchor: [16, 16],
           });
           return L.marker(latlng, { icon, zIndexOffset: 2000 });
@@ -1460,20 +1810,48 @@ async function carregarCamada(tipo) {
           const sevRaw = (p.severidade || "").toLowerCase();
           const sev  = sevRaw.includes("criti") ? "crítica" : sevRaw.includes("alta") ? "alta" : "moderada";
           const cor  = COR_SEV[sev] || "#888";
-          const km   = `km ${parseFloat(p.km_inicio||0).toFixed(1)}–${parseFloat(p.km_fim||0).toFixed(1)}`;
-          const tipo2 = (p.evento || p.conformidade || "evento").replace(/_/g," ");
+          const eventosGrupo = Array.isArray(p.eventos_grupo) && p.eventos_grupo.length ? p.eventos_grupo : [p];
+          const coords = f.geometry?.coordinates || [];
+          const lon = parseFloat(coords[0]);
+          const lat = parseFloat(coords[1]);
+          const zoomBtn = Number.isFinite(lat) && Number.isFinite(lon)
+            ? `<button class="btn btn-p" style="margin-top:8px;width:100%;padding:5px 8px;font-size:10px"
+                 onclick="zoomEventoMapa(${lat},${lon})">Visualizar</button>`
+            : "";
+          if (Number.isFinite(lat) && Number.isFinite(lon) && eventosGrupo.some(isEventoNavegavel)) {
+            _eventosMapa.push({ lat, lon, layer, props: p });
+          }
+          const itens = eventosGrupo.map((ev, index) => {
+            const km = `km ${parseFloat(ev.km_inicio||0).toFixed(1)}–${parseFloat(ev.km_fim||0).toFixed(1)}`;
+            const tipo2 = (ev.evento || ev.conformidade || "evento").replace(/_/g," ");
+            const sevItemRaw = (ev.severidade || "").toLowerCase();
+            const sevItem = sevItemRaw.includes("criti") ? "crítica" : sevItemRaw.includes("alta") ? "alta" : "moderada";
+            const corItem = COR_SEV[sevItem] || "#888";
+            const margem = index ? "margin-top:8px;padding-top:8px;border-top:1px solid #30363D" : "";
+            return `
+              <div style="${margem}">
+                <div style="color:${corItem};font-weight:700">${sevItem.toUpperCase()} — ${km}</div>
+                <strong>${esc(tipo2)}</strong><br>
+                <small style="color:#aaa">${esc(ev.descricao||ev.justificativa||"")}</small>
+                ${ev.metrica ? `<br><code style="font-size:10px;color:#ccc">${esc(ev.metrica)}</code>` : ""}
+              </div>`;
+          }).join("");
           layer.bindPopup(`
             <div style="font-family:monospace;font-size:12px;min-width:200px">
               <div style="background:${cor};color:#fff;padding:4px 8px;margin:-8px -12px 8px;border-radius:4px 4px 0 0;font-weight:700">
-                ${sev.toUpperCase()} — ${km}
+                ${eventosGrupo.length > 1 ? eventosGrupo.length + " ERROS" : sev.toUpperCase()}
               </div>
-              <strong>${esc(tipo2)}</strong><br>
-              <small style="color:#aaa">${esc(p.descricao||p.justificativa||"")}</small>
-              ${p.metrica ? `<br><code style="font-size:10px;color:#ccc">${esc(p.metrica)}</code>` : ""}
+              ${itens}
+              ${zoomBtn}
             </div>`);
-          layer.on("click", () => layer.openPopup());
+          layer.on("click", () => {
+            selecionarEventoMapa(layer);
+            layer.openPopup();
+          });
         }
-      }).addTo(_map);
+      });
+      if (document.getElementById("ckEvt")?.checked) _layers[tipo].addTo(_map);
+      criarNavegadorEventos();
       console.log(`[MAPA] ${gj.features.length} evento(s) de câmera carregado(s)`);
     }
   } catch(e) {
@@ -1481,10 +1859,81 @@ async function carregarCamada(tipo) {
   }
 }
 
+function prioridadeEventoMapa(props) {
+  const sev = (props?.severidade || "").toLowerCase();
+  if (sev.includes("criti")) return 3;
+  if (sev.includes("alta")) return 2;
+  return 1;
+}
+
+function isAlertaVelocidadeBaixa(props) {
+  const evento = (props?.evento || props?.conformidade || "").toLowerCase();
+  const descricao = (props?.descricao || "").toLowerCase();
+  return evento === "velocidade_atipica" && descricao.includes("abaixo");
+}
+
+function isEventoNavegavel(props) {
+  return !isAlertaVelocidadeBaixa(props);
+}
+
+function distanciaEventosMetros(a, b) {
+  const ca = a?.geometry?.coordinates;
+  const cb = b?.geometry?.coordinates;
+  if (!Array.isArray(ca) || !Array.isArray(cb) || ca.length < 2 || cb.length < 2) return Infinity;
+
+  const lon1 = Number(ca[0]);
+  const lat1 = Number(ca[1]);
+  const lon2 = Number(cb[0]);
+  const lat2 = Number(cb[1]);
+  if (![lon1, lat1, lon2, lat2].every(Number.isFinite)) return Infinity;
+
+  const rad = Math.PI / 180;
+  const r = 6371000;
+  const dLat = (lat2 - lat1) * rad;
+  const dLon = (lon2 - lon1) * rad;
+  const p1 = lat1 * rad;
+  const p2 = lat2 * rad;
+  const h = Math.sin(dLat / 2) ** 2 +
+    Math.cos(p1) * Math.cos(p2) * Math.sin(dLon / 2) ** 2;
+  return 2 * r * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+function agruparEventosSobrepostos(gj) {
+  if (!gj?.features?.length) return;
+
+  const grupos = [];
+  for (const f of gj.features) {
+    let grupoEncontrado = null;
+    for (const grupo of grupos) {
+      if (grupo.some(item => distanciaEventosMetros(item, f) <= 2)) {
+        grupoEncontrado = grupo;
+        break;
+      }
+    }
+
+    if (grupoEncontrado) {
+      grupoEncontrado.push(f);
+    } else {
+      grupos.push([f]);
+    }
+  }
+
+  const features = [];
+  for (const grupo of grupos) {
+    grupo.sort((a, b) => prioridadeEventoMapa(b.properties) - prioridadeEventoMapa(a.properties));
+    const principal = grupo[0];
+    principal.properties = principal.properties || {};
+    principal.properties.eventos_grupo = grupo.map(f => f.properties || {});
+    features.push(principal);
+  }
+  gj.features = features;
+}
+
 function toggleLayer(tipo) {
   if (!_map || !_layers[tipo]) return;
   const checks = {segmentos:"ckSeg", pontos:"ckPts", eventos_camera:"ckEvt", snv:"ckSnv"};
   const checked = document.getElementById(checks[tipo])?.checked;
+
   if (checked) {
     _layers[tipo].addTo(_map);
   } else {
@@ -1496,7 +1945,10 @@ async function onTabMapa() {
   if (!_map && S.resultado) {
     await renderMapa(S.resultado);
   } else if (_map) {
-    setTimeout(() => _map.invalidateSize(), 100);
+    setTimeout(() => {
+      _map.invalidateSize();
+      fitMapa();
+    }, 100);
   }
 }
 
@@ -1506,6 +1958,94 @@ function fitMapa() {
   if (l) {
     try { _map.fitBounds(l.getBounds(), {padding:[20,20]}); } catch(e){}
   }
+}
+
+function zoomEventoMapa(lat, lon) {
+  if (!_map) return;
+  const zoomNormal = _map.options.maxZoom || 22;
+  const zoomEvento = 25;
+  const ckPts = document.getElementById("ckPts");
+  if (ckPts && !ckPts.checked) {
+    ckPts.checked = true;
+    toggleLayer("pontos");
+  }
+  _map.closePopup();
+  _map.options.maxZoom = zoomEvento;
+  _map.setView([lat, lon], zoomEvento, { animate: true });
+  setTimeout(() => { _map.options.maxZoom = zoomNormal; }, 300);
+}
+
+function criarNavegadorEventos() {
+  if (!_map) return;
+  if (_eventoNavControl) {
+    _map.removeControl(_eventoNavControl);
+    _eventoNavControl = null;
+  }
+  if (!_eventosMapa.length) return;
+
+  _eventosMapa.sort((a, b) => {
+    const ka = parseFloat(a.props?.km_marcador ?? a.props?.km_pico ?? a.props?.km_inicio ?? 0);
+    const kb = parseFloat(b.props?.km_marcador ?? b.props?.km_pico ?? b.props?.km_inicio ?? 0);
+    return ka - kb;
+  });
+  _eventoAtual = 0;
+  _eventoNavControl = L.control({ position: "topleft" });
+  _eventoNavControl.onAdd = () => {
+    const div = L.DomUtil.create("div", "map-event-nav");
+    div.innerHTML = `
+      <div style="display:flex;align-items:center;gap:4px">
+        <button type="button" class="map-event-btn" onclick="navegarEventoMapa(-1)">‹</button>
+        <button type="button" class="map-event-main" onclick="visualizarEventoAtual()">Visualizar <span id="mapEvtCount">1/${_eventosMapa.length}</span></button>
+        <button type="button" class="map-event-btn" onclick="navegarEventoMapa(1)">›</button>
+      </div>
+      <div class="map-event-summary">${htmlResumoEventos()}</div>`;
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    return div;
+  };
+  _eventoNavControl.addTo(_map);
+}
+
+function htmlResumoEventos() {
+  const counts = new Map();
+  for (const evento of _eventosMapa) {
+    const grupo = Array.isArray(evento.props?.eventos_grupo) ? evento.props.eventos_grupo : [evento.props];
+    for (const item of grupo) {
+      if (!isEventoNavegavel(item)) continue;
+      const tipo = (item?.evento || "evento").replace(/_/g, " ");
+      counts.set(tipo, (counts.get(tipo) || 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([tipo, total]) => `<div><span>${esc(tipo)}</span><strong>${total}</strong></div>`)
+    .join("");
+}
+
+function navegarEventoMapa(delta) {
+  if (!_eventosMapa.length) return;
+  _eventoAtual = (_eventoAtual + delta + _eventosMapa.length) % _eventosMapa.length;
+  atualizarNavegadorEventos();
+  visualizarEventoAtual();
+}
+
+function atualizarNavegadorEventos() {
+  const el = document.getElementById("mapEvtCount");
+  if (el) el.textContent = `${_eventoAtual + 1}/${_eventosMapa.length}`;
+}
+
+function selecionarEventoMapa(layer) {
+  const index = _eventosMapa.findIndex(evento => evento.layer === layer);
+  if (index < 0) return;
+  _eventoAtual = index;
+  atualizarNavegadorEventos();
+}
+
+function visualizarEventoAtual() {
+  const evento = _eventosMapa[_eventoAtual];
+  if (!evento) return;
+  atualizarNavegadorEventos();
+  zoomEventoMapa(evento.lat, evento.lon);
 }
 
 // Quando muda o seletor de SNV no mapa — apenas habilita/desabilita botão

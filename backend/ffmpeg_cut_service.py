@@ -49,13 +49,10 @@ def split_video_on_cut(
 ) -> Tuple[bool, str, List[str]]:
     _log_step(log, "Validando tempos informados.")
     if not validar_tempo(start_time) or not validar_tempo(end_time):
-        return False, "Formato de tempo invalido. Use MM:SS.", []
+        return False, "Formato de tempo invalido. Use M:SS.", []
 
     start_seconds = time_to_seconds(start_time)
     end_seconds = time_to_seconds(end_time)
-
-    if end_seconds <= start_seconds:
-        return False, "O tempo final deve ser maior que o tempo inicial.", []
 
     ffmpeg_path = resolve_ffmpeg_path()
     if not ffmpeg_path:
@@ -92,31 +89,39 @@ def split_video_on_cut(
     if end_seconds > duration_seconds:
         return False, duration_error("final", end_time, duration_seconds), []
 
-    if start_seconds <= 0 or end_seconds >= duration_seconds:
-        return (
-            False,
-            "Informe um intervalo no meio do video para gerar dois arquivos.",
-            [],
-        )
+    cut_start = start_seconds
+    cut_end = duration_seconds if end_seconds == 0 else end_seconds
+
+    if cut_start == 0 and end_seconds == 0:
+        return False, "Informe um trecho para remover.", []
+
+    if cut_end <= cut_start:
+        return False, "O tempo final deve ser maior que o tempo inicial.", []
 
     first_segment = target.parent / f"{target.stem}_comeco.mp4"
     second_segment = target.parent / f"{target.stem}_fim.mp4"
-    output_paths = [first_segment, second_segment]
+    segment_specs = []
+
+    if cut_start > 0:
+        segment_specs.append((first_segment, 0, cut_start))
+
+    if cut_end < duration_seconds:
+        segment_specs.append((second_segment, cut_end, duration_seconds - cut_end))
+
+    if not segment_specs:
+        return False, "O trecho informado remove o video inteiro.", []
+
+    output_paths = [segment_path for segment_path, _, _ in segment_specs]
 
     success = False
     try:
-        segment_specs = [
-            (first_segment, 0, start_seconds),
-            (second_segment, end_seconds, duration_seconds - end_seconds),
-        ]
-
         for index, (segment_path, segment_start, segment_duration) in enumerate(
             segment_specs,
             start=1,
         ):
             _log_step(
                 log,
-                f"Cortando segmento {index}/2 ({segment_path.name}) a partir de "
+                f"Cortando segmento {index}/{len(segment_specs)} ({segment_path.name}) a partir de "
                 f"{seconds_to_mmss(segment_start)} por {seconds_to_mmss(segment_duration)}.",
             )
             ok, output = cut_segment(

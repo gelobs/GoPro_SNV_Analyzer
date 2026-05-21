@@ -38,7 +38,10 @@ class EventoCamera(Enum):
     ENCERRAMENTO_ABRUPTO = "encerramento_abrupto"
     DESCONTINUIDADE      = "descontinuidade_espacial"
     VELOCIDADE_ATIPICA   = "velocidade_atipica"
+    VEICULO_PARADO       = "veiculo_parado"
     AZIMUTE_IRREGULAR    = "azimute_irregular"
+    KM_SEGUNDO_BAIXO     = "km_por_segundo_baixo"
+    ERRO_SNV             = "erro_snv"
 
 
 class Severidade(Enum):
@@ -56,6 +59,7 @@ class EventoDiagnostico:
     descricao:   str
     metrica:     str     # valor medido que disparou o evento
     acao:        str     # ação recomendada
+    km_pico:     Optional[float] = None  # ponto exato usado para posicionar no mapa
 
 
 # ── Limiares de detecção ──────────────────────────────────────────────────────
@@ -66,13 +70,18 @@ JANELA_BATERIA_N      = 180    # últimas N amostras (~10s) para análise de bat
 DELTA_GPSP_BATERIA    = 150    # aumento de GPSP indicativo de bateria fraca
 QUEDA_VEL_BATERIA     = 0.40   # queda relativa de velocidade no fim
 VEL_ENCERRAMENTO_MS   =  5.0   # câmera em movimento ao fim da gravação (m/s)
+ENCERRAMENTO_TOL_FINAL_KM = 0.05  # ignora encerramento nos ultimos X km
 SALTO_MAX_M           = 25.0   # deslocamento impossível entre pontos adjacentes
 VEL_MINIMA_MS         =  3.0   # < 3 m/s em todo o segmento = parada/anomalia
 VEL_MAXIMA_MS         = 55.5   # > 200 km/h = spike impossível em rodovia
+VEL_PARADO_MS         =  0.50  # tolera jitter da GoPro em parada (~1.8 km/h)
+PARADA_VEICULO_MIN_S  =  5.0
 AZIMUTE_DIST_MAX_M    =  1.0   # virada brusca em distancia curta = oscilacao GPS
 AZIMUTE_MIN_GRAUS     = 20.0
 AZIMUTE_PASSO_MIN_M   =  0.05
 AZIMUTE_INTERVALO_S   =  1.0
+AVANCO_KM_MS_MIN      =  1.0
+KM_SEGUNDO_BAIXO_N    = 18
 
 
 def diagnosticar(df: pd.DataFrame,
@@ -92,6 +101,7 @@ def diagnosticar(df: pd.DataFrame,
     eventos += _detectar_bateria(df)
     eventos += _detectar_encerramento_abrupto(df)
     eventos += _detectar_descontinuidades(df, tamanho_seg_km)
+    eventos += _detectar_km_por_segundo_baixo(df)
     eventos += _detectar_azimute_irregular(df)
     eventos += _detectar_velocidade_atipica(df, vel_referencia_ms, tamanho_seg_km)
 
@@ -127,6 +137,7 @@ def _detectar_gaps(df: pd.DataFrame) -> list:
                     "Verificar se o arquivo foi cortado, se houve pausa manual "
                     "na gravação ou falha de escrita no cartão SD."
                 ),
+                km_pico    = round(km, 2),
             ))
     return eventos
 
@@ -151,6 +162,7 @@ def _detectar_gps_bloqueado(df: pd.DataFrame) -> list:
             if cont >= PONTOS_SEM_VARIACAO:
                 km_i = df.iloc[bloco_i]["km"]
                 km_f = df.iloc[i-1]["km"]
+                km_pico = df.iloc[bloco_i + cont // 2]["km"]
                 dur  = (df.iloc[i-1]["timestamp"]
                         - df.iloc[bloco_i]["timestamp"]).total_seconds()
                 eventos.append(EventoDiagnostico(
@@ -166,6 +178,7 @@ def _detectar_gps_bloqueado(df: pd.DataFrame) -> list:
                         "ou o sinal foi totalmente bloqueado (túnel, subsolo, garagem). "
                         "Os dados de km deste trecho foram estimados por velocidade."
                     ),
+                    km_pico    = round(km_pico, 2),
                 ))
             bloco_i = None
             cont    = 0
@@ -216,6 +229,7 @@ def _detectar_bateria(df: pd.DataFrame) -> list:
             "Os últimos segmentos podem ter dados GPS degradados. "
             "Verificar se a gravação está completa."
         ),
+        km_pico = round(fim.loc[fim["precision"].idxmax(), "km"], 2),
     ))
     return eventos
 
@@ -232,10 +246,14 @@ def _detectar_encerramento_abrupto(df: pd.DataFrame) -> list:
         return []
 
     km_f = df["km"].max()
+    km_i = max(km_f - 0.05, 0)
+    if km_f - km_i <= ENCERRAMENTO_TOL_FINAL_KM:
+        return []
+
     return [EventoDiagnostico(
         evento     = EventoCamera.ENCERRAMENTO_ABRUPTO,
         severidade = Severidade.ALTA,
-        km_inicio  = round(km_f - 0.05, 2),
+        km_inicio  = round(km_i, 2),
         km_fim     = round(km_f, 2),
         descricao  = "Gravação encerrada com câmera em movimento",
         metrica    = f"Velocidade média no último segundo: {vel_final*3.6:.1f} km/h",
@@ -243,6 +261,7 @@ def _detectar_encerramento_abrupto(df: pd.DataFrame) -> list:
             "Câmera desligada abruptamente: bateria zerada, botão acionado "
             "acidentalmente ou queda. O último segmento pode estar incompleto."
         ),
+        km_pico    = round(km_f, 2),
     )]
 
 
@@ -291,6 +310,7 @@ def _detectar_descontinuidades(df: pd.DataFrame,
             if dist_m > SALTO_MAX_M:
                 t_a    = cauda["timestamp"].iloc[-1]
                 t_b    = cabeca["timestamp"].iloc[0]
+                km_pico = cabeca["km"].iloc[0]
                 dt     = max((t_b - t_a).total_seconds(), 1/18)
                 vel    = (dist_m / dt) * 3.6
                 sev    = Severidade.CRITICA if dist_m > 100 else Severidade.ALTA
@@ -312,6 +332,7 @@ def _detectar_descontinuidades(df: pd.DataFrame,
                         "Verificar se o arquivo é concatenação de gravações "
                         "diferentes, ou se houve corte e retomada em local distinto."
                     ),
+                    km_pico = round(km_pico, 2),
                 ))
         seg_ant = seg
         km_ant  = km
@@ -377,9 +398,100 @@ def _detectar_azimute_irregular(df: pd.DataFrame) -> list:
                 "Revisar a telemetria neste trecho. Pode haver jitter no GPS, "
                 "multipath, ou irregularidade no buffer GPMF da GoPro."
             ),
+            km_pico    = round(km, 2),
         ))
 
     return eventos
+
+
+def _detectar_km_por_segundo_baixo(df: pd.DataFrame) -> list:
+    """
+    Detecta sequencias em que o avanco do km convertido para m/s fica baixo.
+
+    O marcador do evento cai no ponto com menor km/s dentro de cada bloco,
+    para ficar em cima do ponto mais suspeito do trecho.
+    """
+    if len(df) < 3:
+        return []
+
+    dt = df["timestamp"].diff().dt.total_seconds().replace(0, np.nan)
+    dkm = df["km"].diff()
+    avanco_ms = ((dkm * 1000) / dt).replace([np.inf, -np.inf], np.nan)
+    mask = (avanco_ms <= AVANCO_KM_MS_MIN) & avanco_ms.notna()
+
+    eventos = []
+    bloco_i = None
+    for pos, val in enumerate(mask.to_numpy()):
+        if val:
+            bloco_i = pos if bloco_i is None else bloco_i
+            continue
+
+        if bloco_i is not None:
+            _adicionar_evento_km_s_baixo(df, avanco_ms, bloco_i, pos - 1, eventos)
+            bloco_i = None
+
+    if bloco_i is not None:
+        _adicionar_evento_km_s_baixo(df, avanco_ms, bloco_i, len(df) - 1, eventos)
+
+    return eventos
+
+
+def _adicionar_evento_km_s_baixo(
+    df: pd.DataFrame,
+    avanco_ms: pd.Series,
+    inicio: int,
+    fim: int,
+    eventos: list,
+) -> None:
+    if fim - inicio + 1 < KM_SEGUNDO_BAIXO_N:
+        return
+
+    trecho = avanco_ms.iloc[inicio:fim + 1]
+    pico_pos = trecho.idxmin()
+    km_i = float(df.iloc[inicio]["km"])
+    km_f = float(df.iloc[fim]["km"])
+    km_pico = float(df.loc[pico_pos, "km"])
+    valor_pico = float(avanco_ms.loc[pico_pos])
+    seg = df.iloc[inicio:fim + 1]
+    tempo_parado_s = _maior_tempo_velocidade_zero(seg)
+
+    if tempo_parado_s >= PARADA_VEICULO_MIN_S:
+        eventos.append(EventoDiagnostico(
+            evento     = EventoCamera.VEICULO_PARADO,
+            severidade = Severidade.ALTA,
+            km_inicio  = round(km_i, 2),
+            km_fim     = round(km_f, 2),
+            descricao  = "Veículo parado por tempo prolongado",
+            metrica    = (
+                f"tempo parado = {tempo_parado_s:.1f}s | "
+                f"menor avanco = {valor_pico:.3f} m/s"
+            ),
+            acao       = (
+                "Revisar o vídeo neste trecho. Pode ser parada real "
+                "(semáforo, pedágio, obra) ou interrupção da gravação."
+            ),
+            km_pico    = round(km_pico, 2),
+        ))
+        return
+
+    eventos.append(EventoDiagnostico(
+        evento     = EventoCamera.KM_SEGUNDO_BAIXO,
+        severidade = Severidade.ALTA,
+        km_inicio  = round(km_i, 2),
+        km_fim     = round(km_f, 2),
+        descricao  = (
+            "Avanco do km convertido para m/s igual ou menor que 1 em sequencia"
+        ),
+        metrica    = (
+            f"menor avanco = {valor_pico:.3f} m/s | "
+            f"amostras consecutivas = {fim - inicio + 1}"
+        ),
+        acao       = (
+            "Revisar o ponto marcado no mapa. Pode haver trecho embolado, "
+            "jitter de GPS ou buffer irregular."
+        ),
+        km_pico    = round(km_pico, 2),
+    ))
 
 
 def _detectar_velocidade_atipica(df: pd.DataFrame,
@@ -403,22 +515,25 @@ def _detectar_velocidade_atipica(df: pd.DataFrame,
         vel_seg = seg["speed2d"].mean()
 
         if vel_seg < VEL_MINIMA_MS and vel_ref > 5:
+            km_pico = seg.loc[seg["speed2d"].idxmin(), "km"]
             eventos.append(EventoDiagnostico(
                 evento     = EventoCamera.VELOCIDADE_ATIPICA,
                 severidade = Severidade.MODERADA,
                 km_inicio  = round(km, 2),
                 km_fim     = round(km + tamanho_seg_km, 2),
-                descricao  = "Segmento com velocidade muito abaixo do padrão da rota",
+                descricao  = "Velocidade abaixo do padrão da rota",
                 metrica    = (
                     f"média do segmento = {vel_seg*3.6:.1f} km/h | "
                     f"referência = {vel_ref*3.6:.1f} km/h"
                 ),
                 acao = (
-                    "Câmera pode ter parado (semáforo, pedágio, obra) ou "
-                    "houve corte e retomada. Revisar o vídeo neste trecho."
+                    "Há risco de pontos GPS ficarem embolados por baixa velocidade. "
+                    "Revisar o vídeo neste trecho."
                 ),
+                km_pico = round(km_pico, 2),
             ))
         elif vel_seg > VEL_MAXIMA_MS:
+            km_pico = seg.loc[seg["speed2d"].idxmax(), "km"]
             eventos.append(EventoDiagnostico(
                 evento     = EventoCamera.VELOCIDADE_ATIPICA,
                 severidade = Severidade.ALTA,
@@ -433,9 +548,37 @@ def _detectar_velocidade_atipica(df: pd.DataFrame,
                     "Spike de velocidade GPS — provável multipath ou perda momentânea "
                     "de fix. Os dados de posição deste segmento são suspeitos."
                 ),
+                km_pico = round(km_pico, 2),
             ))
         km += tamanho_seg_km
     return eventos
+
+
+def _maior_tempo_velocidade_zero(seg: pd.DataFrame) -> float:
+    if "timestamp" not in seg.columns or "speed2d" not in seg.columns:
+        return 0.0
+
+    maior = 0.0
+    inicio = None
+    ultimo = None
+
+    for _, row in seg.iterrows():
+        timestamp = row["timestamp"]
+        parado = float(row["speed2d"]) <= VEL_PARADO_MS
+        if parado:
+            inicio = timestamp if inicio is None else inicio
+            ultimo = timestamp
+            continue
+
+        if inicio is not None and ultimo is not None:
+            maior = max(maior, (ultimo - inicio).total_seconds())
+        inicio = None
+        ultimo = None
+
+    if inicio is not None and ultimo is not None:
+        maior = max(maior, (ultimo - inicio).total_seconds())
+
+    return maior
 
 
 def imprimir_diagnostico(eventos: list) -> None:

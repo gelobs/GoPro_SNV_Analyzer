@@ -44,7 +44,7 @@ def resolve_ffmpeg_path() -> Optional[str]:
 
 
 def validar_tempo(time_value: str) -> bool:
-    match = re.fullmatch(r"\d{2}:\d{2}", time_value)
+    match = re.fullmatch(r"\d+:\d{2}", time_value)
     if not match:
         return False
 
