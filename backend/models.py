@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 
 @dataclass
@@ -22,3 +22,11 @@ class TaskResult:
 class GpsTelemetryWarning:
     message: str
     details: str
+    failure_times: Optional[List[str]] = None
+
+
+@dataclass
+class AccelerometerTelemetryWarning:
+    message: str
+    details: str
+    failure_times: Optional[List[str]] = None

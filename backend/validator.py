@@ -19,10 +19,10 @@ def validate_request(request: TaskRequest) -> Optional[str]:
         return "Defina o tempo final do corte."
 
     if not validar_tempo(request.start_time):
-        return "Tempo inicial invalido. Use MM:SS."
+        return "Tempo inicial invalido. Use M:SS."
 
     if not validar_tempo(request.end_time):
-        return "Tempo final invalido. Use MM:SS."
+        return "Tempo final invalido. Use M:SS."
 
     source = Path(request.source_path)
     if not source.exists():
