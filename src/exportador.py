@@ -17,10 +17,6 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString, Point
 
-from comparador_snv import Conformidade
-from avaliador_qualidade import IndiceQualidade
-from diagnostico_camera import Severidade
-
 # Paleta de cores por conformidade (compatível com QGIS)
 CORES_CONFORMIDADE = {
     "dentro_da_tolerancia":    "#2ECC71",   # verde
@@ -164,15 +160,22 @@ def _exportar_eventos_camera(df: pd.DataFrame, eventos: list,
 
     marcadores = []
     for e in eventos:
-        seg = df[df["km"] >= e.km_inicio]
-        if seg.empty:
-            continue
-        pt = seg.iloc[0]
+        km_pico = getattr(e, "km_pico", None)
+        if e.evento.value == "erro_snv" and km_pico is not None:
+            km_alvo = km_pico
+        else:
+            km_alvo = (e.km_inicio + e.km_fim) / 2
+        idx = (df["km"] - km_alvo).abs().idxmin()
+        pt = df.loc[idx]
         marcadores.append({
             "evento":      e.evento.value,
             "severidade":  e.severidade.value,
             "km_inicio":   e.km_inicio,
             "km_fim":      e.km_fim,
+            "km_pico":     km_pico,
+            "km_marcador":  float(pt["km"]),
+            "lat_marcador": float(pt["lat"]),
+            "lon_marcador": float(pt["lon"]),
             "descricao":   e.descricao,
             "metrica":     e.metrica,
             "acao":        e.acao,
@@ -231,6 +234,7 @@ def _exportar_relatorio_csv(qualidades: list, conformidades: list,
             "origem":          "EVENTO_CAMERA",
             "km_inicio":       e.km_inicio,
             "km_fim":          e.km_fim,
+            "km_pico":         getattr(e, "km_pico", None),
             "iq_sinal":        "",
             "gpsp_medio":      "",
             "dop_medio":       "",

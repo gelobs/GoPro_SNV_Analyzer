@@ -1,7 +1,7 @@
 from typing import Callable, Optional
 
 from backend.models import TaskRequest, TaskResult
-from backend.ffmpeg_service import cut_video
+from backend.ffmpeg_cut_service import cut_video
 
 
 class FfmpegRunner:

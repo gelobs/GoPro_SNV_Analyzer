@@ -11,9 +11,11 @@ import subprocess
 import sys
 import threading
 import time
+import uuid
 from pathlib import Path
 
 from flask import Flask, Response, jsonify, render_template, request, stream_with_context
+from werkzeug.utils import secure_filename
 
 # ── Paths do projeto (resolve() garante caminho absoluto) ────────────────────
 BASE_DIR = Path(__file__).resolve().parent
@@ -22,9 +24,10 @@ DATA_DIR = BASE_DIR / "data"
 SNV_DIR  = DATA_DIR / "snv"
 RAW_DIR  = DATA_DIR / "raw"
 OUT_DIR  = BASE_DIR / "output"
+CUT_UPLOAD_DIR = RAW_DIR / "_corte_uploads"
 
 # Cria pastas se não existirem
-for d in [SNV_DIR, RAW_DIR, OUT_DIR]:
+for d in [SNV_DIR, RAW_DIR, OUT_DIR, CUT_UPLOAD_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
 app = Flask(__name__, template_folder=str(BASE_DIR / "templates"))
@@ -40,6 +43,7 @@ def no_cache(response):
 # Fila de log para streaming SSE
 _log_queue: queue.Queue = queue.Queue()
 _processo_atual: dict = {"proc": None, "rodando": False}
+_cut_jobs: dict = {}
 
 
 # ── Mapa firmware GoPro → nome do modelo ─────────────────────────────────────
@@ -77,7 +81,6 @@ DEFAULTS = {
     "gpsp_ruim":        250,
     "max_velocidade":   60,
     "max_aceleracao":   15,
-    "max_salto_frames": 40,
     # diagnostico_camera.py
     "gap_critico_s":        30,
     "gap_moderado_s":        5,
@@ -86,17 +89,13 @@ DEFAULTS = {
     "delta_gpsp_bateria":  150,
     "queda_vel_bateria":  0.40,
     "vel_encerramento_ms": 5.0,
+    "encerramento_tol_final_km": 0.05,
     "salto_max_m":        25.0,
-    "vel_minima_ms":       3.0,
     "vel_maxima_ms":      55.5,
     # avaliador_qualidade.py
     "gpsp_excelente":   200,
     "gpsp_bom":         500,
     "gpsp_aceitavel":  1000,
-    "raio_excelente":    5,
-    "raio_bom":         15,
-    "raio_aceitavel":   50,
-    "raio_degradado":  200,
     # comparador_snv.py
     "dist_snv_desatualizado_m": 100,
 }
@@ -241,6 +240,89 @@ def snv_geojson():
         })
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
+
+
+@app.route("/api/distancia_snv", methods=["POST"])
+def distancia_snv():
+    """Calcula a menor distância de um ponto GPS ao SNV selecionado."""
+    dados = request.get_json(silent=True) or {}
+    shp = dados.get("shp")
+    shp_full = dados.get("path")
+    lat = dados.get("lat")
+    lon = dados.get("lon")
+
+    if not shp or lat is None or lon is None:
+        return jsonify({"erro": "Ponto GPS ou arquivo SNV não informado"}), 400
+
+    shp_path = Path(shp_full) if shp_full else SNV_DIR / shp
+    if not shp_path.exists():
+        return jsonify({"erro": f"Shapefile não encontrado: {shp_path}"}), 404
+
+    try:
+        import geopandas as gpd
+        from shapely.geometry import Point
+
+        gdf = gpd.read_file(str(shp_path), engine="pyogrio")
+        if gdf.empty:
+            return jsonify({"erro": "O SNV selecionado não possui geometrias"}), 400
+        if not gdf.crs:
+            return jsonify({"erro": "O SNV selecionado não possui CRS definido"}), 400
+
+        ponto = gpd.GeoDataFrame(geometry=[Point(float(lon), float(lat))], crs="EPSG:4326")
+        crs_metrico = ponto.estimate_utm_crs()
+        ponto_m = ponto.to_crs(crs_metrico).geometry.iloc[0]
+        distancia_m = float(gdf.to_crs(crs_metrico).geometry.distance(ponto_m).min())
+
+        return jsonify({"distancia_m": round(distancia_m, 2)})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+
+@app.route("/api/distancia_corte_snv", methods=["POST"])
+def distancia_corte_snv():
+    """Calcula a distância reta entre os pontos do SNV mais próximos do corte."""
+    dados = request.get_json(silent=True) or {}
+    shp = dados.get("shp")
+    shp_full = dados.get("path")
+    pontos = dados.get("pontos") or []
+
+    if not shp or len(pontos) != 2:
+        return jsonify({"erro": "Dois pontos GPS e o arquivo SNV são necessários"}), 400
+
+    shp_path = Path(shp_full) if shp_full else SNV_DIR / shp
+    if not shp_path.exists():
+        return jsonify({"erro": f"Shapefile não encontrado: {shp_path}"}), 404
+
+    try:
+        import geopandas as gpd
+        from shapely.geometry import Point
+        from shapely.ops import nearest_points
+
+        gps = []
+        for ponto in pontos:
+            lat = ponto.get("lat")
+            lon = ponto.get("lon")
+            if lat is None or lon is None:
+                return jsonify({"erro": "Coordenadas GPS incompletas"}), 400
+            gps.append(Point(float(lon), float(lat)))
+
+        gdf = gpd.read_file(str(shp_path), engine="pyogrio")
+        if gdf.empty:
+            return jsonify({"erro": "O SNV selecionado não possui geometrias"}), 400
+        if not gdf.crs:
+            return jsonify({"erro": "O SNV selecionado não possui CRS definido"}), 400
+
+        pontos_gps = gpd.GeoDataFrame(geometry=gps, crs="EPSG:4326")
+        crs_metrico = pontos_gps.estimate_utm_crs()
+        gps_m = pontos_gps.to_crs(crs_metrico).geometry
+        snv_m = gdf.to_crs(crs_metrico).geometry.unary_union
+        pontos_snv_m = [nearest_points(ponto, snv_m)[1] for ponto in gps_m]
+        distancia_m = float(pontos_snv_m[0].distance(pontos_snv_m[1]))
+
+        return jsonify({"distancia_reta_m": round(distancia_m, 2)})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
 
 @app.route("/api/debug")
 def debug():
@@ -405,6 +487,165 @@ def cancelar():
     return jsonify({"status": "cancelado"})
 
 
+@app.route("/api/escolher_pasta_corte", methods=["POST"])
+def escolher_pasta_corte():
+    """Abre o seletor de pasta local para definir a saida dos videos cortados."""
+    pasta_inicial_raw = (request.json or {}).get("pasta", "output/cortes")
+    pasta_inicial = Path(pasta_inicial_raw)
+    if not pasta_inicial.is_absolute():
+        pasta_inicial = BASE_DIR / pasta_inicial
+
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        selected = filedialog.askdirectory(
+            title="Escolha a pasta de saida dos videos cortados",
+            initialdir=str(pasta_inicial if pasta_inicial.exists() else BASE_DIR),
+            mustexist=False,
+        )
+        root.destroy()
+    except Exception as exc:
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+    if not selected:
+        return jsonify({"success": False, "message": "Selecao cancelada."}), 200
+
+    return jsonify({"success": True, "path": selected})
+
+
+@app.route("/api/cortar_video", methods=["POST"])
+def cortar_video_api():
+    """Inicia o corte de um video enviado pela aba Corte de Video."""
+    video = request.files.get("video")
+    source_path_raw = request.form.get("source_path", "").strip()
+    output_dir_raw = request.form.get("output_dir", "output/cortes").strip()
+    start_time = request.form.get("start_time", "").strip()
+    end_time = request.form.get("end_time", "").strip()
+
+    if not source_path_raw and (not video or not video.filename):
+        return jsonify({"success": False, "message": "Selecione um video."}), 400
+
+    if source_path_raw:
+        source_path = Path(source_path_raw)
+        if not source_path.exists() or not source_path.is_file():
+            return jsonify({"success": False, "message": f"Video nao encontrado: {source_path}"}), 400
+        filename = secure_filename(source_path.name)
+    else:
+        filename = secure_filename(video.filename)
+
+    if not filename.lower().endswith(".mp4"):
+        return jsonify({"success": False, "message": "Selecione um arquivo .mp4."}), 400
+
+    output_dir = Path(output_dir_raw)
+    if not output_dir.is_absolute():
+        output_dir = BASE_DIR / output_dir
+
+    input_path = CUT_UPLOAD_DIR / f"{uuid.uuid4().hex}_{filename}"
+    output_path = output_dir / f"{Path(filename).stem}_corte_{uuid.uuid4().hex[:8]}.mp4"
+    job_id = uuid.uuid4().hex
+
+    if source_path_raw:
+        input_path = source_path
+    else:
+        video.save(input_path)
+
+    _cut_jobs[job_id] = {
+        "done": False,
+        "success": None,
+        "message": "Corte na fila.",
+        "output_path": None,
+        "output_paths": [],
+        "progress": 5,
+        "step": "Preparando arquivo.",
+        "logs": [],
+        "delete_input": not bool(source_path_raw),
+    }
+
+    thread = threading.Thread(
+        target=_executar_corte_video,
+        args=(job_id, input_path, output_path, start_time, end_time),
+        daemon=True,
+    )
+    thread.start()
+    return jsonify({"success": True, "job_id": job_id})
+
+
+@app.route("/api/cortar_video_status/<job_id>")
+def cortar_video_status(job_id):
+    job = _cut_jobs.get(job_id)
+    if not job:
+        return jsonify({"success": False, "message": "Corte nao encontrado."}), 404
+
+    return jsonify(job)
+
+
+def _executar_corte_video(
+    job_id: str,
+    input_path: Path,
+    output_path: Path,
+    start_time: str,
+    end_time: str,
+) -> None:
+    from backend.ffmpeg_cut_service import split_video_on_cut
+
+    def log_step(message: str) -> None:
+        job = _cut_jobs[job_id]
+        job["logs"].append(message)
+        job["step"] = message
+        job["progress"] = max(int(job["progress"]), _cut_progress_from_message(message))
+
+    try:
+        ok, details, output_paths = split_video_on_cut(
+            input_path=str(input_path),
+            output_path=str(output_path),
+            start_time=start_time,
+            end_time=end_time,
+            log=log_step,
+        )
+        job = _cut_jobs[job_id]
+        job["done"] = True
+        job["success"] = ok
+        job["message"] = details
+        job["output_path"] = output_paths[0] if ok and output_paths else None
+        job["output_paths"] = output_paths if ok else []
+        job["progress"] = 100 if ok else int(job["progress"])
+        job["step"] = "Corte finalizado." if ok else "Falha no corte."
+    except Exception as exc:
+        job = _cut_jobs[job_id]
+        job["done"] = True
+        job["success"] = False
+        job["message"] = str(exc)
+        job["step"] = "Falha no corte."
+    finally:
+        if _cut_jobs[job_id].get("delete_input", True):
+            try:
+                input_path.unlink(missing_ok=True)
+            except PermissionError:
+                pass
+
+
+def _cut_progress_from_message(message: str) -> int:
+    checks = [
+        ("Validando tempos", 10),
+        ("Verificando arquivo", 20),
+        ("Verificando espaco", 30),
+        ("Inspecionando video", 45),
+        ("Cortando segmento", 70),
+        ("Juntando segmentos", 88),
+        ("Limpando arquivos", 96),
+        ("Corte finalizado", 100),
+    ]
+    for marker, progress in checks:
+        if marker in message:
+            return progress
+
+    return 5
+
+
 @app.route("/api/log_stream")
 def log_stream():
     """SSE — envia logs do processamento em tempo real."""
@@ -488,7 +729,6 @@ def _executar_pipeline(params: dict):
         # Garante caminho absoluto para o prefixo de saída
         saida = str(BASE_DIR / saida_raw) if not Path(saida_raw).is_absolute() else saida_raw
         seg_km   = params.get("tamanho_seg_km", 1.0)
-        vel      = params.get("velocidade_kmh", 80)
         avancado = params.get("avancado", {})
 
         if not mp4 or not shp:
@@ -499,7 +739,7 @@ def _executar_pipeline(params: dict):
         log("info", f"Vídeo  : {mp4_path_str}")
         log("info", f"SNV    : {shp_path_str}")
         log("info", f"Saída  : {saida}")
-        log("info", f"Segmento: {seg_km}km | Velocidade ref.: {vel}km/h")
+        log("info", f"Segmento: {seg_km}km")
 
         # Gera validar_rota_temp.py com os parâmetros e limiares do usuário
         script = _gerar_script_temp(
@@ -507,20 +747,26 @@ def _executar_pipeline(params: dict):
             shp_path  = shp_path_str,
             prefixo   = saida,
             seg_km    = seg_km,
-            vel_kmh   = vel,
             avancado  = avancado,
         )
 
         script_path = BASE_DIR / "_validar_temp.py"
         script_path.write_text(script, encoding="utf-8")
 
+        env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["PYTHONUTF8"] = "1"
+
         proc = subprocess.Popen(
             [sys.executable, str(script_path)],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             bufsize=1,
             cwd=str(BASE_DIR),
+            env=env,
         )
         _processo_atual["proc"] = proc
 
@@ -551,7 +797,7 @@ def _executar_pipeline(params: dict):
 
 
 def _gerar_script_temp(mp4_path, shp_path, prefixo,
-                        seg_km, vel_kmh, avancado) -> str:
+                        seg_km, avancado) -> str:
     """Gera script Python temporário com os parâmetros do usuário."""
     av = avancado or {}
 
@@ -568,8 +814,8 @@ def _gerar_script_temp(mp4_path, shp_path, prefixo,
         "delta_gpsp_bateria":   ("diagnostico_camera", "DELTA_GPSP_BATERIA"),
         "queda_vel_bateria":    ("diagnostico_camera", "QUEDA_VEL_BATERIA"),
         "vel_encerramento_ms":  ("diagnostico_camera", "VEL_ENCERRAMENTO_MS"),
+        "encerramento_tol_final_km": ("diagnostico_camera", "ENCERRAMENTO_TOL_FINAL_KM"),
         "salto_max_m":          ("diagnostico_camera", "SALTO_MAX_M"),
-        "vel_minima_ms":        ("diagnostico_camera", "VEL_MINIMA_MS"),
         "vel_maxima_ms":        ("diagnostico_camera", "VEL_MAXIMA_MS"),
         "gpsp_excelente":       ("avaliador_qualidade","GPSP_EXCELENTE"),
         "gpsp_bom":             ("avaliador_qualidade","GPSP_BOM"),
@@ -601,7 +847,6 @@ snv_t = recortar_snv(snv, gps, buffer_km=0.5)
 df, qual, conf, evts = validar_rota(
     gps, snv_t,
     tamanho_seg_km={seg_km},
-    velocidade_esperada_ms={vel_kmh/3.6:.4f},
 )
 exportar_para_gis(df, qual, conf, evts, prefixo=r'{prefixo}')
 print("Concluído.")
@@ -619,6 +864,11 @@ if __name__ == "__main__":
     print("  Video GoPro Analyzer X DNIT SNV")
     print("  Servidor: http://localhost:5000")
     print("=" * 55)
-    app.run(debug=False, host="0.0.0.0", port=5000, threaded=True)
 
-print("Backend carregado com sucesso")
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=True,
+        use_reloader=False
+    )
+    print("Backend carregado com sucesso")

@@ -28,10 +28,11 @@ from avaliador_qualidade import (
     QualidadeSegmento, avaliar_qualidade, imprimir_qualidade
 )
 from comparador_snv    import (
-    ConformidadeSegmento, classificar_conformidade, imprimir_conformidade
+    ConformidadeSegmento, DIST_SNV_DESATUALIZADO_M,
+    classificar_conformidade, imprimir_conformidade
 )
 from diagnostico_camera import (
-    EventoDiagnostico, diagnosticar, imprimir_diagnostico
+    EventoCamera, EventoDiagnostico, Severidade, diagnosticar, imprimir_diagnostico
 )
 
 
@@ -84,6 +85,9 @@ def validar_rota(
     """
     Executa o pipeline completo de validação.
 
+    `velocidade_esperada_ms` é mantido para compatibilidade com chamadas
+    existentes; a detecção atual usa apenas limites físicos.
+
     Retorna:
       df           : DataFrame com todas as colunas de análise por amostra
       qualidades   : lista de QualidadeSegmento (sinal GPS por segmento)
@@ -128,7 +132,9 @@ def validar_rota(
 
     # 5. Diagnóstico de câmera
     print("[5/5] Diagnosticando câmera e gravação...")
-    eventos = diagnosticar(df, velocidade_esperada_ms, tamanho_seg_km)
+    eventos = diagnosticar(df, tamanho_seg_km)
+    eventos += _detectar_erros_snv(df)
+    eventos.sort(key=lambda e: (e.km_inicio, e.severidade.value))
 
     # Propaga conformidade e qualidade amostra a amostra (para exportação GIS)
     df["conformidade"] = ""
@@ -145,6 +151,70 @@ def validar_rota(
     _imprimir_sumario(conformidades, qualidades, eventos)
 
     return df, qualidades, conformidades, eventos
+
+
+def _detectar_erros_snv(df: pd.DataFrame) -> list:
+    """
+    Gera eventos pontuais para trechos em que o GPS fica a mais de 100m do SNV.
+
+    Pontos consecutivos acima do limite viram um unico evento para nao poluir
+    o mapa com muitos marcadores quase sobrepostos.
+    """
+    if "dist_snv_m" not in df.columns or "km" not in df.columns:
+        return []
+
+    mask = df["dist_snv_m"] > DIST_SNV_DESATUALIZADO_M
+    eventos = []
+    bloco_i = None
+
+    for pos, val in enumerate(mask.to_numpy()):
+        if val:
+            bloco_i = pos if bloco_i is None else bloco_i
+            continue
+
+        if bloco_i is not None:
+            _adicionar_erro_snv(df, bloco_i, pos - 1, eventos)
+            bloco_i = None
+
+    if bloco_i is not None:
+        _adicionar_erro_snv(df, bloco_i, len(df) - 1, eventos)
+
+    return eventos
+
+
+def _adicionar_erro_snv(
+    df: pd.DataFrame,
+    inicio: int,
+    fim: int,
+    eventos: list,
+) -> None:
+    trecho = df.iloc[inicio:fim + 1]
+    pico_idx = trecho["dist_snv_m"].idxmax()
+    pico = df.loc[pico_idx]
+    km_i = float(trecho.iloc[0]["km"])
+    km_f = float(trecho.iloc[-1]["km"])
+    dist_max = float(pico["dist_snv_m"])
+    dist_med = float(trecho["dist_snv_m"].mean())
+
+    eventos.append(EventoDiagnostico(
+        evento     = EventoCamera.ERRO_SNV,
+        severidade = Severidade.ALTA,
+        km_inicio  = round(km_i, 2),
+        km_fim     = round(km_f, 2),
+        descricao  = (
+            f"Ponto GPS a mais de {DIST_SNV_DESATUALIZADO_M:.0f}m do SNV - erro de SNV"
+        ),
+        metrica    = (
+            f"distancia maxima ao SNV = {dist_max:.1f}m | "
+            f"media do trecho = {dist_med:.1f}m | "
+            f"amostras = {len(trecho)}"
+        ),
+        acao       = (
+            "Revisar o tracado SNV neste ponto. A rota da GoPro esta distante "
+            "da geometria cadastrada no SNV."
+        ),
+        km_pico    = round(float(pico["km"]), 2),
+    ))
 
 
 def _imprimir_sumario(conformidades, qualidades, eventos) -> None:
