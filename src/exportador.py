@@ -17,10 +17,6 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString, Point
 
-from comparador_snv import Conformidade
-from avaliador_qualidade import IndiceQualidade
-from diagnostico_camera import Severidade
-
 # Paleta de cores por conformidade (compatível com QGIS)
 CORES_CONFORMIDADE = {
     "dentro_da_tolerancia":    "#2ECC71",   # verde

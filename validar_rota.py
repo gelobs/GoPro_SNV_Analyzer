@@ -32,17 +32,10 @@ PREFIXO_SAIDA           = r"output\validacao_BR"
 
 # Tamanho de cada segmento de análise (km)
 TAMANHO_SEG_KM          = 1.0
-
-# Velocidade de cruzeiro da gravação em km/h.
-# Usada como referência para detectar segmentos com velocidade atípica.
-# Defina None para usar a mediana calculada automaticamente.
-VELOCIDADE_KMH          = 80
 # ══════════════════════════════════════════════════════════════════════
 
 
 def main() -> None:
-    vel_ms = VELOCIDADE_KMH / 3.6 if VELOCIDADE_KMH else None
-
     print("Carregando SNV...")
     snv = load_snv(SNV_PATH)
 
@@ -56,7 +49,6 @@ def main() -> None:
         gps,
         snv_trecho,
         tamanho_seg_km          = TAMANHO_SEG_KM,
-        velocidade_esperada_ms  = vel_ms,
     )
 
     print("\nExportando resultados...")
