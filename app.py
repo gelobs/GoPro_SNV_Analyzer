@@ -81,7 +81,6 @@ DEFAULTS = {
     "gpsp_ruim":        250,
     "max_velocidade":   60,
     "max_aceleracao":   15,
-    "max_salto_frames": 40,
     # diagnostico_camera.py
     "gap_critico_s":        30,
     "gap_moderado_s":        5,
@@ -92,16 +91,11 @@ DEFAULTS = {
     "vel_encerramento_ms": 5.0,
     "encerramento_tol_final_km": 0.05,
     "salto_max_m":        25.0,
-    "vel_minima_ms":       3.0,
     "vel_maxima_ms":      55.5,
     # avaliador_qualidade.py
     "gpsp_excelente":   200,
     "gpsp_bom":         500,
     "gpsp_aceitavel":  1000,
-    "raio_excelente":    5,
-    "raio_bom":         15,
-    "raio_aceitavel":   50,
-    "raio_degradado":  200,
     # comparador_snv.py
     "dist_snv_desatualizado_m": 100,
 }
@@ -246,6 +240,89 @@ def snv_geojson():
         })
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
+
+
+@app.route("/api/distancia_snv", methods=["POST"])
+def distancia_snv():
+    """Calcula a menor distância de um ponto GPS ao SNV selecionado."""
+    dados = request.get_json(silent=True) or {}
+    shp = dados.get("shp")
+    shp_full = dados.get("path")
+    lat = dados.get("lat")
+    lon = dados.get("lon")
+
+    if not shp or lat is None or lon is None:
+        return jsonify({"erro": "Ponto GPS ou arquivo SNV não informado"}), 400
+
+    shp_path = Path(shp_full) if shp_full else SNV_DIR / shp
+    if not shp_path.exists():
+        return jsonify({"erro": f"Shapefile não encontrado: {shp_path}"}), 404
+
+    try:
+        import geopandas as gpd
+        from shapely.geometry import Point
+
+        gdf = gpd.read_file(str(shp_path), engine="pyogrio")
+        if gdf.empty:
+            return jsonify({"erro": "O SNV selecionado não possui geometrias"}), 400
+        if not gdf.crs:
+            return jsonify({"erro": "O SNV selecionado não possui CRS definido"}), 400
+
+        ponto = gpd.GeoDataFrame(geometry=[Point(float(lon), float(lat))], crs="EPSG:4326")
+        crs_metrico = ponto.estimate_utm_crs()
+        ponto_m = ponto.to_crs(crs_metrico).geometry.iloc[0]
+        distancia_m = float(gdf.to_crs(crs_metrico).geometry.distance(ponto_m).min())
+
+        return jsonify({"distancia_m": round(distancia_m, 2)})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+
+@app.route("/api/distancia_corte_snv", methods=["POST"])
+def distancia_corte_snv():
+    """Calcula a distância reta entre os pontos do SNV mais próximos do corte."""
+    dados = request.get_json(silent=True) or {}
+    shp = dados.get("shp")
+    shp_full = dados.get("path")
+    pontos = dados.get("pontos") or []
+
+    if not shp or len(pontos) != 2:
+        return jsonify({"erro": "Dois pontos GPS e o arquivo SNV são necessários"}), 400
+
+    shp_path = Path(shp_full) if shp_full else SNV_DIR / shp
+    if not shp_path.exists():
+        return jsonify({"erro": f"Shapefile não encontrado: {shp_path}"}), 404
+
+    try:
+        import geopandas as gpd
+        from shapely.geometry import Point
+        from shapely.ops import nearest_points
+
+        gps = []
+        for ponto in pontos:
+            lat = ponto.get("lat")
+            lon = ponto.get("lon")
+            if lat is None or lon is None:
+                return jsonify({"erro": "Coordenadas GPS incompletas"}), 400
+            gps.append(Point(float(lon), float(lat)))
+
+        gdf = gpd.read_file(str(shp_path), engine="pyogrio")
+        if gdf.empty:
+            return jsonify({"erro": "O SNV selecionado não possui geometrias"}), 400
+        if not gdf.crs:
+            return jsonify({"erro": "O SNV selecionado não possui CRS definido"}), 400
+
+        pontos_gps = gpd.GeoDataFrame(geometry=gps, crs="EPSG:4326")
+        crs_metrico = pontos_gps.estimate_utm_crs()
+        gps_m = pontos_gps.to_crs(crs_metrico).geometry
+        snv_m = gdf.to_crs(crs_metrico).geometry.unary_union
+        pontos_snv_m = [nearest_points(ponto, snv_m)[1] for ponto in gps_m]
+        distancia_m = float(pontos_snv_m[0].distance(pontos_snv_m[1]))
+
+        return jsonify({"distancia_reta_m": round(distancia_m, 2)})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
 
 @app.route("/api/debug")
 def debug():
@@ -652,7 +729,6 @@ def _executar_pipeline(params: dict):
         # Garante caminho absoluto para o prefixo de saída
         saida = str(BASE_DIR / saida_raw) if not Path(saida_raw).is_absolute() else saida_raw
         seg_km   = params.get("tamanho_seg_km", 1.0)
-        vel      = params.get("velocidade_kmh", 80)
         avancado = params.get("avancado", {})
 
         if not mp4 or not shp:
@@ -663,7 +739,7 @@ def _executar_pipeline(params: dict):
         log("info", f"Vídeo  : {mp4_path_str}")
         log("info", f"SNV    : {shp_path_str}")
         log("info", f"Saída  : {saida}")
-        log("info", f"Segmento: {seg_km}km | Velocidade ref.: {vel}km/h")
+        log("info", f"Segmento: {seg_km}km")
 
         # Gera validar_rota_temp.py com os parâmetros e limiares do usuário
         script = _gerar_script_temp(
@@ -671,7 +747,6 @@ def _executar_pipeline(params: dict):
             shp_path  = shp_path_str,
             prefixo   = saida,
             seg_km    = seg_km,
-            vel_kmh   = vel,
             avancado  = avancado,
         )
 
@@ -722,7 +797,7 @@ def _executar_pipeline(params: dict):
 
 
 def _gerar_script_temp(mp4_path, shp_path, prefixo,
-                        seg_km, vel_kmh, avancado) -> str:
+                        seg_km, avancado) -> str:
     """Gera script Python temporário com os parâmetros do usuário."""
     av = avancado or {}
 
@@ -741,7 +816,6 @@ def _gerar_script_temp(mp4_path, shp_path, prefixo,
         "vel_encerramento_ms":  ("diagnostico_camera", "VEL_ENCERRAMENTO_MS"),
         "encerramento_tol_final_km": ("diagnostico_camera", "ENCERRAMENTO_TOL_FINAL_KM"),
         "salto_max_m":          ("diagnostico_camera", "SALTO_MAX_M"),
-        "vel_minima_ms":        ("diagnostico_camera", "VEL_MINIMA_MS"),
         "vel_maxima_ms":        ("diagnostico_camera", "VEL_MAXIMA_MS"),
         "gpsp_excelente":       ("avaliador_qualidade","GPSP_EXCELENTE"),
         "gpsp_bom":             ("avaliador_qualidade","GPSP_BOM"),
@@ -773,7 +847,6 @@ snv_t = recortar_snv(snv, gps, buffer_km=0.5)
 df, qual, conf, evts = validar_rota(
     gps, snv_t,
     tamanho_seg_km={seg_km},
-    velocidade_esperada_ms={vel_kmh/3.6:.4f},
 )
 exportar_para_gis(df, qual, conf, evts, prefixo=r'{prefixo}')
 print("Concluído.")
@@ -791,6 +864,11 @@ if __name__ == "__main__":
     print("  Video GoPro Analyzer X DNIT SNV")
     print("  Servidor: http://localhost:5000")
     print("=" * 55)
-    app.run(debug=False, host="0.0.0.0", port=5000, threaded=True)
 
-print("Backend carregado com sucesso")
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=True,
+        use_reloader=False
+    )
+    print("Backend carregado com sucesso")

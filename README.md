@@ -192,7 +192,6 @@ MP4_PATH                = r"data\raw\GX010062.MP4"
 SNV_PATH                = r"data\snv\202602A\SNV_202602A.shp"
 PREFIXO_SAIDA           = r"output\validacao_BRxxxx"
 TAMANHO_SEG_KM          = 1.0
-VELOCIDADE_KMH          = 80
 ```
 
 ```bash

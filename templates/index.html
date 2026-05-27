@@ -522,6 +522,12 @@ aside .cut-grid {
 }
 .leaflet-popup-tip { background: #1C2128; }
 .leaflet-popup-content { margin: 10px 14px; }
+.leaflet-popup.gps-popup-fade-out {
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity .45s ease, transform .45s ease;
+  pointer-events: none;
+}
 #tip{
   position:fixed;background:#1C2128;border:1px solid var(--border2);
   color:var(--text2);font-family:var(--mono);font-size:10px;line-height:1.5;
@@ -592,7 +598,7 @@ aside .cut-grid {
     </div>
 
     <div class="field">
-      <label data-tip="Velocidade mediana calculada automaticamente\nao selecionar o vídeo">Velocidade de referência</label>
+      <label data-tip="Velocidade mediana calculada automaticamente\nao selecionar o vídeo">Velocidade mediana</label>
       <div class="velbox">
         <span class="velnum" id="velnum">—</span>
         <span class="velunit">km/h</span>
@@ -671,7 +677,6 @@ aside .cut-grid {
         <div class="tfield"><label data-tip="GPSP acima deste valor = sinal ruim (DOP > 2.5)">GPSP ruim</label><input type="number" id="t_gpsp_ruim" value="250"></div>
         <div class="tfield"><label data-tip="Velocidade máxima em m/s (~216 km/h)">Vel. máx. (m/s)</label><input type="number" id="t_max_vel" value="60"></div>
         <div class="tfield"><label data-tip="Aceleração máxima em m/s²">Acel. máx. (m/s²)</label><input type="number" id="t_max_acel" value="15"></div>
-        <div class="tfield"><label data-tip="Salto impossível entre frames @ 18Hz (m/s)">Salto frame (m/s)</label><input type="number" id="t_salto_frame" value="40"></div>
       </div>
 
       <div class="tgroup">
@@ -685,7 +690,6 @@ aside .cut-grid {
         <div class="tfield"><label data-tip="Velocidade mínima ao fim = encerramento abrupto (m/s)">Vel. encerramento</label><input type="number" id="t_vel_enc" value="5.0"></div>
         <div class="tfield"><label data-tip="Ignora encerramento abrupto nos ultimos X km da rota">Tol. fim rota (km)</label><input type="number" id="t_tol_fim" value="0.05" step="0.01"></div>
         <div class="tfield"><label data-tip="Salto máximo entre pontos adjacentes (m)">Salto máx. pontos (m)</label><input type="number" id="t_salto_m" value="25.0"></div>
-        <div class="tfield"><label data-tip="Vel. média mínima por segmento (m/s)">Vel. mín. segmento</label><input type="number" id="t_vel_min" value="3.0"></div>
         <div class="tfield"><label data-tip="Vel. média máxima por segmento (m/s)">Vel. máx. segmento</label><input type="number" id="t_vel_max" value="55.5"></div>
       </div>
 
@@ -694,10 +698,6 @@ aside .cut-grid {
         <div class="tfield"><label data-tip="GPSP máximo para sinal Excelente (DOP < 2.0)">GPSP Excelente (≤)</label><input type="number" id="t_gpsp_exc" value="200"></div>
         <div class="tfield"><label data-tip="GPSP máximo para sinal Bom (DOP < 5.0)">GPSP Bom (≤)</label><input type="number" id="t_gpsp_bom" value="500"></div>
         <div class="tfield"><label data-tip="GPSP máximo para sinal Aceitável (DOP < 10.0)">GPSP Aceitável (≤)</label><input type="number" id="t_gpsp_ace" value="1000"></div>
-        <div class="tfield"><label data-tip="Raio de confiança posicional — Excelente (m)">Raio Excelente (m)</label><input type="number" id="t_raio_exc" value="5"></div>
-        <div class="tfield"><label data-tip="Raio de confiança posicional — Bom (m)">Raio Bom (m)</label><input type="number" id="t_raio_bom" value="15"></div>
-        <div class="tfield"><label data-tip="Raio de confiança posicional — Aceitável (m)">Raio Aceitável (m)</label><input type="number" id="t_raio_ace" value="50"></div>
-        <div class="tfield"><label data-tip="Raio de confiança posicional — Degradado (m)">Raio Degradado (m)</label><input type="number" id="t_raio_deg" value="200"></div>
         <div class="tfield"><label data-tip="Distância máxima (m) para SNV desatualizado">Limiar SNV desatual. (m)</label><input type="number" id="t_dist_snv" value="100"></div>
       </div>
     </div>
@@ -757,7 +757,7 @@ aside .cut-grid {
 
 <script>
 // ── Estado global ─────────────────────────────────────────────
-const S = { rodando:false, velMediana:null, avancado:{}, defaults:{}, resultado:null, temposCorteGps:[] };
+const S = { rodando:false, avancado:{}, defaults:{}, resultado:null, temposCorteGps:[], pontosCorteGps:[], distanciaCorteSnv:undefined };
 
 // ── Init ──────────────────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", async () => {
@@ -835,7 +835,7 @@ async function onMp4Change() {
   if (!mp4) {
     document.getElementById("infoGopro").innerHTML = '<span class="iempty">Selecione um vídeo</span>';
     document.getElementById("velnum").textContent = "—";
-    S.velMediana = null; checkReady(); return;
+    checkReady(); return;
   }
   document.getElementById("infoGopro").innerHTML = '<span class="iempty">Lendo metadados...</span>';
   document.getElementById("velnum").textContent = "…";
@@ -849,7 +849,6 @@ async function onMp4Change() {
       : infoHtml([["Modelo",ir.modelo||"—"],["Firmware",ir.firmware||"—"],["Duração",ir.duracao_fmt||"—"],["Resolução",ir.resolucao||"—"],["FPS",(ir.fps||"—")+" fps"],["Gravado",ir.criacao?.substring(0,10)||"—"],["Tamanho",(ir.tamanho_mb||"?")+" MB"]]);
     if (!ir.erro) syncCutVideoFromProcessing(mp4, mp4Path, ir.duracao_s);
     if (vr.velocidade_kmh) {
-      S.velMediana = vr.velocidade_kmh;
       document.getElementById("velnum").textContent = vr.velocidade_kmh;
     } else {
       document.getElementById("velnum").textContent = "—";
@@ -910,9 +909,79 @@ function parseCutTime(valor) {
   return Number(match[1]) * 60 + seconds;
 }
 
-function usarTempoGpsParaCorte(totalSeconds, botao=null) {
+function atualizarPontosGpsSelecionadosParaCorte() {
+  const layerPontos = _layers["pontos"];
+  if (!layerPontos) return;
+  const inicio = S.temposCorteGps.length > 1 ? Math.min(...S.temposCorteGps) : null;
+  const fim = S.temposCorteGps.length > 1 ? Math.max(...S.temposCorteGps) : null;
+
+  layerPontos.eachLayer(layer => {
+    const tempo = layer._tempoCorteGps;
+    if (!Number.isFinite(tempo) || !layer.setStyle) return;
+    const selecionado = inicio !== null && fim !== null
+      ? tempo >= inicio && tempo <= fim
+      : S.temposCorteGps.includes(tempo);
+    layer.setStyle(selecionado ? {
+      fillColor: "#F85149",
+      color: "#B62324",
+      weight: 2,
+      fillOpacity: 0.95,
+    } : {
+      fillColor: layer._corGpsOriginal || "#888",
+      color: "transparent",
+      weight: 0,
+      fillOpacity: 0.55,
+    });
+    layer.setRadius(selecionado ? 6 : 5);
+  });
+}
+
+function fecharPopupGpsComFade(botao) {
+  const popup = botao?.closest(".leaflet-popup");
+  if (!popup) return;
+  popup.classList.add("gps-popup-fade-out");
+  setTimeout(() => {
+    if (popup.isConnected) _map?.closePopup();
+  }, 450);
+}
+
+async function calcularDistanciaPontoAoSnv(layer, lat, lon) {
+  const popup = layer.getPopup()?.getElement();
+  const distanciaEl = popup?.querySelector("[data-distancia-snv]");
+  if (!distanciaEl) return;
+
+  const sel = document.getElementById("mapSnvSel");
+  if (!sel?.value) {
+    distanciaEl.textContent = "SNV não selecionado";
+    return;
+  }
+
+  distanciaEl.textContent = "calculando...";
+  const shpPath = sel.options[sel.selectedIndex]?.dataset?.path || "";
+
+  try {
+    const response = await fetch("/api/distancia_snv", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({shp: sel.value, path: shpPath, lat, lon}),
+    });
+    const data = await response.json();
+    if (data.erro) {
+      distanciaEl.textContent = "indisponível";
+      return;
+    }
+    distanciaEl.textContent = Number(data.distancia_m).toFixed(1) + "m";
+  } catch (e) {
+    distanciaEl.textContent = "indisponível";
+  }
+}
+
+function usarTempoGpsParaCorte(totalSeconds, lat, lon, botao=null) {
   const seconds = Number(totalSeconds);
-  if (!Number.isFinite(seconds) || seconds < 0) return;
+  const latitude = Number(lat);
+  const longitude = Number(lon);
+  if (!Number.isFinite(seconds) || seconds < 0 ||
+      !Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
 
   if (botao) {
     botao.classList.remove("btn-p");
@@ -922,9 +991,13 @@ function usarTempoGpsParaCorte(totalSeconds, botao=null) {
   }
 
   S.temposCorteGps.push(seconds);
+  S.pontosCorteGps.push({ seconds, lat: latitude, lon: longitude });
   if (S.temposCorteGps.length > 2) {
     S.temposCorteGps = S.temposCorteGps.slice(-2);
+    S.pontosCorteGps = S.pontosCorteGps.slice(-2);
   }
+  atualizarPontosGpsSelecionadosParaCorte();
+  fecharPopupGpsComFade(botao);
 
   const status = document.getElementById("cutStatus");
   const step = document.getElementById("cutStep");
@@ -932,6 +1005,7 @@ function usarTempoGpsParaCorte(totalSeconds, botao=null) {
   const endInput = document.getElementById("cutEnd");
 
   if (S.temposCorteGps.length === 1) {
+    S.distanciaCorteSnv = undefined;
     if (status) {
       status.className = "cut-status";
       status.textContent = "Primeiro ponto de corte selecionado: " + fmtCutTime(seconds);
@@ -949,18 +1023,80 @@ function usarTempoGpsParaCorte(totalSeconds, botao=null) {
     status.textContent = "Trecho preenchido pelos pontos GPS: " + fmtCutTime(inicio) + " até " + fmtCutTime(fim);
   }
   if (step) step.textContent = "Confira os tempos e clique em Cortar para executar.";
+  prepararDistanciaCorteNoSnv(inicio, fim);
 }
 
-function confirmarCorteVideo(duracaoCorte, inicio, fim) {
+function distanciaCorteCalculadaParaTrecho(inicio, fim) {
+  if (S.pontosCorteGps.length !== 2) return undefined;
+  const tempos = S.pontosCorteGps.map(p => Math.floor(p.seconds));
+  return Math.min(...tempos) === inicio && Math.max(...tempos) === fim
+    ? S.distanciaCorteSnv
+    : undefined;
+}
+
+async function prepararDistanciaCorteNoSnv(inicio, fim) {
+  if (S.pontosCorteGps.length !== 2) return;
+  const selecao = S.pontosCorteGps.map(p => ({...p}));
+  const btn = document.getElementById("cutBtn");
+  const status = document.getElementById("cutStatus");
+  const step = document.getElementById("cutStep");
+  S.distanciaCorteSnv = undefined;
+  if (btn) btn.disabled = true;
+  if (step) step.textContent = "Calculando distância perdida no SNV...";
+
+  const sel = document.getElementById("mapSnvSel");
+  if (!sel?.value) {
+    S.distanciaCorteSnv = null;
+    if (btn) btn.disabled = false;
+    if (step) step.textContent = "Confira os tempos e clique em Cortar para executar.";
+    return;
+  }
+  const shpPath = sel.options[sel.selectedIndex]?.dataset?.path || "";
+
+  try {
+    const response = await fetch("/api/distancia_corte_snv", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({shp: sel.value, path: shpPath, pontos: selecao}),
+    });
+    const data = await response.json();
+    const selecaoAindaAtual = S.pontosCorteGps.length === 2 &&
+      S.pontosCorteGps.every((p, i) => p.seconds === selecao[i].seconds);
+    if (!selecaoAindaAtual) return;
+    S.distanciaCorteSnv = !response.ok || data.erro ? null : Number(data.distancia_reta_m);
+    if (status && Number.isFinite(S.distanciaCorteSnv)) {
+      status.textContent = "Trecho preenchido pelos pontos GPS: " + fmtCutTime(inicio) + " até " + fmtCutTime(fim) +
+        " | SNV: " + S.distanciaCorteSnv.toFixed(1) + "m";
+    }
+  } catch (e) {
+    const selecaoAindaAtual = S.pontosCorteGps.length === 2 &&
+      S.pontosCorteGps.every((p, i) => p.seconds === selecao[i].seconds);
+    if (selecaoAindaAtual) S.distanciaCorteSnv = null;
+  } finally {
+    const selecaoAindaAtual = S.pontosCorteGps.length === 2 &&
+      S.pontosCorteGps.every((p, i) => p.seconds === selecao[i].seconds);
+    if (selecaoAindaAtual) {
+      if (btn) btn.disabled = false;
+      if (step) step.textContent = "Confira os tempos e clique em Cortar para executar.";
+    }
+  }
+}
+
+function confirmarCorteVideo(duracaoCorte, inicio, fim, distanciaSnv) {
   const modal = document.getElementById("cutConfirmModal");
   const text = document.getElementById("cutConfirmText");
   const ok = document.getElementById("cutConfirmOk");
   const cancel = document.getElementById("cutConfirmCancel");
   if (!modal || !text || !ok || !cancel) return Promise.resolve(true);
 
+  const metrosPerdidos = distanciaSnv === undefined
+    ? ""
+    : distanciaSnv === null || !Number.isFinite(distanciaSnv)
+      ? "<br>Distância perdida no SNV: <strong>indisponível</strong>."
+      : `<br>Distância reta perdida no SNV: <strong>${distanciaSnv.toFixed(1)} metros</strong>.`;
   text.innerHTML = `
     O trecho entre <strong>${esc(inicio)}</strong> e <strong>${esc(fim)}</strong> será removido.<br>
-    Tempo total cortado: <strong>${fmtVideoDuration(duracaoCorte)}</strong>.`;
+    Tempo total cortado: <strong>${fmtVideoDuration(duracaoCorte)}</strong>.${metrosPerdidos}`;
   modal.style.display = "flex";
 
   return new Promise(resolve => {
@@ -1041,6 +1177,9 @@ function resetarEstadoCorteVideo() {
   if (step) step.textContent = "Aguardando corte.";
   if (fileInput) fileInput.value = "";
   S.temposCorteGps = [];
+  S.pontosCorteGps = [];
+  S.distanciaCorteSnv = undefined;
+  atualizarPontosGpsSelecionadosParaCorte();
 }
 
 function checkReady() {
@@ -1058,7 +1197,6 @@ async function processar() {
     shp: selSnv.value, shp_path: selSnv.options[selSnv.selectedIndex]?.dataset?.path||"",
     saida: document.getElementById("inpSaida").value,
     tamanho_seg_km: parseFloat(document.getElementById("segKm").value),
-    velocidade_kmh: S.velMediana || 80,
     avancado: S.avancado,
   };
   resetarEstadoCorteVideo();
@@ -1162,7 +1300,8 @@ async function cortarVideo() {
   }
 
   const fimConfirmacao = corteAteFinal ? "fim do vídeo" : endTime;
-  const confirmado = await confirmarCorteVideo(fimEfetivo - startSeconds, startTime, fimConfirmacao);
+  const distanciaSnv = distanciaCorteCalculadaParaTrecho(startSeconds, fimEfetivo);
+  const confirmado = await confirmarCorteVideo(fimEfetivo - startSeconds, startTime, fimConfirmacao, distanciaSnv);
   if (!confirmado) {
     status.className = "cut-status";
     status.textContent = "Corte cancelado.";
@@ -1493,7 +1632,7 @@ function aplicarAdv() {
     janela_bateria_n:getN("t_jan_bat"),delta_gpsp_bateria:getN("t_delta_gpsp"),
     queda_vel_bateria:getN("t_queda_vel"),vel_encerramento_ms:getN("t_vel_enc"),
     encerramento_tol_final_km:getN("t_tol_fim"),
-    salto_max_m:getN("t_salto_m"),vel_minima_ms:getN("t_vel_min"),
+    salto_max_m:getN("t_salto_m"),
     vel_maxima_ms:getN("t_vel_max"),gpsp_excelente:getN("t_gpsp_exc"),
     gpsp_bom:getN("t_gpsp_bom"),gpsp_aceitavel:getN("t_gpsp_ace"),
     dist_snv_desatualizado_m:getN("t_dist_snv"),
@@ -1505,10 +1644,9 @@ function resetDef() {
   const m={t_gpsp_ruim:"gpsp_ruim",t_max_vel:"max_velocidade",t_max_acel:"max_aceleracao",
     t_gap_crit:"gap_critico_s",t_gap_mod:"gap_moderado_s",t_pts_var:"pontos_sem_variacao",
     t_jan_bat:"janela_bateria_n",t_delta_gpsp:"delta_gpsp_bateria",t_queda_vel:"queda_vel_bateria",
-    t_vel_enc:"vel_encerramento_ms",t_tol_fim:"encerramento_tol_final_km",t_salto_m:"salto_max_m",t_vel_min:"vel_minima_ms",
+    t_vel_enc:"vel_encerramento_ms",t_tol_fim:"encerramento_tol_final_km",t_salto_m:"salto_max_m",
     t_vel_max:"vel_maxima_ms",t_gpsp_exc:"gpsp_excelente",t_gpsp_bom:"gpsp_bom",
-    t_gpsp_ace:"gpsp_aceitavel",t_raio_exc:"raio_excelente",t_raio_bom:"raio_bom",
-    t_raio_ace:"raio_aceitavel",t_raio_deg:"raio_degradado",t_dist_snv:"dist_snv_desatualizado_m"};
+    t_gpsp_ace:"gpsp_aceitavel",t_dist_snv:"dist_snv_desatualizado_m"};
   Object.entries(m).forEach(([id,key])=>{ if(d[key]!==undefined) document.getElementById(id).value=d[key]; });
   S.avancado={};
 }
@@ -1659,10 +1797,11 @@ async function renderMapa(d) {
     carregarCamada("pontos"),
     carregarCamada("eventos_camera"),
   ]);
-  if (_layers["pontos"]) _layers["pontos"].bringToFront();
 
   // Fit nos segmentos
   fitMapa();
+  await carregarSNVnoMapa();
+  if (_layers["snv"]) _layers["snv"].bringToFront();
   setTimeout(() => {
     _map?.invalidateSize();
     fitMapa();
@@ -1731,11 +1870,8 @@ async function carregarCamada(tipo) {
           const iq = p.iq_sinal || "—";
           const dop = p.dop != null ? parseFloat(p.dop).toFixed(2) : "—";
           const vel = p.vel_kmh != null ? parseFloat(p.vel_kmh).toFixed(0)+" km/h" : "—";
-          const distSnv = p.dist_snv_m != null ? parseFloat(p.dist_snv_m).toFixed(1)+"m" : "—";
-          layer.bindTooltip(
-            `km ${parseFloat(p.km||0).toFixed(2)} | IQ: ${p.iq_sinal||"—"} | DOP: ${p.dop != null ? parseFloat(p.dop).toFixed(2) : "—"} | ${p.vel_kmh != null ? parseFloat(p.vel_kmh).toFixed(0)+"km/h" : ""}`,
-            {sticky:true, className:"leaflet-tooltip-dark"}
-          );
+          layer._tempoCorteGps = segundosVideo;
+          layer._corGpsOriginal = COR_IQ[iq] || "#888";
           layer.bindTooltip(
             `km ${km} | Vídeo: ${duracaoVideo} | IQ: ${iq} | DOP: ${dop} | ${vel}`,
             {sticky:true, className:"leaflet-tooltip-dark"}
@@ -1747,18 +1883,21 @@ async function carregarCamada(tipo) {
               km: ${km}<br>
               Velocidade: ${vel}<br>
               IQ GPS: ${iq} | DOP: ${dop}<br>
-              Dist. SNV: ${distSnv}
+              Dist. SNV: <strong data-distancia-snv>calculando...</strong>
               <button class="btn btn-p" type="button" style="margin-top:8px;width:100%;padding:5px 8px;font-size:10px"
-                onclick="usarTempoGpsParaCorte(${segundosVideo ?? "null"}, this)">
+                onclick="usarTempoGpsParaCorte(${segundosVideo ?? "null"}, ${Number(p.lat)}, ${Number(p.lon)}, this)">
                 Cortar vídeo
               </button>
             </div>`);
+          layer.on("popupopen", () => calcularDistanciaPontoAoSnv(layer, p.lat, p.lon));
         }
       });
       _layers[tipo].addTo(_map);  // sempre adiciona; toggleLayer controla visibilidade
+      atualizarPontosGpsSelecionadosParaCorte();
 
     } else if (tipo === "eventos_camera") {
       _eventosMapa = [];
+      removerAlertasVelocidadeBaixa(gj);
       agruparEventosSobrepostos(gj);
       _layers[tipo] = L.geoJSON(gj, {
         pointToLayer: (f, latlng) => {
@@ -1818,7 +1957,7 @@ async function carregarCamada(tipo) {
             ? `<button class="btn btn-p" style="margin-top:8px;width:100%;padding:5px 8px;font-size:10px"
                  onclick="zoomEventoMapa(${lat},${lon})">Visualizar</button>`
             : "";
-          if (Number.isFinite(lat) && Number.isFinite(lon) && eventosGrupo.some(isEventoNavegavel)) {
+          if (Number.isFinite(lat) && Number.isFinite(lon)) {
             _eventosMapa.push({ lat, lon, layer, props: p });
           }
           const itens = eventosGrupo.map((ev, index) => {
@@ -1872,8 +2011,9 @@ function isAlertaVelocidadeBaixa(props) {
   return evento === "velocidade_atipica" && descricao.includes("abaixo");
 }
 
-function isEventoNavegavel(props) {
-  return !isAlertaVelocidadeBaixa(props);
+function removerAlertasVelocidadeBaixa(gj) {
+  if (!gj?.features?.length) return;
+  gj.features = gj.features.filter(f => !isAlertaVelocidadeBaixa(f.properties || {}));
 }
 
 function distanciaEventosMetros(a, b) {
@@ -2011,7 +2151,6 @@ function htmlResumoEventos() {
   for (const evento of _eventosMapa) {
     const grupo = Array.isArray(evento.props?.eventos_grupo) ? evento.props.eventos_grupo : [evento.props];
     for (const item of grupo) {
-      if (!isEventoNavegavel(item)) continue;
       const tipo = (item?.evento || "evento").replace(/_/g, " ");
       counts.set(tipo, (counts.get(tipo) || 0) + 1);
     }
@@ -2065,9 +2204,13 @@ async function carregarSNVnoMapa() {
   setSnvStatus("loading", "Carregando traçado SNV...");
   document.getElementById("btnCarregarSnv").disabled = true;
 
-  // Calcula bbox atual do mapa para filtrar o SNV
+  // Usa a rota processada para filtrar o SNV, mesmo se a aba do mapa estiver oculta.
   let bbox = null;
-  if (_map) {
+  const camadaRota = _layers["segmentos"] || _layers["pontos"];
+  if (camadaRota) {
+    const b = camadaRota.getBounds();
+    bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+  } else if (_map) {
     const b = _map.getBounds();
     bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
   }
@@ -2113,6 +2256,7 @@ async function carregarSNVnoMapa() {
         layer.on("mouseout",  () => _layers["snv"]?.resetStyle(layer));
       }
     }).addTo(_map);
+    _layers["snv"].bringToFront();
 
     const n = data.features;
     setSnvStatus("ok", `✓ ${shp} — ${n} segmento(s) carregado(s)`);

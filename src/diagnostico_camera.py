@@ -72,7 +72,6 @@ QUEDA_VEL_BATERIA     = 0.40   # queda relativa de velocidade no fim
 VEL_ENCERRAMENTO_MS   =  5.0   # câmera em movimento ao fim da gravação (m/s)
 ENCERRAMENTO_TOL_FINAL_KM = 0.05  # ignora encerramento nos ultimos X km
 SALTO_MAX_M           = 25.0   # deslocamento impossível entre pontos adjacentes
-VEL_MINIMA_MS         =  3.0   # < 3 m/s em todo o segmento = parada/anomalia
 VEL_MAXIMA_MS         = 55.5   # > 200 km/h = spike impossível em rodovia
 VEL_PARADO_MS         =  0.50  # tolera jitter da GoPro em parada (~1.8 km/h)
 PARADA_VEICULO_MIN_S  =  5.0
@@ -84,15 +83,12 @@ AVANCO_KM_MS_MIN      =  1.0
 KM_SEGUNDO_BAIXO_N    = 18
 
 
-def diagnosticar(df: pd.DataFrame,
-                  vel_referencia_ms: Optional[float] = None,
-                  tamanho_seg_km: float = 1.0) -> list:
+def diagnosticar(df: pd.DataFrame, tamanho_seg_km: float = 1.0) -> list:
     """
     Executa todos os detectores e retorna lista de EventoDiagnostico.
 
     Parâmetros:
       df                : DataFrame com timestamp, lat, lon, km, speed2d, precision
-      vel_referencia_ms : velocidade esperada (None = usa mediana da rota)
       tamanho_seg_km    : tamanho dos segmentos para análise de velocidade
     """
     eventos = []
@@ -103,7 +99,7 @@ def diagnosticar(df: pd.DataFrame,
     eventos += _detectar_descontinuidades(df, tamanho_seg_km)
     eventos += _detectar_km_por_segundo_baixo(df)
     eventos += _detectar_azimute_irregular(df)
-    eventos += _detectar_velocidade_atipica(df, vel_referencia_ms, tamanho_seg_km)
+    eventos += _detectar_velocidade_atipica(df, tamanho_seg_km)
 
     eventos.sort(key=lambda e: (e.km_inicio, e.severidade.value))
     return eventos
@@ -495,14 +491,11 @@ def _adicionar_evento_km_s_baixo(
 
 
 def _detectar_velocidade_atipica(df: pd.DataFrame,
-                                   vel_ref_ms: Optional[float],
                                    tamanho_seg_km: float) -> list:
     """
-    Detecta segmentos com velocidade média muito fora do padrão da rota.
-    Usa a mediana da rota como referência se vel_ref_ms não for fornecida.
+    Detecta segmentos com velocidade média fisicamente impossível.
     """
     eventos = []
-    vel_ref = vel_ref_ms if vel_ref_ms else df["speed2d"].median()
     km_max  = df["km"].max()
     km = 0.0
 
@@ -514,25 +507,7 @@ def _detectar_velocidade_atipica(df: pd.DataFrame,
 
         vel_seg = seg["speed2d"].mean()
 
-        if vel_seg < VEL_MINIMA_MS and vel_ref > 5:
-            km_pico = seg.loc[seg["speed2d"].idxmin(), "km"]
-            eventos.append(EventoDiagnostico(
-                evento     = EventoCamera.VELOCIDADE_ATIPICA,
-                severidade = Severidade.MODERADA,
-                km_inicio  = round(km, 2),
-                km_fim     = round(km + tamanho_seg_km, 2),
-                descricao  = "Velocidade abaixo do padrão da rota",
-                metrica    = (
-                    f"média do segmento = {vel_seg*3.6:.1f} km/h | "
-                    f"referência = {vel_ref*3.6:.1f} km/h"
-                ),
-                acao = (
-                    "Há risco de pontos GPS ficarem embolados por baixa velocidade. "
-                    "Revisar o vídeo neste trecho."
-                ),
-                km_pico = round(km_pico, 2),
-            ))
-        elif vel_seg > VEL_MAXIMA_MS:
+        if vel_seg > VEL_MAXIMA_MS:
             km_pico = seg.loc[seg["speed2d"].idxmax(), "km"]
             eventos.append(EventoDiagnostico(
                 evento     = EventoCamera.VELOCIDADE_ATIPICA,
