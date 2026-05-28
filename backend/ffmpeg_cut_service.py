@@ -49,7 +49,7 @@ def split_video_on_cut(
 ) -> Tuple[bool, str, List[str]]:
     _log_step(log, "Validando tempos informados.")
     if not validar_tempo(start_time) or not validar_tempo(end_time):
-        return False, "Formato de tempo invalido. Use M:SS.", []
+        return False, "Formato de tempo invalido. Use MM:SS.", []
 
     start_seconds = time_to_seconds(start_time)
     end_seconds = time_to_seconds(end_time)
