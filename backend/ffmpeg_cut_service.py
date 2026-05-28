@@ -17,6 +17,8 @@ from backend.ffmpeg_service import (
     validar_tempo,
 )
 
+MIN_SEGMENT_DURATION_SECONDS = 1.0
+
 
 def _log_step(log: Optional[Callable[[str], None]], message: str) -> None:
     if log:
@@ -102,11 +104,16 @@ def split_video_on_cut(
     second_segment = target.parent / f"{target.stem}_fim.mp4"
     segment_specs = []
 
-    if cut_start > 0:
+    if cut_start > MIN_SEGMENT_DURATION_SECONDS:
         segment_specs.append((first_segment, 0, cut_start))
+    elif cut_start > 0:
+        _log_step(log, "Ignorando segmento inicial com ate 1 segundo.")
 
-    if cut_end < duration_seconds:
-        segment_specs.append((second_segment, cut_end, duration_seconds - cut_end))
+    remaining_end_duration = duration_seconds - cut_end
+    if remaining_end_duration > MIN_SEGMENT_DURATION_SECONDS:
+        segment_specs.append((second_segment, cut_end, remaining_end_duration))
+    elif remaining_end_duration > 0:
+        _log_step(log, "Ignorando segmento final com ate 1 segundo.")
 
     if not segment_specs:
         return False, "O trecho informado remove o video inteiro.", []
