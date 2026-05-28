@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1134,8 +1134,8 @@ function confirmarCorteVideo(duracaoCorte, inicio, fim, distanciaSnv) {
   const metrosPerdidos = distanciaSnv === undefined
     ? ""
     : distanciaSnv === null || !Number.isFinite(distanciaSnv)
-      ? "<br>Distância perdida no SNV: <strong>indisponível</strong>."
-      : `<br>Distância reta perdida no SNV: <strong>${distanciaSnv.toFixed(1)} metros</strong>.`;
+      ? "<br>Distância perdida sobre o traçado do SNV: <strong>indisponível</strong>."
+      : `<br>Distância perdida sobre o traçado do SNV: <strong>${distanciaSnv.toFixed(1)} metros</strong>.`;
   text.innerHTML = `
     O trecho entre <strong>${esc(inicio)}</strong> e <strong>${esc(fim)}</strong> será removido.<br>
     Tempo total cortado: <strong>${fmtVideoDuration(duracaoCorte)}</strong>.${metrosPerdidos}`;
@@ -1850,7 +1850,7 @@ async function renderMapa(d) {
   if (_layers["snv"]) _layers["snv"].bringToFront();
   setTimeout(() => {
     _map?.invalidateSize();
-    fitMapa();
+    if (!focarPrimeiroEventoMapa()) fitMapa();
   }, 100);
 }
 
@@ -2133,7 +2133,7 @@ async function onTabMapa() {
   } else if (_map) {
     setTimeout(() => {
       _map.invalidateSize();
-      fitMapa();
+      if (!focarPrimeiroEventoMapa()) fitMapa();
     }, 100);
   }
 }
@@ -2144,6 +2144,18 @@ function fitMapa() {
   if (l) {
     try { _map.fitBounds(l.getBounds(), {padding:[20,20]}); } catch(e){}
   }
+}
+
+function focarPrimeiroEventoMapa() {
+  if (!_map || !_eventosMapa.length) return false;
+  const evento = _eventosMapa[0];
+  if (!evento) return false;
+  _eventoAtual = 0;
+  atualizarNavegadorEventos();
+  _map.closePopup();
+  _map.setView([evento.lat, evento.lon], 20, { animate: true });
+  setTimeout(() => evento.layer?.openPopup(), 250);
+  return true;
 }
 
 function zoomEventoMapa(lat, lon) {
