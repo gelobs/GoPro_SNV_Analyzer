@@ -1,0 +1,70 @@
+Metadata-Version: 2.4
+Name: mapclassify
+Version: 2.10.0
+Summary: Classification Schemes for Choropleth Maps.
+Maintainer-email: Serge Rey <sjsrey@gmail.com>, Wei Kang <weikang9009@gmail.com>
+License: BSD 3-Clause
+Project-URL: Home, https://pysal.org/mapclassify/
+Project-URL: Repository, https://github.com/pysal/mapclassify
+Keywords: spatial statistics,geovisualization
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: GIS
+Requires-Python: >=3.11
+Description-Content-Type: text/x-rst
+License-File: LICENSE.txt
+Requires-Dist: networkx>=3.2
+Requires-Dist: numpy>=1.26
+Requires-Dist: pandas>=2.1
+Requires-Dist: scikit-learn>=1.4
+Requires-Dist: scipy>=1.12
+Provides-Extra: speedups
+Requires-Dist: numba>=0.58; extra == "speedups"
+Provides-Extra: dev
+Requires-Dist: ruff; extra == "dev"
+Requires-Dist: pre-commit; extra == "dev"
+Requires-Dist: watermark; extra == "dev"
+Provides-Extra: docs
+Requires-Dist: nbsphinx; extra == "docs"
+Requires-Dist: numpydoc; extra == "docs"
+Requires-Dist: sphinx>=1.4.3; extra == "docs"
+Requires-Dist: sphinx-gallery; extra == "docs"
+Requires-Dist: sphinxcontrib-bibtex; extra == "docs"
+Requires-Dist: sphinx_bootstrap_theme; extra == "docs"
+Provides-Extra: spatial
+Requires-Dist: geopandas; extra == "spatial"
+Requires-Dist: libpysal; extra == "spatial"
+Requires-Dist: matplotlib; extra == "spatial"
+Requires-Dist: shapely; extra == "spatial"
+Provides-Extra: notebooks
+Requires-Dist: mapclassify[spatial]; extra == "notebooks"
+Requires-Dist: geodatasets; extra == "notebooks"
+Requires-Dist: ipywidgets; extra == "notebooks"
+Requires-Dist: jupyterlab; extra == "notebooks"
+Requires-Dist: lonboard; extra == "notebooks"
+Requires-Dist: pyarrow; extra == "notebooks"
+Requires-Dist: pydeck; extra == "notebooks"
+Requires-Dist: seaborn; extra == "notebooks"
+Provides-Extra: tests
+Requires-Dist: mapclassify[spatial]; extra == "tests"
+Requires-Dist: pytest; extra == "tests"
+Requires-Dist: pytest-cov; extra == "tests"
+Requires-Dist: pytest-xdist; extra == "tests"
+Requires-Dist: pytest-doctestplus; extra == "tests"
+Provides-Extra: all
+Requires-Dist: mapclassify[dev,docs,notebooks,speedups,tests]; extra == "all"
+Dynamic: license-file
+
+`mapclassify` implements a family of classification schemes for choropleth maps.
+Its focus is on the determination of the number of classes, and the assignment
+of observations to those classes. It is intended for use with upstream mapping
+and geovisualization packages (see `geopandas`_ and `geoplot`_)
+that handle the rendering of the maps.
+
+For further theoretical background see "`Choropleth Mapping`_" in Rey, S.J., D. Arribas-Bel, and L.J. Wolf (2020) "Geographic Data Science with PySAL and the PyData Stack”.
+
+.. _geopandas: https://geopandas.org/mapping.html
+.. _geoplot: https://residentmario.github.io/geoplot/user_guide/Customizing_Plots.html
+.. _Choropleth Mapping: https://geographicdata.science/book/notebooks/05_choropleth.html
