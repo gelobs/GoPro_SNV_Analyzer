@@ -211,11 +211,5 @@ data/raw/*.mp4
 data/raw/*.MP4
 videos/
 *.rar
-
-# Desktop app distribution: keep runtime files, ignore generated media/results
 dist/app/
-!dist/
-!dist/desktop_app/
-!dist/desktop_app/desktop_app.exe
-!dist/desktop_app/_internal/
-!dist/desktop_app/_internal/**
+dist/desktop_app/_internal/
