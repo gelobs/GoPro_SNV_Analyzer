@@ -4,6 +4,8 @@ Uso: python app.py
 Acesse: http://localhost:5000
 """
 from backend.service import *
+import contextlib
+import importlib
 import json
 import os
 import queue
@@ -18,13 +20,17 @@ from flask import Flask, Response, jsonify, render_template, request, stream_wit
 from werkzeug.utils import secure_filename
 
 # ── Paths do projeto (resolve() garante caminho absoluto) ────────────────────
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 SRC_DIR  = BASE_DIR / "src"
 DATA_DIR = BASE_DIR / "data"
 SNV_DIR  = DATA_DIR / "snv"
 RAW_DIR  = DATA_DIR / "raw"
 OUT_DIR  = BASE_DIR / "output"
 CUT_UPLOAD_DIR = RAW_DIR / "_corte_uploads"
+FFMPEG_BIN_DIR = BASE_DIR / "ffmpeg" / "bin"
+
+if FFMPEG_BIN_DIR.exists():
+    os.environ["PATH"] = str(FFMPEG_BIN_DIR) + os.pathsep + os.environ.get("PATH", "")
 
 # Cria pastas se não existirem
 for d in [SNV_DIR, RAW_DIR, OUT_DIR, CUT_UPLOAD_DIR]:
@@ -517,6 +523,41 @@ def escolher_pasta_corte():
     return jsonify({"success": True, "path": selected})
 
 
+@app.route("/api/escolher_arquivo_mp4", methods=["POST"])
+def escolher_arquivo_mp4():
+    """Abre o seletor de arquivo local para escolher um video MP4."""
+    arquivo_atual_raw = (request.json or {}).get("arquivo", "")
+    arquivo_atual = Path(arquivo_atual_raw) if arquivo_atual_raw else RAW_DIR
+    pasta_inicial = arquivo_atual.parent if arquivo_atual.is_file() else arquivo_atual
+    if not pasta_inicial.is_absolute():
+        pasta_inicial = BASE_DIR / pasta_inicial
+
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        selected = filedialog.askopenfilename(
+            title="Escolha um video MP4",
+            initialdir=str(pasta_inicial if pasta_inicial.exists() else BASE_DIR),
+            filetypes=[("Videos MP4", "*.mp4 *.MP4"), ("Todos os arquivos", "*.*")],
+        )
+        root.destroy()
+    except Exception as exc:
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+    if not selected:
+        return jsonify({"success": False, "message": "Selecao cancelada."}), 200
+
+    path = Path(selected)
+    if path.suffix.lower() != ".mp4":
+        return jsonify({"success": False, "message": "Selecione um arquivo MP4."}), 400
+
+    return jsonify({"success": True, "name": path.name, "path": str(path)})
+
+
 @app.route("/api/cortar_video", methods=["POST"])
 def cortar_video_api():
     """Inicia o corte de um video enviado pela aba Corte de Video."""
@@ -714,7 +755,7 @@ def resultado():
 # ── Pipeline de processamento ─────────────────────────────────────────────────
 
 def _executar_pipeline(params: dict):
-    """Executa validar_rota.py como subprocesso com log em tempo real."""
+    """Executa o pipeline de validação com log em tempo real."""
     _processo_atual["rodando"] = True
 
     def log(tipo, msg):
@@ -741,52 +782,32 @@ def _executar_pipeline(params: dict):
         log("info", f"Saída  : {saida}")
         log("info", f"Segmento: {seg_km}km")
 
-        # Gera validar_rota_temp.py com os parâmetros e limiares do usuário
-        script = _gerar_script_temp(
-            mp4_path  = mp4_path_str,
-            shp_path  = shp_path_str,
-            prefixo   = saida,
-            seg_km    = seg_km,
-            avancado  = avancado,
-        )
+        if str(SRC_DIR) not in sys.path:
+            sys.path.insert(0, str(SRC_DIR))
 
-        script_path = BASE_DIR / "_validar_temp.py"
-        script_path.write_text(script, encoding="utf-8")
+        _aplicar_limiares_avancados(avancado)
 
-        env = os.environ.copy()
-        env["PYTHONIOENCODING"] = "utf-8"
-        env["PYTHONUTF8"] = "1"
+        from snv_loader import load_snv, recortar_snv
+        from gp12_gps_extractor import extract_hero12_gps
+        from validador_snv_gopro import validar_rota
+        from exportador import exportar_para_gis
 
-        proc = subprocess.Popen(
-            [sys.executable, str(script_path)],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            bufsize=1,
-            cwd=str(BASE_DIR),
-            env=env,
-        )
-        _processo_atual["proc"] = proc
+        writer = _LogWriter(log)
+        with contextlib.redirect_stdout(writer), contextlib.redirect_stderr(writer):
+            print("Carregando SNV...")
+            snv = load_snv(shp_path_str)
+            print("Extraindo GPS da GoPro...")
+            gps = extract_hero12_gps(mp4_path_str)
+            print("Recortando SNV...")
+            snv_t = recortar_snv(snv, gps, buffer_km=0.5)
+            df, qual, conf, evts = validar_rota(
+                gps, snv_t,
+                tamanho_seg_km=seg_km,
+            )
+            exportar_para_gis(df, qual, conf, evts, prefixo=saida)
+            print("Concluído.")
 
-        for line in proc.stdout:
-            linha = line.rstrip()
-            if not linha:
-                continue
-            tipo = ("erro"  if any(k in linha for k in ["Traceback","Error","ERRO"]) else
-                    "aviso" if any(k in linha for k in ["AVISO","WARNING","⚠"]) else
-                    "ok"    if any(k in linha for k in ["✓","OK","EXPORT","Conclu"]) else
-                    "info")
-            log(tipo, linha)
-
-        proc.wait()
-        script_path.unlink(missing_ok=True)
-
-        if proc.returncode == 0:
-            log("ok", "Processamento concluído com sucesso.")
-        else:
-            log("erro", f"Processo encerrou com código {proc.returncode}.")
+        log("ok", "Processamento concluído com sucesso.")
 
     except Exception as e:
         log("erro", f"Erro interno: {e}")
@@ -796,13 +817,35 @@ def _executar_pipeline(params: dict):
         _log_queue.put({"tipo": "fim", "msg": ""})
 
 
-def _gerar_script_temp(mp4_path, shp_path, prefixo,
-                        seg_km, avancado) -> str:
-    """Gera script Python temporário com os parâmetros do usuário."""
-    av = avancado or {}
+class _LogWriter:
+    def __init__(self, log):
+        self.log = log
+        self.buffer = ""
 
-    # Sobrescritas de limiares (aplicadas via monkey-patch)
-    patches = []
+    def write(self, text):
+        self.buffer += text
+        while "\n" in self.buffer:
+            line, self.buffer = self.buffer.split("\n", 1)
+            self._emit(line)
+
+    def flush(self):
+        if self.buffer:
+            self._emit(self.buffer)
+            self.buffer = ""
+
+    def _emit(self, line):
+        linha = line.rstrip()
+        if not linha:
+            return
+        tipo = ("erro"  if any(k in linha for k in ["Traceback", "Error", "ERRO"]) else
+                "aviso" if any(k in linha for k in ["AVISO", "WARNING", "⚠"]) else
+                "ok"    if any(k in linha for k in ["✓", "OK", "EXPORT", "Conclu"]) else
+                "info")
+        self.log(tipo, linha)
+
+
+def _aplicar_limiares_avancados(avancado):
+    av = avancado or {}
     mapa_modulo = {
         "gpsp_ruim":            ("gp12_features",      "GPSP_RUIM"),
         "max_velocidade":       ("gp12_features",      "MAX_VELOCIDADE"),
@@ -825,32 +868,7 @@ def _gerar_script_temp(mp4_path, shp_path, prefixo,
     for chave, valor in av.items():
         if chave in mapa_modulo and valor is not None:
             modulo, constante = mapa_modulo[chave]
-            patches.append(f"import {modulo}; {modulo}.{constante} = {valor}")
-
-    patches_str = "\n".join(patches)
-
-    return f"""import sys
-sys.path.insert(0, r'{str(SRC_DIR)}')
-{patches_str}
-
-from snv_loader          import load_snv, recortar_snv
-from gp12_gps_extractor  import extract_hero12_gps
-from validador_snv_gopro import validar_rota
-from exportador          import exportar_para_gis
-
-print("Carregando SNV...")
-snv = load_snv(r'{shp_path}')
-print("Extraindo GPS da GoPro...")
-gps = extract_hero12_gps(r'{mp4_path}')
-print("Recortando SNV...")
-snv_t = recortar_snv(snv, gps, buffer_km=0.5)
-df, qual, conf, evts = validar_rota(
-    gps, snv_t,
-    tamanho_seg_km={seg_km},
-)
-exportar_para_gis(df, qual, conf, evts, prefixo=r'{prefixo}')
-print("Concluído.")
-"""
+            setattr(importlib.import_module(modulo), constante, valor)
 
 
 def _fmt_duracao(segundos: float) -> str:
