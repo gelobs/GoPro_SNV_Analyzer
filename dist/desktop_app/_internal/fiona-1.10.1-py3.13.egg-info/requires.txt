@@ -1,0 +1,25 @@
+attrs>=19.2.0
+click~=8.0
+click-plugins>=1.0
+cligj>=0.5
+
+[:python_version < "3.10"]
+importlib-metadata
+
+[all]
+fiona[calc,s3,test]
+
+[calc]
+pyparsing
+shapely
+
+[s3]
+boto3>=1.3.1
+
+[test]
+aiohttp
+fsspec
+fiona[s3]
+pytest>=7
+pytest-cov
+pytz
