@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -86,6 +86,9 @@ input[type=file]::file-selector-button:hover {
 select option{background:var(--surface2)}
 .irow{display:flex;align-items:center;gap:4px}
 .irow input{flex:1;text-align:center}
+.select-row{display:flex;align-items:center;gap:6px}
+.select-row select{min-width:0;flex:1}
+.select-row .btn{flex:none;padding:6px 10px;font-size:10px}
 .spbtn{
   width:26px;height:26px;background:var(--surface3);border:1px solid var(--border);
   border-radius:4px;color:var(--text2);font-size:14px;cursor:pointer;
@@ -225,12 +228,13 @@ main{
   background:#090D12;border:1px solid var(--border);border-radius:6px;
   padding:12px 14px;font-family:var(--mono);font-size:11px;
   line-height:1.8;height:calc(100vh - 180px);overflow-y:auto;
+  cursor:text;user-select:text;
 }
 .logbox::-webkit-scrollbar{width:4px}
 .logbox::-webkit-scrollbar-thumb{background:var(--border2)}
-.lline{display:flex;gap:8px;align-items:flex-start}
-.ltime{color:var(--text3);flex-shrink:0;min-width:54px}
-.lmsg{flex:1;white-space:pre-wrap;word-break:break-all}
+.lline{display:flex;gap:8px;align-items:flex-start;user-select:text}
+.ltime{color:var(--text3);flex-shrink:0;min-width:54px;user-select:text}
+.lmsg{flex:1;white-space:pre-wrap;word-break:break-all;user-select:text}
 .l-info .lmsg{color:var(--text2)}
 .l-ok   .lmsg{color:var(--success)}
 .l-aviso .lmsg{color:var(--warning)}
@@ -357,6 +361,12 @@ footer .fhi{color:var(--text2)}
 }
 .leg-item { display: flex; align-items: center; gap: 5px; }
 .leg-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.leg-event {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  background: #D29922; color: #fff; display: inline-flex;
+  align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; line-height: 1;
+}
 .leg-line { width: 18px; height: 3px; border-radius: 2px; flex-shrink: 0; }
 .map-stat {
   display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;
@@ -578,9 +588,12 @@ aside .cut-grid {
 
     <div class="field">
       <label data-tip="Arquivo de vídeo GoPro (.MP4)\nBusca recursiva em todo o projeto">Vídeo GoPro</label>
-      <select id="selMp4" onchange="onMp4Change()">
-        <option value="">Carregando...</option>
-      </select>
+      <div class="select-row">
+        <select id="selMp4" onchange="onMp4Change()">
+          <option value="">Carregando...</option>
+        </select>
+        <button class="btn btn-n" type="button" onclick="escolherArquivoMp4()">Escolher...</button>
+      </div>
     </div>
 
     <div class="field">
@@ -857,6 +870,35 @@ async function onMp4Change() {
   checkReady();
 }
 
+async function escolherArquivoMp4() {
+  const sel = document.getElementById("selMp4");
+  const atual = sel.options[sel.selectedIndex]?.dataset?.path || "";
+
+  try {
+    const r = await fetch("/api/escolher_arquivo_mp4", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({arquivo: atual}),
+    });
+    const d = await r.json();
+    if (!d.success || !d.path) return;
+
+    let opt = [...sel.options].find(o => o.dataset.path === d.path);
+    if (!opt) {
+      opt = document.createElement("option");
+      opt.value = d.name;
+      opt.dataset.path = d.path;
+      opt.textContent = d.name + "  [" + shortP(d.path) + "]";
+      sel.appendChild(opt);
+    }
+    sel.value = opt.value;
+    await onMp4Change();
+  } catch(e) {
+    document.getElementById("infoGopro").innerHTML =
+      '<span style="color:var(--danger)">'+esc(e.message)+'</span>';
+  }
+}
+
 function fmtCutTime(totalSeconds) {
   const total = Math.max(0, Math.floor(Number(totalSeconds) || 0));
   const minutes = Math.floor(total / 60);
@@ -922,8 +964,8 @@ function atualizarPontosGpsSelecionadosParaCorte() {
       ? tempo >= inicio && tempo <= fim
       : S.temposCorteGps.includes(tempo);
     layer.setStyle(selecionado ? {
-      fillColor: "#F85149",
-      color: "#B62324",
+      fillColor: "#A855F7",
+      color: "#7E22CE",
       weight: 2,
       fillOpacity: 0.95,
     } : {
@@ -1092,8 +1134,8 @@ function confirmarCorteVideo(duracaoCorte, inicio, fim, distanciaSnv) {
   const metrosPerdidos = distanciaSnv === undefined
     ? ""
     : distanciaSnv === null || !Number.isFinite(distanciaSnv)
-      ? "<br>Distância perdida no SNV: <strong>indisponível</strong>."
-      : `<br>Distância reta perdida no SNV: <strong>${distanciaSnv.toFixed(1)} metros</strong>.`;
+      ? "<br>Distância perdida sobre o traçado do SNV: <strong>indisponível</strong>."
+      : `<br>Distância perdida sobre o traçado do SNV: <strong>${distanciaSnv.toFixed(1)} metros</strong>.`;
   text.innerHTML = `
     O trecho entre <strong>${esc(inicio)}</strong> e <strong>${esc(fim)}</strong> será removido.<br>
     Tempo total cortado: <strong>${fmtVideoDuration(duracaoCorte)}</strong>.${metrosPerdidos}`;
@@ -1279,7 +1321,7 @@ async function cortarVideo() {
   const videoDuration = duracaoVideoCorteSelecionado();
   if (startSeconds === null || endSeconds === null || (startSeconds === 0 && endSeconds === 0)) {
     status.className = "cut-status erro";
-    status.textContent = "Informe tempos válidos no formato M:SS.";
+    status.textContent = "Informe tempos válidos no formato MM:SS.";
     progressBar.className = "cut-progress-bar erro";
     progressBar.style.width = "0%";
     step.textContent = "Tempos de corte inválidos.";
@@ -1366,7 +1408,7 @@ async function acompanharCorteVideo(jobId) {
         status.textContent = paths.length
           ? "Arquivos gerados:\n" + paths.join("\n")
           : (d.message || ("Arquivo gerado em: " + d.output_path));
-        limparResultadoProcessamentoAposCorte();
+        limparResultadoProcessamento("Resultados limpos após corte", "Reprocesse o vídeo");
       } else {
         progressBar.className = "cut-progress-bar erro";
         status.className = "cut-status erro";
@@ -1389,7 +1431,7 @@ function painelVazio(texto) {
   return `<div class="empty"><div class="emicon">◈</div><div class="emtxt">${texto}</div></div>`;
 }
 
-function limparResultadoProcessamentoAposCorte() {
+function limparResultadoProcessamento(rodape, status) {
   S.resultado = null;
   if (_map) {
     _map.remove();
@@ -1406,8 +1448,8 @@ function limparResultadoProcessamentoAposCorte() {
   document.getElementById("d-cam").innerHTML = painelVazio("Diagnóstico de câmera será exibido após novo processamento.");
   document.getElementById("d-tab").innerHTML = painelVazio("Tabela detalhada será exibida após novo processamento.");
   document.getElementById("d-mapa").innerHTML = painelVazio("Mapa será exibido após novo processamento.");
-  document.getElementById("ftxt").textContent = "Resultados limpos após corte";
-  setStatus("idle", "Reprocesse o vídeo");
+  document.getElementById("ftxt").textContent = rodape;
+  setStatus("idle", status);
 }
 
 async function finalizar() {
@@ -1658,7 +1700,7 @@ function limpar() {
   document.getElementById("velnum").textContent="—";
   document.getElementById("logbox").innerHTML='<div class="lempty">Log limpo.</div>';
   document.getElementById("btnP").disabled=true;
-  setStatus("idle","Aguardando");
+  limparResultadoProcessamento("Resultados limpos", "Aguardando");
 }
 function getN(id) { const v=parseFloat(document.getElementById(id).value); return isNaN(v)?null:v; }
 function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
@@ -1747,10 +1789,14 @@ async function renderMapa(d) {
       <strong style="color:var(--text2);margin:0 4px">SNV:</strong>
       <span class="leg-item"><span class="leg-line" style="background:#FF69B4;border:1px dashed #888"></span>Traçado SNV</span>
       <span style="margin-left:6px;color:var(--text3)">|</span>
-      <strong style="color:var(--text2);margin:0 4px">GPS:</strong>
+      <strong style="color:var(--text2);margin:0 4px">Alertas:</strong>
       <span class="leg-item"><span class="leg-dot" style="background:#DA3633;border:2px solid #fff;width:12px;height:12px"></span>Crítico ✗</span>
       <span class="leg-item"><span class="leg-dot" style="background:#D29922;border:2px solid #fff;width:12px;height:12px"></span>Alto ⚠</span>
       <span class="leg-item"><span class="leg-dot" style="background:#6E7681;border:2px solid #fff;width:12px;height:12px"></span>Moderado</span>
+      <span style="margin-left:6px;color:var(--text3)">|</span>
+      <strong style="color:var(--text2);margin:0 4px">Tipo:</strong>
+      <span class="leg-item"><span class="leg-event" style="border:3px solid #F85149">!</span>Erro no GPS</span>
+      <span class="leg-item"><span class="leg-event" style="border:3px solid rgba(255,255,255,0.9)">!</span>Possível erro no GPS</span>
       <span style="margin-left:6px;color:var(--text3)">|</span>
       <strong style="color:var(--text2);margin:0 4px">GPS:</strong>
       <span class="leg-item"><span class="leg-dot" style="background:#388BFD"></span>Excelente</span>
@@ -1804,7 +1850,7 @@ async function renderMapa(d) {
   if (_layers["snv"]) _layers["snv"].bringToFront();
   setTimeout(() => {
     _map?.invalidateSize();
-    fitMapa();
+    if (!focarPrimeiroEventoMapa()) fitMapa();
   }, 100);
 }
 
@@ -2087,7 +2133,7 @@ async function onTabMapa() {
   } else if (_map) {
     setTimeout(() => {
       _map.invalidateSize();
-      fitMapa();
+      if (!focarPrimeiroEventoMapa()) fitMapa();
     }, 100);
   }
 }
@@ -2098,6 +2144,18 @@ function fitMapa() {
   if (l) {
     try { _map.fitBounds(l.getBounds(), {padding:[20,20]}); } catch(e){}
   }
+}
+
+function focarPrimeiroEventoMapa() {
+  if (!_map || !_eventosMapa.length) return false;
+  const evento = _eventosMapa[0];
+  if (!evento) return false;
+  _eventoAtual = 0;
+  atualizarNavegadorEventos();
+  _map.closePopup();
+  _map.setView([evento.lat, evento.lon], 20, { animate: true });
+  setTimeout(() => evento.layer?.openPopup(), 250);
+  return true;
 }
 
 function zoomEventoMapa(lat, lon) {

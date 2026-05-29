@@ -10,7 +10,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -212,3 +211,5 @@ data/raw/*.mp4
 data/raw/*.MP4
 videos/
 *.rar
+dist/app/
+dist/desktop_app/_internal/
