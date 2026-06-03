@@ -586,7 +586,7 @@ def cortar_video_api():
         output_dir = BASE_DIR / output_dir
 
     input_path = CUT_UPLOAD_DIR / f"{uuid.uuid4().hex}_{filename}"
-    output_path = output_dir / f"{Path(filename).stem}_corte_{uuid.uuid4().hex[:8]}.mp4"
+    output_path = output_dir / f"{Path(filename).stem}.mp4"
     job_id = uuid.uuid4().hex
 
     if source_path_raw:

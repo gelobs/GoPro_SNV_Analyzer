@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 
@@ -100,8 +101,9 @@ def split_video_on_cut(
     if cut_end <= cut_start:
         return False, "O tempo final deve ser maior que o tempo inicial.", []
 
-    first_segment = target.parent / f"{target.stem}_comeco.mp4"
-    second_segment = target.parent / f"{target.stem}_fim.mp4"
+    timestamp_suffix = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    first_segment = target.parent / f"{target.stem}_{timestamp_suffix}_1.mp4"
+    second_segment = target.parent / f"{target.stem}_{timestamp_suffix}_2.mp4"
     segment_specs = []
 
     if cut_start > MIN_SEGMENT_DURATION_SECONDS:
