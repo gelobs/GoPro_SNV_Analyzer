@@ -85,6 +85,9 @@ def validar_rota(
     """
     Executa o pipeline completo de validação.
 
+    `velocidade_esperada_ms` é mantido para compatibilidade com chamadas
+    existentes; a detecção atual usa apenas limites físicos.
+
     Retorna:
       df           : DataFrame com todas as colunas de análise por amostra
       qualidades   : lista de QualidadeSegmento (sinal GPS por segmento)
@@ -129,7 +132,7 @@ def validar_rota(
 
     # 5. Diagnóstico de câmera
     print("[5/5] Diagnosticando câmera e gravação...")
-    eventos = diagnosticar(df, velocidade_esperada_ms, tamanho_seg_km)
+    eventos = diagnosticar(df, tamanho_seg_km)
     eventos += _detectar_erros_snv(df)
     eventos.sort(key=lambda e: (e.km_inicio, e.severidade.value))
 
