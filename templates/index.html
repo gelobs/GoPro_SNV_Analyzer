@@ -964,8 +964,8 @@ function atualizarPontosGpsSelecionadosParaCorte() {
       ? tempo >= inicio && tempo <= fim
       : S.temposCorteGps.includes(tempo);
     layer.setStyle(selecionado ? {
-      fillColor: "#A855F7",
-      color: "#7E22CE",
+      fillColor: "#F85149",
+      color: "#B62324",
       weight: 2,
       fillOpacity: 0.95,
     } : {
@@ -1134,8 +1134,8 @@ function confirmarCorteVideo(duracaoCorte, inicio, fim, distanciaSnv) {
   const metrosPerdidos = distanciaSnv === undefined
     ? ""
     : distanciaSnv === null || !Number.isFinite(distanciaSnv)
-      ? "<br>Distância perdida sobre o traçado do SNV: <strong>indisponível</strong>."
-      : `<br>Distância perdida sobre o traçado do SNV: <strong>${distanciaSnv.toFixed(1)} metros</strong>.`;
+      ? "<br>Distância perdida no SNV: <strong>indisponível</strong>."
+      : `<br>Distância reta perdida no SNV: <strong>${distanciaSnv.toFixed(1)} metros</strong>.`;
   text.innerHTML = `
     O trecho entre <strong>${esc(inicio)}</strong> e <strong>${esc(fim)}</strong> será removido.<br>
     Tempo total cortado: <strong>${fmtVideoDuration(duracaoCorte)}</strong>.${metrosPerdidos}`;
