@@ -9,6 +9,8 @@ import importlib
 import json
 import os
 import queue
+import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -79,6 +81,196 @@ def _detectar_modelo_gopro(tags: dict) -> str:
     if model and model.upper() not in ("GOPRO", ""):
         return model
     return f"GoPro ({prefixo})" if prefixo else "GoPro"
+
+
+def _resolucao_video(path: Path) -> tuple[int | None, int | None]:
+    cmd = [
+        "ffprobe", "-v", "quiet",
+        "-print_format", "json",
+        "-show_streams",
+        str(path),
+    ]
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+    info = json.loads(r.stdout) if r.stdout else {}
+    video_stream = next(
+        (s for s in info.get("streams", []) if s.get("codec_type") == "video"),
+        {},
+    )
+    width = video_stream.get("width")
+    height = video_stream.get("height")
+    return (
+        int(width) if isinstance(width, int) or str(width).isdigit() else None,
+        int(height) if isinstance(height, int) or str(height).isdigit() else None,
+    )
+
+
+def _fps_video(path: Path) -> float | None:
+    cmd = [
+        "ffprobe", "-v", "quiet",
+        "-print_format", "json",
+        "-show_streams",
+        str(path),
+    ]
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+    info = json.loads(r.stdout) if r.stdout else {}
+    video_stream = next(
+        (s for s in info.get("streams", []) if s.get("codec_type") == "video"),
+        {},
+    )
+    fps_str = video_stream.get("r_frame_rate", "0/1")
+    fps_parts = str(fps_str).split("/")
+    if len(fps_parts) != 2:
+        return None
+    numerator = float(fps_parts[0])
+    denominator = float(fps_parts[1])
+    return numerator / denominator if denominator else None
+
+
+def _ffprobe_json(path: Path) -> dict:
+    cmd = [
+        "ffprobe", "-v", "quiet",
+        "-print_format", "json",
+        "-show_format", "-show_streams",
+        str(path),
+    ]
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+    return json.loads(r.stdout) if r.stdout else {}
+
+
+def _resolve_exiftool_path() -> str | None:
+    exiftool_path = shutil.which("exiftool")
+    if exiftool_path:
+        return exiftool_path
+
+    candidates = [
+        BASE_DIR / "exiftool.exe",
+        BASE_DIR / "exiftool" / "exiftool.exe",
+        BASE_DIR / "tools" / "exiftool.exe",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return str(candidate)
+
+    return None
+
+
+def _exiftool_json(path: Path) -> dict:
+    exiftool_path = _resolve_exiftool_path()
+    if not exiftool_path:
+        return {}
+
+    cmd = [exiftool_path, "-j", "-G", "-s", str(path)]
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+    if r.returncode != 0 or not r.stdout:
+        return {}
+
+    data = json.loads(r.stdout)
+    return data[0] if data else {}
+
+
+def _iter_text_values(value):
+    if isinstance(value, dict):
+        for key, item in value.items():
+            yield str(key)
+            yield from _iter_text_values(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _iter_text_values(item)
+    elif value is not None:
+        yield str(value)
+
+
+def _iter_fov_text_values(value):
+    key_hints = (
+        "fov",
+        "fieldofview",
+        "field of view",
+        "lens",
+        "lente",
+        "view",
+        "digital",
+        "mode",
+        "modo",
+        "setting",
+        "superview",
+        "hyperview",
+    )
+
+    if isinstance(value, dict):
+        for key, item in value.items():
+            key_text = str(key)
+            key_lower = key_text.lower().replace("_", " ")
+            is_relevant = any(hint in key_lower for hint in key_hints)
+            if is_relevant:
+                yield key_text
+                yield from _iter_text_values(item)
+            else:
+                yield from _iter_fov_text_values(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _iter_fov_text_values(item)
+
+
+def _detectar_fov_linear(info: dict) -> tuple[bool | None, str]:
+    textos = [texto.lower() for texto in _iter_fov_text_values(info)]
+    texto_total = " ".join(textos)
+
+    if "linear" in texto_total:
+        return True, "Linear"
+
+    modos_nao_lineares = [
+        ("superview", "SuperView"),
+        ("hyperview", "HyperView"),
+        ("wide", "Wide"),
+        ("amplo", "Amplo"),
+        ("narrow", "Narrow"),
+        ("estreito", "Estreito"),
+    ]
+    for chave, nome in modos_nao_lineares:
+        if chave in texto_total:
+            return False, nome
+
+    return None, "Não identificado"
+
+
+def _detectar_fov_video(path: Path, ffprobe_info: dict | None = None) -> tuple[bool | None, str, str]:
+    exif_info = _exiftool_json(path)
+    if exif_info:
+        fov_linear, fov_nome = _detectar_fov_linear(exif_info)
+        if fov_linear is not None:
+            return fov_linear, fov_nome, "ExifTool"
+
+    info = ffprobe_info if ffprobe_info is not None else _ffprobe_json(path)
+    fov_linear, fov_nome = _detectar_fov_linear(info)
+    if fov_linear is not None:
+        return fov_linear, fov_nome, "ffprobe"
+
+    return None, "Não identificado", "ExifTool/ffprobe"
+
+
+def _validar_fov_linear(path: Path) -> tuple[bool, str, bool | None, str]:
+    try:
+        fov_linear, fov_nome, _ = _detectar_fov_video(path)
+    except Exception as exc:
+        return False, f"Nao foi possivel ler o FOV do video: {exc}", None, "Não identificado"
+
+    if fov_linear is True:
+        return True, "", fov_linear, fov_nome
+
+    if fov_linear is False:
+        return (
+            False,
+            f"O video esta com FOV {fov_nome}. O corte so e permitido para videos em FOV Linear.",
+            fov_linear,
+            fov_nome,
+        )
+
+    return (
+        False,
+        "Nao foi possivel confirmar que o FOV do video e Linear. O corte foi bloqueado.",
+        fov_linear,
+        fov_nome,
+    )
 
 
 # ── Valores padrão dos limiares do backend (lidos dos arquivos fonte) ─────────
@@ -371,6 +563,7 @@ def info_gopro():
         ]
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
         info = json.loads(r.stdout) if r.stdout else {}
+        fov_linear, fov_nome, fov_fonte = _detectar_fov_video(mp4_path, info)
 
         tags     = info.get("format", {}).get("tags", {})
         streams  = info.get("streams", [])
@@ -378,6 +571,8 @@ def info_gopro():
         size_mb  = mp4_path.stat().st_size / (1024 * 1024)
 
         video_stream = next((s for s in streams if s.get("codec_type") == "video"), {})
+        width = video_stream.get("width")
+        height = video_stream.get("height")
         fps_str = video_stream.get("r_frame_rate", "0/1")
         fps_parts = fps_str.split("/")
         fps = round(int(fps_parts[0]) / int(fps_parts[1]), 1) if len(fps_parts) == 2 else 0
@@ -388,7 +583,12 @@ def info_gopro():
             "duracao_s":    round(duration, 1),
             "duracao_fmt":  _fmt_duracao(duration),
             "tamanho_mb":   round(size_mb, 1),
-            "resolucao":    f"{video_stream.get('width','?')}×{video_stream.get('height','?')}",
+            "resolucao":    f"{width or '?'}×{height or '?'}",
+            "width":        width,
+            "height":       height,
+            "fov":          fov_nome,
+            "fov_linear":   fov_linear,
+            "fov_fonte":    fov_fonte,
             "fps":          fps,
             "criacao":      tags.get("creation_time", "—"),
         })
@@ -467,6 +667,45 @@ def processar():
         return jsonify({"erro": "Processamento já em andamento."}), 409
 
     params = request.json
+    mp4 = params.get("mp4")
+    mp4_path_str = params.get("mp4_path") or str(RAW_DIR / mp4) if mp4 else None
+    if mp4_path_str:
+        mp4_path = Path(mp4_path_str)
+        if not mp4_path.exists():
+            return jsonify({"erro": f"Vídeo não encontrado: {mp4_path}"}), 400
+        problemas = []
+
+        try:
+            width, height = _resolucao_video(mp4_path)
+        except Exception as exc:
+            problemas.append(f"Não foi possível ler a resolução do vídeo: {exc}")
+        else:
+            if not width or not height:
+                problemas.append("Não foi possível identificar a resolução do vídeo.")
+            elif width < 1920 or height < 1080:
+                problemas.append(
+                    f"Resolução insuficiente: {width}x{height}. O vídeo precisa ter pelo menos 1920x1080."
+                )
+
+        fps = _fps_video(mp4_path)
+        if fps is None:
+            problemas.append("Não foi possível identificar o FPS do vídeo.")
+        elif fps < 59.9:
+            problemas.append(
+                f"FPS insuficiente: {fps:.2f}. O vídeo precisa estar em 59.94 fps ou 60 fps."
+            )
+
+        ok_fov, _, fov_linear, fov_nome = _validar_fov_linear(mp4_path)
+        if not ok_fov:
+            detalhe = f" Detectado: {fov_nome}." if fov_linear is False else ""
+            problemas.append(f"FOV do vídeo não é Linear.{detalhe}")
+
+        if problemas:
+            return jsonify({
+                "erro": "O vídeo não pode ser processado.",
+                "problemas": problemas,
+            }), 400
+
     # Limpa a fila
     while not _log_queue.empty():
         try:
@@ -510,6 +749,36 @@ def escolher_pasta_corte():
         root.attributes("-topmost", True)
         selected = filedialog.askdirectory(
             title="Escolha a pasta de saida dos videos cortados",
+            initialdir=str(pasta_inicial if pasta_inicial.exists() else BASE_DIR),
+            mustexist=False,
+        )
+        root.destroy()
+    except Exception as exc:
+        return jsonify({"success": False, "message": str(exc)}), 500
+
+    if not selected:
+        return jsonify({"success": False, "message": "Selecao cancelada."}), 200
+
+    return jsonify({"success": True, "path": selected})
+
+
+@app.route("/api/escolher_pasta_saida", methods=["POST"])
+def escolher_pasta_saida():
+    """Abre o seletor de pasta local para definir a saida do processamento."""
+    pasta_inicial_raw = (request.json or {}).get("pasta", "output/validacao")
+    pasta_inicial = Path(pasta_inicial_raw)
+    if not pasta_inicial.is_absolute():
+        pasta_inicial = BASE_DIR / pasta_inicial
+
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        selected = filedialog.askdirectory(
+            title="Escolha a pasta de saida do processamento",
             initialdir=str(pasta_inicial if pasta_inicial.exists() else BASE_DIR),
             mustexist=False,
         )
@@ -581,6 +850,29 @@ def cortar_video_api():
     if not filename.lower().endswith(".mp4"):
         return jsonify({"success": False, "message": "Selecione um arquivo .mp4."}), 400
 
+    if source_path_raw:
+        try:
+            width, height = _resolucao_video(source_path)
+        except Exception as exc:
+            return jsonify({"success": False, "message": f"Nao foi possivel ler a resolucao do video: {exc}"}), 400
+        if not width or not height:
+            return jsonify({"success": False, "message": "Nao foi possivel identificar a resolucao do video."}), 400
+        if width < 1920 or height < 1080:
+            return jsonify({
+                "success": False,
+                "message": f"O video tem {width}x{height}. O corte so e permitido para videos com pelo menos 1920x1080.",
+            }), 400
+        fps = _fps_video(source_path)
+        if fps is None:
+            return jsonify({"success": False, "message": "Nao foi possivel identificar o FPS do video."}), 400
+        if fps < 59.9:
+            return jsonify({
+                "success": False,
+                "message": f"O video tem {fps:.2f} fps. O corte so e permitido para videos em 59.94 fps ou 60 fps.",
+            }), 400
+        ok_fov, fov_message, _, _ = _validar_fov_linear(source_path)
+        if not ok_fov:
+            return jsonify({"success": False, "message": fov_message}), 400
     output_dir = Path(output_dir_raw)
     if not output_dir.is_absolute():
         output_dir = BASE_DIR / output_dir
@@ -593,7 +885,34 @@ def cortar_video_api():
         input_path = source_path
     else:
         video.save(input_path)
-
+        try:
+            width, height = _resolucao_video(input_path)
+        except Exception as exc:
+            input_path.unlink(missing_ok=True)
+            return jsonify({"success": False, "message": f"Nao foi possivel ler a resolucao do video: {exc}"}), 400
+        if not width or not height:
+            input_path.unlink(missing_ok=True)
+            return jsonify({"success": False, "message": "Nao foi possivel identificar a resolucao do video."}), 400
+        if width < 1920 or height < 1080:
+            input_path.unlink(missing_ok=True)
+            return jsonify({
+                "success": False,
+                "message": f"O video tem {width}x{height}. O corte so e permitido para videos com pelo menos 1920x1080.",
+            }), 400
+        fps = _fps_video(input_path)
+        if fps is None:
+            input_path.unlink(missing_ok=True)
+            return jsonify({"success": False, "message": "Nao foi possivel identificar o FPS do video."}), 400
+        if fps < 59.9:
+            input_path.unlink(missing_ok=True)
+            return jsonify({
+                "success": False,
+                "message": f"O video tem {fps:.2f} fps. O corte so e permitido para videos em 59.94 fps ou 60 fps.",
+            }), 400
+        ok_fov, fov_message, _, _ = _validar_fov_linear(input_path)
+        if not ok_fov:
+            input_path.unlink(missing_ok=True)
+            return jsonify({"success": False, "message": fov_message}), 400
     _cut_jobs[job_id] = {
         "done": False,
         "success": None,
@@ -670,6 +989,10 @@ def _executar_corte_video(
 
 
 def _cut_progress_from_message(message: str) -> int:
+    progress_match = re.search(r"Progresso FFmpeg:\s*(\d+)%", message)
+    if progress_match:
+        return int(progress_match.group(1))
+
     checks = [
         ("Validando tempos", 10),
         ("Verificando arquivo", 20),
@@ -767,8 +1090,8 @@ def _executar_pipeline(params: dict):
         shp      = params.get("shp")
         shp_path_str = params.get("shp_path") or str(SNV_DIR / shp) if shp else None
         saida_raw = params.get("saida", "output/validacao")
-        # Garante caminho absoluto para o prefixo de saída
-        saida = str(BASE_DIR / saida_raw) if not Path(saida_raw).is_absolute() else saida_raw
+        saida_dir = _resolver_diretorio_saida(saida_raw)
+        saida = str(saida_dir / "validacao")
         seg_km   = params.get("tamanho_seg_km", 1.0)
         avancado = params.get("avancado", {})
 
@@ -779,7 +1102,7 @@ def _executar_pipeline(params: dict):
         log("info", f"Iniciando processamento...")
         log("info", f"Vídeo  : {mp4_path_str}")
         log("info", f"SNV    : {shp_path_str}")
-        log("info", f"Saída  : {saida}")
+        log("info", f"Saída  : {saida_dir}")
         log("info", f"Segmento: {seg_km}km")
 
         if str(SRC_DIR) not in sys.path:
@@ -869,6 +1192,15 @@ def _aplicar_limiares_avancados(avancado):
         if chave in mapa_modulo and valor is not None:
             modulo, constante = mapa_modulo[chave]
             setattr(importlib.import_module(modulo), constante, valor)
+
+
+def _resolver_diretorio_saida(saida_raw: str) -> Path:
+    """Resolve o campo da UI como pasta de destino dos arquivos exportados."""
+    saida = Path(saida_raw or "output/validacao")
+    if not saida.is_absolute():
+        saida = BASE_DIR / saida
+    saida.mkdir(parents=True, exist_ok=True)
+    return saida
 
 
 def _fmt_duracao(segundos: float) -> str:

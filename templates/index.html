@@ -383,6 +383,33 @@ footer .fhi{color:var(--text2)}
   background: rgba(13,17,23,.92); border: 1px solid var(--border);
   border-radius: 6px; padding: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.35);
 }
+.map-event-nav.has-error {
+  border-color: var(--border);
+}
+.map-event-controls.has-error {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+}
+.map-event-error-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--danger);
+  border: 3px solid rgba(255,255,255,0.9);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 0 0 3px rgba(218,54,51,.35), 0 2px 6px rgba(0,0,0,.45);
+}
 .map-event-btn, .map-event-main {
   border: 1px solid var(--border); background: var(--surface2); color: var(--text);
   font-family: var(--mono); font-size: 11px; border-radius: 4px; cursor: pointer;
@@ -394,8 +421,14 @@ footer .fhi{color:var(--text2)}
   margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border);
   font-family: var(--mono); font-size: 10px; color: var(--text2);
 }
+.map-event-nav.has-error .map-event-summary {
+  border-top-color: var(--border);
+  color: var(--text2);
+}
 .map-event-summary div { display: flex; justify-content: space-between; gap: 12px; line-height: 1.55; }
 .map-event-summary strong { color: var(--text); font-weight: 600; }
+.map-event-nav.has-error .map-event-summary strong { color: var(--text); font-weight: 700; }
+#mapEvtCount { font-weight: 700; }
 
 /* CORTE DE VIDEO */
 .cut-wrap {
@@ -477,7 +510,8 @@ aside .cut-grid {
 }
 .cut-output-row .btn {
   flex: none;
-  padding: 6px 12px;
+  padding: 6px 10px;
+  font-size: 10px;
   white-space: nowrap;
 }
 .cut-confirm-backdrop {
@@ -498,10 +532,17 @@ aside .cut-grid {
   box-shadow: 0 18px 50px rgba(0,0,0,.45);
   padding: 18px;
 }
+.cut-confirm-box.danger {
+  border-color: var(--danger);
+  box-shadow: 0 18px 50px rgba(218,54,51,.18), 0 18px 50px rgba(0,0,0,.45);
+}
 .cut-confirm-title {
   font-size: 14px;
   font-weight: 700;
   margin-bottom: 8px;
+}
+.cut-confirm-title.danger {
+  color: var(--danger);
 }
 .cut-confirm-text {
   color: var(--text2);
@@ -509,6 +550,15 @@ aside .cut-grid {
   font-size: 12px;
   line-height: 1.6;
   margin-bottom: 14px;
+}
+.cut-confirm-warning {
+  background: rgba(248,81,73,.18);
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  color: #FFFFFF;
+  font-weight: 700;
+  margin-top: 14px;
+  padding: 10px;
 }
 .cut-confirm-actions {
   display: flex;
@@ -598,7 +648,10 @@ aside .cut-grid {
 
     <div class="field">
       <label data-tip="Pasta de destino dos arquivos gerados\n(.geojson e .csv)">Diretório de saída</label>
-      <input type="text" id="inpSaida" value="output\validacao">
+      <div class="cut-output-row">
+        <input type="text" id="inpSaida" value="output\validacao">
+        <button class="btn btn-n" type="button" onclick="escolherPastaSaida()">Escolher...</button>
+      </div>
     </div>
 
     <div class="field">
@@ -768,6 +821,16 @@ aside .cut-grid {
   </div>
 </div>
 
+<div class="cut-confirm-backdrop" id="processAlertModal">
+  <div class="cut-confirm-box danger">
+    <div class="cut-confirm-title danger">Vídeo não pode ser processado</div>
+    <div class="cut-confirm-text" id="processAlertText"></div>
+    <div class="cut-confirm-actions">
+      <button class="btn btn-n" type="button" id="processAlertClose">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Estado global ─────────────────────────────────────────────
 const S = { rodando:false, avancado:{}, defaults:{}, resultado:null, temposCorteGps:[], pontosCorteGps:[], distanciaCorteSnv:undefined };
@@ -859,8 +922,8 @@ async function onMp4Change() {
     ]);
     document.getElementById("infoGopro").innerHTML = ir.erro
       ? '<span style="color:var(--danger)">'+esc(ir.erro)+'</span>'
-      : infoHtml([["Modelo",ir.modelo||"—"],["Firmware",ir.firmware||"—"],["Duração",ir.duracao_fmt||"—"],["Resolução",ir.resolucao||"—"],["FPS",(ir.fps||"—")+" fps"],["Gravado",ir.criacao?.substring(0,10)||"—"],["Tamanho",(ir.tamanho_mb||"?")+" MB"]]);
-    if (!ir.erro) syncCutVideoFromProcessing(mp4, mp4Path, ir.duracao_s);
+      : infoHtml([["Modelo",ir.modelo||"—"],["Firmware",ir.firmware||"—"],["Duração",ir.duracao_fmt||"—"],["Resolução",ir.resolucao||"—"],["FOV",(ir.fov||"—") + (ir.fov_fonte ? " (" + ir.fov_fonte + ")" : "")],["FPS",(ir.fps||"—")+" fps"],["Gravado",ir.criacao?.substring(0,10)||"—"],["Tamanho",(ir.tamanho_mb||"?")+" MB"]]);
+    if (!ir.erro) syncCutVideoFromProcessing(mp4, mp4Path, ir.duracao_s, ir.width, ir.height, ir.fov_linear, ir.fov, ir.fps);
     if (vr.velocidade_kmh) {
       document.getElementById("velnum").textContent = vr.velocidade_kmh;
     } else {
@@ -1124,7 +1187,7 @@ async function prepararDistanciaCorteNoSnv(inicio, fim) {
   }
 }
 
-function confirmarCorteVideo(duracaoCorte, inicio, fim, distanciaSnv) {
+function confirmarCorteVideo(duracaoCorte, inicio, fim, distanciaSnv, resolucao=null, fps=null) {
   const modal = document.getElementById("cutConfirmModal");
   const text = document.getElementById("cutConfirmText");
   const ok = document.getElementById("cutConfirmOk");
@@ -1134,11 +1197,23 @@ function confirmarCorteVideo(duracaoCorte, inicio, fim, distanciaSnv) {
   const metrosPerdidos = distanciaSnv === undefined
     ? ""
     : distanciaSnv === null || !Number.isFinite(distanciaSnv)
-      ? "<br>Distância perdida no SNV: <strong>indisponível</strong>."
-      : `<br>Distância reta perdida no SNV: <strong>${distanciaSnv.toFixed(1)} metros</strong>.`;
+      ? "<br>Distância perdida sobre o traçado do SNV: <strong>indisponível</strong>."
+      : `<br>Distância perdida sobre o traçado do SNV: <strong>${distanciaSnv.toFixed(1)} metros</strong>.`;
+  const acimaResolucao = resolucao && (resolucao.width > 1920 || resolucao.height > 1080);
+  const acimaFps = fps !== null && fps > 60;
+  const avisoAjuste = acimaResolucao && acimaFps
+    ? "Aviso: o vídeo excede 1080p e 60 fps, então será ajustado para atender aos padrões do ICM."
+    : acimaResolucao
+      ? "Aviso: o vídeo excede 1080p, então será ajustado para atender aos padrões do ICM."
+      : acimaFps
+        ? "Aviso: o vídeo excede 60 fps, então será ajustado para atender aos padrões do ICM."
+        : "";
+  const avisoResolucao = avisoAjuste
+    ? `<div class="cut-confirm-warning">${avisoAjuste}</div>`
+    : "";
   text.innerHTML = `
     O trecho entre <strong>${esc(inicio)}</strong> e <strong>${esc(fim)}</strong> será removido.<br>
-    Tempo total cortado: <strong>${fmtVideoDuration(duracaoCorte)}</strong>.${metrosPerdidos}`;
+    Tempo total cortado: <strong>${fmtVideoDuration(duracaoCorte)}</strong>.${metrosPerdidos}${avisoResolucao}`;
   modal.style.display = "flex";
 
   return new Promise(resolve => {
@@ -1163,7 +1238,59 @@ function duracaoVideoCorteSelecionado() {
   return Number.isFinite(duration) && duration > 0 ? duration : null;
 }
 
-function syncCutVideoFromProcessing(mp4, mp4Path, durationSeconds=null) {
+function resolucaoVideoCorteSelecionado() {
+  const cutPath = document.getElementById("cutVideoPath");
+  const width = Number(cutPath?.dataset?.videoWidth || 0);
+  const height = Number(cutPath?.dataset?.videoHeight || 0);
+  return Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0
+    ? { width, height }
+    : null;
+}
+
+function fovVideoCorteSelecionado() {
+  const cutPath = document.getElementById("cutVideoPath");
+  const linearRaw = cutPath?.dataset?.fovLinear || "";
+  return {
+    linear: linearRaw === "true" ? true : linearRaw === "false" ? false : null,
+    nome: cutPath?.dataset?.fovNome || "Não identificado",
+  };
+}
+
+function fpsVideoCorteSelecionado() {
+  const cutPath = document.getElementById("cutVideoPath");
+  const fps = Number(cutPath?.dataset?.videoFps || 0);
+  return Number.isFinite(fps) && fps > 0 ? fps : null;
+}
+
+function avisoCorteNegrito(status, mensagem) {
+  status.className = "cut-status";
+  status.innerHTML = `<strong>${esc(mensagem)}</strong>`;
+}
+
+function mostrarAvisoProcessamento(mensagem, problemas=[]) {
+  const modal = document.getElementById("processAlertModal");
+  const text = document.getElementById("processAlertText");
+  const close = document.getElementById("processAlertClose");
+  if (!modal || !text || !close) return;
+
+  const lista = Array.isArray(problemas) && problemas.length
+    ? `<ul style="margin:8px 0 0 18px">${problemas.map(p => `<li><strong>${esc(p)}</strong></li>`).join("")}</ul>`
+    : "";
+  text.innerHTML = `<strong>${esc(mensagem)}</strong>${lista}`;
+  modal.style.display = "flex";
+
+  const fechar = () => {
+    modal.style.display = "none";
+    close.onclick = null;
+    modal.onclick = null;
+  };
+  close.onclick = fechar;
+  modal.onclick = event => {
+    if (event.target === modal) fechar();
+  };
+}
+
+function syncCutVideoFromProcessing(mp4, mp4Path, durationSeconds=null, width=null, height=null, fovLinear=null, fovNome=null, fps=null) {
   const cutPath = document.getElementById("cutVideoPath");
   const linked = document.getElementById("cutLinkedVideo");
   const status = document.getElementById("cutStatus");
@@ -1175,6 +1302,11 @@ function syncCutVideoFromProcessing(mp4, mp4Path, durationSeconds=null) {
   if (!cutPath || !linked) return;
 
   cutPath.value = mp4Path || "";
+  cutPath.dataset.videoWidth = mp4Path && width ? String(width) : "";
+  cutPath.dataset.videoHeight = mp4Path && height ? String(height) : "";
+  cutPath.dataset.fovLinear = mp4Path && fovLinear !== null && fovLinear !== undefined ? String(fovLinear) : "";
+  cutPath.dataset.fovNome = mp4Path && fovNome ? String(fovNome) : "";
+  cutPath.dataset.videoFps = mp4Path && fps ? String(fps) : "";
   if (controls) controls.style.display = mp4Path ? "" : "none";
   if (unavailable) unavailable.style.display = mp4Path ? "none" : "";
   if (inheritedName) inheritedName.textContent = mp4 || "Nenhum vídeo selecionado";
@@ -1248,7 +1380,19 @@ async function processar() {
   setStatus("running","Processando…");
   swTab("log", document.querySelector(".tab"));
   document.getElementById("logbox").innerHTML = "";
-  await fetch("/api/processar",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(params) });
+  const iniciar = await fetch("/api/processar",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(params) });
+  const inicio = await iniciar.json().catch(() => ({}));
+  if (!iniciar.ok || inicio.erro) {
+    S.rodando = false;
+    document.getElementById("btnP").style.display = "";
+    document.getElementById("btnC").style.display = "none";
+    mostrarAvisoProcessamento(
+      inicio.erro || "Não foi possível iniciar o processamento.",
+      inicio.problemas || [],
+    );
+    setStatus("error", "Erro");
+    return;
+  }
   const es = new EventSource("/api/log_stream");
   es.onmessage = e => {
     const d = JSON.parse(e.data);
@@ -1260,6 +1404,23 @@ async function processar() {
 
 async function cancelar() {
   await fetch("/api/cancelar",{method:"POST"});
+}
+
+async function escolherPastaSaida() {
+  const input = document.getElementById("inpSaida");
+  const valorAtual = input.value.trim();
+
+  try {
+    const r = await fetch("/api/escolher_pasta_saida", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({pasta: valorAtual}),
+    });
+    const d = await r.json();
+    if (d.success && d.path) input.value = d.path;
+  } catch(e) {
+    alert("Não foi possível abrir o seletor de pasta: " + e.message);
+  }
 }
 
 async function escolherPastaCorte() {
@@ -1343,7 +1504,33 @@ async function cortarVideo() {
 
   const fimConfirmacao = corteAteFinal ? "fim do vídeo" : endTime;
   const distanciaSnv = distanciaCorteCalculadaParaTrecho(startSeconds, fimEfetivo);
-  const confirmado = await confirmarCorteVideo(fimEfetivo - startSeconds, startTime, fimConfirmacao, distanciaSnv);
+  const resolucao = resolucaoVideoCorteSelecionado();
+  if (resolucao && (resolucao.width < 1920 || resolucao.height < 1080)) {
+    avisoCorteNegrito(status, `O vídeo tem ${resolucao.width}x${resolucao.height}. O corte só é permitido para vídeos com pelo menos 1920x1080.`);
+    progressBar.className = "cut-progress-bar erro";
+    progressBar.style.width = "0%";
+    step.textContent = "Resolução insuficiente para corte.";
+    return;
+  }
+  const fps = fpsVideoCorteSelecionado();
+  if (sourcePath && fps !== null && fps < 59.9) {
+    avisoCorteNegrito(status, `O vídeo tem ${fps} fps. O corte só é permitido para vídeos em 59.94 fps ou 60 fps.`);
+    progressBar.className = "cut-progress-bar erro";
+    progressBar.style.width = "0%";
+    step.textContent = "FPS insuficiente para corte.";
+    return;
+  }
+  const fov = fovVideoCorteSelecionado();
+  if (sourcePath && fov.linear !== true) {
+    avisoCorteNegrito(status, fov.linear === false
+      ? `O vídeo está com FOV ${fov.nome}. O corte só é permitido para vídeos em FOV Linear.`
+      : "Não foi possível confirmar que o FOV do vídeo é Linear. O corte foi bloqueado.");
+    progressBar.className = "cut-progress-bar erro";
+    progressBar.style.width = "0%";
+    step.textContent = "FOV incompatível para corte.";
+    return;
+  }
+  const confirmado = await confirmarCorteVideo(fimEfetivo - startSeconds, startTime, fimConfirmacao, distanciaSnv, resolucao, fps);
   if (!confirmado) {
     status.className = "cut-status";
     status.textContent = "Corte cancelado.";
@@ -1580,8 +1767,31 @@ function renderQual(d) {
       ${rows}</table></div></div>`;
 }
 
+const CAMERA_EVENT_SCREENSHOT_MODE = false;
+
+function eventosCameraParaPrint() {
+  const nomes = [
+    ["gap_stream", "CRÍTICA", "Interrupção no fluxo de dados GPS durante a gravação.", "intervalo sem dados GPS acima do limite configurado", "verificar se houve pausa, falha no arquivo ou corte da gravação"],
+    ["gps_bloqueado", "ALTA", "GPS permaneceu sem variação de posição por tempo prolongado.", "coordenadas repetidas em várias amostras consecutivas", "verificar obstrução de sinal, túnel, sombra ou GPS travado"],
+    ["bateria_fraca", "ALTA", "Padrão compatível com perda de qualidade no final da gravação.", "GPSP aumentou e velocidade caiu no trecho final", "verificar bateria e condições da câmera no fim do vídeo"],
+    ["encerramento_abrupto", "CRÍTICA", "Gravação terminou com a câmera ainda em movimento.", "velocidade no final acima do limite de encerramento", "verificar desligamento por bateria, botão acionado ou interrupção acidental"],
+    ["descontinuidade_espacial", "CRÍTICA", "Salto de posição incompatível entre pontos próximos.", "distância entre pontos consecutivos acima do limite físico", "verificar se houve corte, retomada em outro local ou erro de GPS"],
+    ["velocidade_atipica", "MODERADA", "Trecho com velocidade muito fora do padrão esperado.", "velocidade média do segmento fora do limite configurado", "avaliar se houve parada, congestionamento ou leitura incorreta"],
+    ["veiculo_parado", "MODERADA", "Veículo permaneceu parado durante parte da gravação.", "velocidade próxima de zero por tempo prolongado", "avaliar se a parada faz parte do levantamento"],
+    ["azimute_irregular", "MODERADA", "Mudança brusca de direção em distância muito curta.", "variação de direção acima do limite com pouco deslocamento", "verificar possível oscilação do GPS"],
+    ["km_por_segundo_baixo", "MODERADA", "Avanço da rota muito baixo em relação ao tempo.", "quilometragem avançou pouco por segundo", "verificar lentidão, parada ou instabilidade no sinal"],
+    ["erro_snv", "ALTA", "Possível inconsistência identificada na comparação com o SNV.", "ponto GPS distante do traçado de referência", "avaliar o trecho no mapa e comparar com a base SNV utilizada"],
+  ];
+  return nomes.map(([conformidade, sev, desc, metrica, acao], i) => ({
+    conformidade,
+    km_inicio: i,
+    km_fim: i + 0.5,
+    justificativa: `[${sev}] ${desc} | Métrica: ${metrica} | Ação: ${acao}`,
+  }));
+}
+
 function renderCam(d) {
-  const evts = d.eventos||[];
+  const evts = CAMERA_EVENT_SCREENSHOT_MODE ? eventosCameraParaPrint() : (d.eventos||[]);
   if (!evts.length) {
     document.getElementById("d-cam").innerHTML = `<div class="ccard"><div class="ctitle">Diagnóstico de gravação — câmera GoPro</div>
       <div style="color:var(--success);font-family:var(--mono);font-size:12px;padding:20px 0">✓ Nenhum evento detectado. Gravação íntegra.</div></div>`;
@@ -2187,11 +2397,12 @@ function criarNavegadorEventos() {
     return ka - kb;
   });
   _eventoAtual = 0;
-  _eventoNavControl = L.control({ position: "topleft" });
+  _eventoNavControl = L.control({ position: "topright" });
   _eventoNavControl.onAdd = () => {
-    const div = L.DomUtil.create("div", "map-event-nav");
+    const div = L.DomUtil.create("div", "map-event-nav has-error");
     div.innerHTML = `
-      <div style="display:flex;align-items:center;gap:4px">
+      <div class="map-event-controls has-error">
+        <span class="map-event-error-icon" id="mapEvtIcon">!</span>
         <button type="button" class="map-event-btn" onclick="navegarEventoMapa(-1)">‹</button>
         <button type="button" class="map-event-main" onclick="visualizarEventoAtual()">Visualizar <span id="mapEvtCount">1/${_eventosMapa.length}</span></button>
         <button type="button" class="map-event-btn" onclick="navegarEventoMapa(1)">›</button>
@@ -2202,6 +2413,7 @@ function criarNavegadorEventos() {
     return div;
   };
   _eventoNavControl.addTo(_map);
+  atualizarNavegadorEventos();
 }
 
 function htmlResumoEventos() {
@@ -2229,6 +2441,18 @@ function navegarEventoMapa(delta) {
 function atualizarNavegadorEventos() {
   const el = document.getElementById("mapEvtCount");
   if (el) el.textContent = `${_eventoAtual + 1}/${_eventosMapa.length}`;
+  const icon = document.getElementById("mapEvtIcon");
+  const evento = _eventosMapa[_eventoAtual];
+  if (icon && evento) {
+    const sevRaw = (evento.props?.severidade || evento.props?.evento || "").toLowerCase();
+    const sev = sevRaw.includes("criti") ? "crítica"
+      : sevRaw.includes("alta") ? "alta"
+      : "moderada";
+    const cor = COR_SEV[sev] || "#6E7681";
+    icon.textContent = sev === "crítica" ? "✗" : sev === "alta" ? "⚠" : "!";
+    icon.style.background = cor;
+    icon.style.boxShadow = `0 0 0 3px ${cor}55, 0 2px 6px rgba(0,0,0,.45)`;
+  }
 }
 
 function selecionarEventoMapa(layer) {

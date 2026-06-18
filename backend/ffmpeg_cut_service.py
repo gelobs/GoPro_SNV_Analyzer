@@ -17,6 +17,7 @@ from backend.ffmpeg_service import (
     time_to_seconds,
     validar_tempo,
 )
+from backend.video_metadata_service import aplicar_metadata_corte
 
 MIN_SEGMENT_DURATION_SECONDS = 1.0
 
@@ -128,6 +129,8 @@ def split_video_on_cut(
             segment_specs,
             start=1,
         ):
+            progress_start = 70 + int((index - 1) * 25 / len(segment_specs))
+            progress_end = 70 + int(index * 25 / len(segment_specs))
             _log_step(
                 log,
                 f"Cortando segmento {index}/{len(segment_specs)} ({segment_path.name}) a partir de "
@@ -140,6 +143,9 @@ def split_video_on_cut(
                 map_args,
                 start_seconds=segment_start,
                 duration_seconds=segment_duration,
+                log=log,
+                progress_start=progress_start,
+                progress_end=progress_end,
             )
             if not ok:
                 return False, output, []
@@ -152,6 +158,8 @@ def split_video_on_cut(
                     output_file.unlink(missing_ok=True)
                 except PermissionError:
                     pass
+
+    aplicar_metadata_corte(source, output_paths)
 
     _log_step(log, "Corte finalizado com sucesso.")
     output_text = "\n".join(str(path) for path in output_paths)

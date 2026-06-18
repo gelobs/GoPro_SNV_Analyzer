@@ -4,7 +4,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 
 def check_disk_space(target_path: Path, estimated_size: int) -> Tuple[bool, str]:
@@ -161,6 +161,18 @@ def run_command(command: List[str]) -> Tuple[bool, str]:
     return True, output
 
 
+def _parse_ffmpeg_time_to_seconds(value: str) -> Optional[float]:
+    match = re.fullmatch(r"(?P<h>\d+):(?P<m>\d{2}):(?P<s>\d{2}(?:\.\d+)?)", value)
+    if not match:
+        return None
+
+    return (
+        int(match.group("h")) * 3600
+        + int(match.group("m")) * 60
+        + float(match.group("s"))
+    )
+
+
 def cut_segment(
     ffmpeg_path: str,
     source: Path,
@@ -168,6 +180,9 @@ def cut_segment(
     map_args: List[str],
     start_seconds: float,
     duration_seconds: float,
+    log: Optional[Callable[[str], None]] = None,
+    progress_start: int = 70,
+    progress_end: int = 95,
 ) -> Tuple[bool, str]:
     command = [
         ffmpeg_path,
@@ -178,16 +193,66 @@ def cut_segment(
         str(source),
         "-t",
         str(duration_seconds),
+        "-nostats",
         *map_args,
         "-map_metadata",
         "0",
         "-c",
         "copy",
+        "-c:v",
+        "libx264",
+        "-vf",
+        "scale=1920:1080",
+        "-r",
+        "60000/1001",
+        "-crf",
+        "10",
         "-copy_unknown",
         "-avoid_negative_ts",
         "make_zero",
         "-movflags",
         "use_metadata_tags",
+        "-progress",
+        "pipe:1",
         str(target),
     ]
-    return run_command(command)
+
+    try:
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+    except Exception as exc:
+        return False, str(exc)
+
+    output_lines: List[str] = []
+    last_progress = -1
+
+    assert process.stdout is not None
+    for line in process.stdout:
+        line = line.strip()
+        if not line:
+            continue
+        output_lines.append(line)
+
+        if not line.startswith("out_time="):
+            continue
+
+        elapsed = _parse_ffmpeg_time_to_seconds(line.partition("=")[2])
+        if elapsed is None or duration_seconds <= 0:
+            continue
+
+        ratio = min(max(elapsed / duration_seconds, 0), 1)
+        progress = int(progress_start + ratio * (progress_end - progress_start))
+        if log and progress > last_progress:
+            last_progress = progress
+            log(f"Progresso FFmpeg: {progress}%")
+
+    return_code = process.wait()
+    output = "\n".join(output_lines).strip()
+    if return_code != 0:
+        return False, output or "FFmpeg retornou erro sem detalhes."
+
+    return True, output
