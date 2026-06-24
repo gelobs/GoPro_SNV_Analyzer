@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Vídeo GoPro Analyzer x DNIT SNV</title>
+<title>ICM Tools</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0D1117;--surface:#161B22;--surface2:#1C2128;--surface3:#21262D;
-  --border:#30363D;--border2:#3D444D;
-  --primary:#1F6FEB;--primary2:#388BFD;
-  --accent:#F78166;--success:#3FB950;--warning:#D29922;--danger:#DA3633;
-  --text:#E6EDF3;--text2:#8B949E;--text3:#6E7681;
+  --bg:#F6F8FA;--surface:#FFFFFF;--surface2:#F0F3F6;--surface3:#EAEFF4;
+  --border:#D0D7DE;--border2:#AFB8C1;
+  --primary:#0969DA;--primary2:#1F6FEB;
+  --accent:#BC4C00;--success:#1A7F37;--warning:#9A6700;--danger:#CF222E;
+  --text:#24292F;--text2:#57606A;--text3:#6E7781;
   --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -225,7 +225,7 @@ main{
 
 /* LOG */
 .logbox{
-  background:#090D12;border:1px solid var(--border);border-radius:6px;
+  background:#FFFFFF;border:1px solid var(--border);border-radius:6px;
   padding:12px 14px;font-family:var(--mono);font-size:11px;
   line-height:1.8;height:calc(100vh - 180px);overflow-y:auto;
   cursor:text;user-select:text;
@@ -286,6 +286,8 @@ main{
   text-align:left;color:var(--text3);font-size:9px;text-transform:uppercase;
   letter-spacing:.06em;padding:6px 10px;border-bottom:1px solid var(--border);font-weight:500;
 }
+.dtable th.tr{text-align:right}
+.dtable th.tc{text-align:center}
 .dtable td{
   padding:7px 10px;border-bottom:1px solid var(--border);
   color:var(--text2);vertical-align:middle;
@@ -367,6 +369,13 @@ footer .fhi{color:var(--text2)}
   align-items: center; justify-content: center;
   font-size: 11px; font-weight: 700; line-height: 1;
 }
+.leg-alert {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  color: #fff; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 900; line-height: 1;
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 2px rgba(110,118,129,.22);
+}
 .leg-line { width: 18px; height: 3px; border-radius: 2px; flex-shrink: 0; }
 .map-stat {
   display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;
@@ -380,8 +389,8 @@ footer .fhi{color:var(--text2)}
 .mstat-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
 .map-event-nav {
   display: flex; align-items: center; gap: 4px;
-  background: rgba(13,17,23,.92); border: 1px solid var(--border);
-  border-radius: 6px; padding: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.35);
+  background: rgba(255,255,255,.96); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px; box-shadow: 0 6px 18px rgba(27,31,36,.16);
 }
 .map-event-nav.has-error {
   border-color: var(--border);
@@ -408,7 +417,7 @@ footer .fhi{color:var(--text2)}
   font-size: 12px;
   font-weight: 900;
   line-height: 1;
-  box-shadow: 0 0 0 3px rgba(218,54,51,.35), 0 2px 6px rgba(0,0,0,.45);
+  box-shadow: 0 0 0 3px rgba(207,34,46,.24), 0 2px 6px rgba(27,31,36,.24);
 }
 .map-event-btn, .map-event-main {
   border: 1px solid var(--border); background: var(--surface2); color: var(--text);
@@ -416,7 +425,7 @@ footer .fhi{color:var(--text2)}
 }
 .map-event-btn { width: 26px; height: 26px; font-size: 16px; line-height: 1; }
 .map-event-main { height: 26px; padding: 0 9px; }
-.map-event-btn:hover, .map-event-main:hover { border-color: var(--primary); color: #fff; }
+.map-event-btn:hover, .map-event-main:hover { border-color: var(--primary); color: var(--primary); }
 .map-event-summary {
   margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border);
   font-family: var(--mono); font-size: 10px; color: var(--text2);
@@ -521,7 +530,7 @@ aside .cut-grid {
   display: none;
   align-items: center;
   justify-content: center;
-  background: rgba(1,4,9,.68);
+  background: rgba(36,41,47,.35);
   padding: 20px;
 }
 .cut-confirm-box {
@@ -529,12 +538,12 @@ aside .cut-grid {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  box-shadow: 0 18px 50px rgba(27,31,36,.18);
   padding: 18px;
 }
 .cut-confirm-box.danger {
   border-color: var(--danger);
-  box-shadow: 0 18px 50px rgba(218,54,51,.18), 0 18px 50px rgba(0,0,0,.45);
+  box-shadow: 0 18px 50px rgba(207,34,46,.14), 0 18px 50px rgba(27,31,36,.18);
 }
 .cut-confirm-title {
   font-size: 14px;
@@ -552,10 +561,10 @@ aside .cut-grid {
   margin-bottom: 14px;
 }
 .cut-confirm-warning {
-  background: rgba(248,81,73,.18);
+  background: rgba(207,34,46,.08);
   border: 1px solid var(--danger);
   border-radius: 6px;
-  color: #FFFFFF;
+  color: var(--danger);
   font-weight: 700;
   margin-top: 14px;
   padding: 10px;
@@ -568,19 +577,19 @@ aside .cut-grid {
 
 /* TOOLTIP */
 .leaflet-tooltip-dark {
-  background: #1C2128;
-  border: 1px solid #3D444D;
-  color: #8B949E;
+  background: #FFFFFF;
+  border: 1px solid #D0D7DE;
+  color: #57606A;
   font-size: 10px;
   font-family: 'IBM Plex Mono', monospace;
   white-space: nowrap;
 }
-.leaflet-tooltip-dark::before { border-right-color: #3D444D; }
+.leaflet-tooltip-dark::before { border-right-color: #D0D7DE; }
 .leaflet-popup-content-wrapper {
-  background: #1C2128; color: #E6EDF3;
-  border: 1px solid #3D444D; border-radius: 6px;
+  background: #FFFFFF; color: #24292F;
+  border: 1px solid #D0D7DE; border-radius: 6px;
 }
-.leaflet-popup-tip { background: #1C2128; }
+.leaflet-popup-tip { background: #FFFFFF; }
 .leaflet-popup-content { margin: 10px 14px; }
 .leaflet-popup.gps-popup-fade-out {
   opacity: 0;
@@ -589,11 +598,11 @@ aside .cut-grid {
   pointer-events: none;
 }
 #tip{
-  position:fixed;background:#1C2128;border:1px solid var(--border2);
+  position:fixed;background:#FFFFFF;border:1px solid var(--border2);
   color:var(--text2);font-family:var(--mono);font-size:10px;line-height:1.5;
   padding:7px 11px;border-radius:5px;max-width:240px;white-space:pre-wrap;
   z-index:9999;pointer-events:none;opacity:0;transition:opacity .15s;
-  box-shadow:0 4px 12px rgba(0,0,0,.4);
+  box-shadow:0 4px 12px rgba(27,31,36,.18);
 }
 #tip.show{opacity:1}
 </style>
@@ -610,8 +619,8 @@ aside .cut-grid {
     </svg>
   </div>
   <div class="htitle">
-    <h1>Vídeo GoPro Analyzer X DNIT SNV</h1>
-    <span>Sistema de Validação de Trajetória GPS × SNV/DNIT</span>
+    <h1>ICM Tools</h1>
+    <span>Sistema de Validação de Trajetória GPS × SNV/DNIT / Corte de vídeo</span>
   </div>
   <div class="hspace"></div>
   <div class="hstatus">
@@ -802,7 +811,7 @@ aside .cut-grid {
 
 <footer>
   <span>DNIT SNV</span><span class="fsep">|</span>
-  <span class="fhi">Vídeo GoPro Analyzer</span><span class="fsep">|</span>
+  <span class="fhi">ICM Tools</span><span class="fsep">|</span>
   <span>v1.0.0</span><span class="fsep">|</span>
   <span>Python 3.13 + Flask + GeoPandas</span><span class="fsep">|</span>
   <span id="ftxt">—</span>
@@ -1746,7 +1755,7 @@ function renderConf(d) {
   </tr>`).join("");
   document.getElementById("d-conf").innerHTML = `<div class="ccard"><div class="ctitle">Conformidade da trajetória com o SNV/DNIT</div>
     <div style="overflow-x:auto"><table class="dtable">
-      <tr><th>Segmento</th><th>Conformidade</th><th>Dist. Méd.</th><th>Dist. Máx.</th><th>P95</th><th>Raio Conf.</th><th>Sistemático</th><th>Justificativa</th></tr>
+      <tr><th>Segmento</th><th>Conformidade</th><th class="tr">Dist. Méd.</th><th class="tr">Dist. Máx.</th><th class="tr">P95</th><th class="tr">Raio Conf.</th><th class="tc">Sistemático</th><th>Justificativa</th></tr>
       ${rows}</table></div></div>`;
 }
 
@@ -1763,7 +1772,7 @@ function renderQual(d) {
   </tr>`).join("");
   document.getElementById("d-qual").innerHTML = `<div class="ccard"><div class="ctitle">Índice de qualidade do sinal GPS (GPMF @ 18Hz)</div>
     <div style="overflow-x:auto"><table class="dtable">
-      <tr><th>Segmento</th><th>IQ</th><th>GPSP</th><th>DOP</th><th>Fix 3D</th><th>Anomalias</th><th>Raio Conf.</th><th>Vel.</th></tr>
+      <tr><th>Segmento</th><th>IQ</th><th class="tr">GPSP</th><th class="tr">DOP</th><th class="tr">Fix 3D</th><th class="tr">Anomalias</th><th class="tr">Raio Conf.</th><th class="tr">Vel.</th></tr>
       ${rows}</table></div></div>`;
 }
 
@@ -2000,13 +2009,14 @@ async function renderMapa(d) {
       <span class="leg-item"><span class="leg-line" style="background:#FF69B4;border:1px dashed #888"></span>Traçado SNV</span>
       <span style="margin-left:6px;color:var(--text3)">|</span>
       <strong style="color:var(--text2);margin:0 4px">Alertas:</strong>
-      <span class="leg-item"><span class="leg-dot" style="background:#DA3633;border:2px solid #fff;width:12px;height:12px"></span>Crítico ✗</span>
-      <span class="leg-item"><span class="leg-dot" style="background:#D29922;border:2px solid #fff;width:12px;height:12px"></span>Alto ⚠</span>
-      <span class="leg-item"><span class="leg-dot" style="background:#6E7681;border:2px solid #fff;width:12px;height:12px"></span>Moderado</span>
+      <span class="leg-item"><span class="leg-alert" style="background:#DA3633">!</span>Crítico</span>
+      <span class="leg-item"><span class="leg-alert" style="background:#D29922">!</span>Alto</span>
+      <span class="leg-item"><span class="leg-alert" style="background:#6E7681">!</span>Moderado</span>
       <span style="margin-left:6px;color:var(--text3)">|</span>
       <strong style="color:var(--text2);margin:0 4px">Tipo:</strong>
-      <span class="leg-item"><span class="leg-event" style="border:3px solid #F85149">!</span>Erro no GPS</span>
-      <span class="leg-item"><span class="leg-event" style="border:3px solid rgba(255,255,255,0.9)">!</span>Possível erro no GPS</span>
+      <span class="leg-item"><span class="leg-alert" style="background:#DA3633;border-color:#F85149">!</span>Erro no GPS</span>
+      <span class="leg-item"><span class="leg-alert" style="background:#D29922">!</span>Possível erro no GPS</span>
+      <span class="leg-item"><span class="leg-alert" style="background:#6E7681">!</span>Erro moderado</span>
       <span style="margin-left:6px;color:var(--text3)">|</span>
       <strong style="color:var(--text2);margin:0 4px">GPS:</strong>
       <span class="leg-item"><span class="leg-dot" style="background:#388BFD"></span>Excelente</span>
@@ -2092,7 +2102,7 @@ async function carregarCamada(tipo) {
           layer.bindPopup(`
             <div style="font-family:monospace;font-size:12px;min-width:200px">
               <strong>${km}</strong><br>
-              <span style="color:${COR_CONF[p.conformidade]||'#aaa'}">${conf.replace(/_/g," ")}</span><br>
+              <span style="color:${COR_CONF[p.conformidade]||'#6E7781'}">${conf.replace(/_/g," ")}</span><br>
               IQ GPS: ${iq} | DOP: ${p.dop_medio != null ? parseFloat(p.dop_medio).toFixed(2) : "—"}<br>
               Dist. média: ${dmed} | Dist. máx: ${dmax}<br>
               Velocidade: ${vel}<br>
@@ -2164,7 +2174,7 @@ async function carregarCamada(tipo) {
                     : sevRaw.includes("alta")  ? "alta"
                     : "moderada";
           const cor = COR_SEV[sev] || "#6E7681";
-          const ico = sev === "crítica" ? "✗" : sev === "alta" ? "⚠" : "!";
+          const ico = "!";
           // divIcon com tamanho grande e sombra forte — sempre visível
           const eventosGrupo = Array.isArray(props.eventos_grupo) && props.eventos_grupo.length ? props.eventos_grupo : [props];
           const temVeiculoParado = eventosGrupo.some(ev => (ev.evento || "").toLowerCase() === "veiculo_parado");
@@ -2222,13 +2232,13 @@ async function carregarCamada(tipo) {
             const sevItemRaw = (ev.severidade || "").toLowerCase();
             const sevItem = sevItemRaw.includes("criti") ? "crítica" : sevItemRaw.includes("alta") ? "alta" : "moderada";
             const corItem = COR_SEV[sevItem] || "#888";
-            const margem = index ? "margin-top:8px;padding-top:8px;border-top:1px solid #30363D" : "";
+            const margem = index ? "margin-top:8px;padding-top:8px;border-top:1px solid #D0D7DE" : "";
             return `
               <div style="${margem}">
                 <div style="color:${corItem};font-weight:700">${sevItem.toUpperCase()} — ${km}</div>
                 <strong>${esc(tipo2)}</strong><br>
-                <small style="color:#aaa">${esc(ev.descricao||ev.justificativa||"")}</small>
-                ${ev.metrica ? `<br><code style="font-size:10px;color:#ccc">${esc(ev.metrica)}</code>` : ""}
+                <small style="color:#57606A">${esc(ev.descricao||ev.justificativa||"")}</small>
+                ${ev.metrica ? `<br><code style="font-size:10px;color:#6E7781">${esc(ev.metrica)}</code>` : ""}
               </div>`;
           }).join("");
           layer.bindPopup(`
@@ -2449,7 +2459,7 @@ function atualizarNavegadorEventos() {
       : sevRaw.includes("alta") ? "alta"
       : "moderada";
     const cor = COR_SEV[sev] || "#6E7681";
-    icon.textContent = sev === "crítica" ? "✗" : sev === "alta" ? "⚠" : "!";
+    icon.textContent = "!";
     icon.style.background = cor;
     icon.style.boxShadow = `0 0 0 3px ${cor}55, 0 2px 6px rgba(0,0,0,.45)`;
   }
