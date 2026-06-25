@@ -20,7 +20,7 @@ body{
   font-family:var(--sans);background:var(--bg);color:var(--text);
   display:grid;
   grid-template-rows:52px 1fr 36px;
-  grid-template-columns:300px 1fr;
+  grid-template-columns:330px 1fr;
   grid-template-areas:"hdr hdr" "side main" "ftr ftr";
   height:100vh;overflow:hidden;
 }
@@ -53,18 +53,23 @@ aside{
 }
 aside::-webkit-scrollbar{width:4px}
 aside::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-.ssec{border-bottom:1px solid var(--border);padding:14px 16px}
+.ssec{border-bottom:1px solid var(--border);padding:16px 18px}
 .ssec:last-child{border-bottom:none}
 .stitle{
-  font-family:var(--mono);font-size:10px;font-weight:600;
+  font-family:var(--mono);font-size:11px;font-weight:600;
   color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;
 }
-.field{margin-bottom:10px}
-.field label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px}
+.field{margin-bottom:11px}
+.side-step{
+  color:var(--primary);font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.08em;margin:10px 0 8px;text-transform:uppercase;
+}
+.side-step:first-child{margin-top:0}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:5px}
 select,input[type=text],input[type=number],input[type=file]{
   width:100%;background:var(--bg);border:1px solid var(--border);
-  color:var(--text);font-family:var(--mono);font-size:11px;
-  padding:6px 8px;border-radius:4px;appearance:none;outline:none;
+  color:var(--text);font-family:var(--mono);font-size:12px;
+  padding:8px 10px;border-radius:4px;appearance:none;outline:none;
   transition:border-color .2s;
 }
 select:focus,input:focus{border-color:var(--primary)}
@@ -88,9 +93,11 @@ select option{background:var(--surface2)}
 .irow input{flex:1;text-align:center}
 .select-row{display:flex;align-items:center;gap:6px}
 .select-row select{min-width:0;flex:1}
-.select-row .btn{flex:none;padding:6px 10px;font-size:10px}
+.select-row .btn{flex:none;padding:8px 12px;font-size:11px}
+.select-row .btn,
+.cut-output-row .btn{width:112px}
 .spbtn{
-  width:26px;height:26px;background:var(--surface3);border:1px solid var(--border);
+  width:30px;height:30px;background:var(--surface3);border:1px solid var(--border);
   border-radius:4px;color:var(--text2);font-size:14px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
   transition:background .15s,color .15s;font-family:var(--mono);
@@ -113,8 +120,8 @@ select option{background:var(--surface2)}
 .velsub{font-size:10px;color:var(--text3);margin-left:auto}
 .brow{display:flex;gap:6px;margin-top:4px}
 .btn{
-  flex:1;padding:7px 0;border:1px solid var(--border);border-radius:4px;
-  font-family:var(--mono);font-size:11px;font-weight:500;cursor:pointer;
+  flex:1;padding:9px 0;border:1px solid var(--border);border-radius:4px;
+  font-family:var(--mono);font-size:12px;font-weight:500;cursor:pointer;
   transition:all .15s;text-align:center;letter-spacing:.05em;background:transparent;
 }
 .btn-p{background:var(--primary);border-color:var(--primary);color:#fff}
@@ -126,27 +133,66 @@ select option{background:var(--surface2)}
 .btn-n:hover{background:var(--surface3)}
 .advtoggle{
   display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;
-  font-size:11px;color:var(--text2);padding:8px 16px;border-top:1px solid var(--border);
+  font-size:11px;color:var(--text2);padding:0;border-top:none;
 }
 .advtoggle:hover{color:var(--text)}
 .advicon{font-size:10px;transition:transform .2s}
 .advopen .advicon{transform:rotate(90deg)}
-.advbody{display:none;padding:0 0 8px}
-.advbody.open{display:block}
-.tgroup{margin-bottom:14px}
+.adv-overlay{
+  position:fixed;inset:0;background:rgba(27,31,36,.38);
+  opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:90;
+}
+.adv-overlay.open{opacity:1;pointer-events:auto}
+.advbody{
+  position:fixed;top:0;left:0;width:min(460px,calc(100vw - 24px));height:100vh;
+  background:var(--surface);border-right:1px solid var(--border);
+  box-shadow:8px 0 18px rgba(27,31,36,.08);z-index:100;
+  transform:translateX(-100%);transition:transform .24s ease;
+  display:flex;flex-direction:column;
+}
+.advbody.open{transform:translateX(0)}
+.advhead{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:18px 20px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.advtitle{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);letter-spacing:.05em;text-transform:uppercase}
+.advclose{
+  width:30px;height:30px;border:1px solid var(--border);border-radius:4px;
+  background:var(--surface2);color:var(--text2);cursor:pointer;font-size:18px;line-height:1;
+}
+.advclose:hover{border-color:var(--danger);color:var(--danger)}
+.advscroll{padding:16px 20px 90px;overflow-y:auto;min-height:0;flex:1}
+.advscroll::-webkit-scrollbar{width:5px}
+.advscroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.advsection{
+  border:1px solid var(--border);border-radius:8px;background:var(--bg);
+  margin-bottom:12px;overflow:hidden;
+}
+.advsection summary{
+  cursor:pointer;user-select:none;list-style:none;padding:12px 14px;
+  font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text2);
+  letter-spacing:.05em;text-transform:uppercase;
+}
+.advsection summary::-webkit-details-marker{display:none}
+.advsection summary::before{content:"▶";display:inline-block;margin-right:8px;font-size:10px;transition:transform .18s ease}
+.advsection[open] summary::before{transform:rotate(90deg)}
+.tgroup{padding:0 14px 14px;margin-bottom:0}
 .tgtitle{
-  font-size:9px;color:var(--primary);letter-spacing:.1em;text-transform:uppercase;
-  font-weight:600;margin-bottom:6px;padding-bottom:4px;
-  border-bottom:1px solid rgba(31,111,235,.2);
+  display:none;
 }
 .tfield{
-  display:grid;grid-template-columns:1fr 80px;
-  gap:6px;align-items:center;margin-bottom:6px;
+  display:grid;grid-template-columns:1fr 110px;
+  gap:12px;align-items:center;margin-bottom:10px;
 }
-.tfield label{font-size:10px;color:var(--text2)}
-.tfield input{padding:4px 6px;font-size:11px;text-align:right}
-.abrow{display:flex;gap:6px;padding:0 16px 12px}
-.abrow .btn{font-size:10px;padding:5px 0}
+.tfield:last-child{margin-bottom:0}
+.tfield label{font-size:12px;color:var(--text2);line-height:1.35}
+.tfield input{padding:7px 8px;font-size:12px;text-align:right}
+.abrow{
+  position:sticky;bottom:0;display:flex;gap:8px;padding:14px 20px;
+  background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -8px 18px rgba(27,31,36,.06);
+  flex-shrink:0;
+}
+.abrow .btn{font-size:12px;padding:9px 0}
 .side-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -211,8 +257,8 @@ main{
   border-bottom:1px solid var(--border);padding:0 16px;gap:0;flex-shrink:0;
 }
 .tab{
-  font-family:var(--mono);font-size:11px;color:var(--text3);
-  padding:12px 16px;cursor:pointer;border-bottom:2px solid transparent;
+  font-family:var(--mono);font-size:12.5px;color:var(--text3);
+  padding:12px 14px;cursor:pointer;border-bottom:2px solid transparent;
   transition:all .15s;white-space:nowrap;
 }
 .tab:hover{color:var(--text2)}
@@ -242,35 +288,50 @@ main{
 .lempty{color:var(--text3);font-style:italic;padding:40px 0;text-align:center}
 
 /* DASHBOARD */
-.dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
-.kpilbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
-.kpival{font-family:var(--mono);font-size:24px;font-weight:600;color:var(--text)}
-.kpisub{font-size:10px;color:var(--text3);margin-top:3px}
+.dashboard-top{display:grid;grid-template-columns:330px minmax(430px,.9fr) minmax(260px,1fr);gap:12px;margin-bottom:20px;align-items:stretch}
+.dgrid{display:grid;grid-template-columns:repeat(2,minmax(160px,1fr));gap:10px;margin-bottom:0}
+.dash-info-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:0}
+.dash-info-grid.dash-info-hidden{display:none}
+.dash-info-card{max-width:330px;background:var(--surface);border:1px solid rgba(31,111,235,.3);border-radius:8px;padding:16px 17px}
+.dash-info-card .stitle{
+  color:var(--text3);font-size:12px;letter-spacing:.07em;margin-bottom:10px;
+  text-transform:uppercase;font-family:var(--mono);font-weight:600;
+}
+.dash-info-card .ibox{border:none;background:transparent;padding:0;font-size:12px;line-height:1.85}
+@media (max-width:1100px){.dashboard-top{grid-template-columns:1fr}.dash-info-card{max-width:none}}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:13px 14px}
+.kpilbl{font-size:11.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.kpival{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--text)}
+.kpisub{font-size:11.5px;color:var(--text3);margin-top:3px}
 .kpi.green{border-color:rgba(63,185,80,.3)}.kpi.green .kpival{color:var(--success)}
 .kpi.red{border-color:rgba(218,54,51,.3)}.kpi.red .kpival{color:var(--danger)}
 .kpi.blue{border-color:rgba(31,111,235,.3)}.kpi.blue .kpival{color:var(--primary2)}
 .kpi.amber{border-color:rgba(210,153,34,.3)}.kpi.amber .kpival{color:var(--warning)}
+.kpi.neutral{border-color:rgba(110,118,129,.3)}.kpi.neutral .kpival{color:var(--text2)}
 .ccard{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px}
+.dash-spark-card{margin-bottom:0;min-height:100%;display:flex;flex-direction:column}
+.dash-distance-card .ctitle{font-size:14px}
+.dash-distance-card .kmrow{font-size:12.5px}
+.dash-distance-card .kmrow.hdr{font-size:11.5px}
 .ctitle{
-  font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text2);
+  font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--text2);
   margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em;
 }
 .kmrow{
   display:grid;grid-template-columns:80px 1fr 90px 110px 70px;
-  align-items:center;gap:8px;font-family:var(--mono);font-size:10px;
-  padding:4px 0;border-bottom:1px solid var(--border);
+  align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;
+  padding:5px 0;border-bottom:1px solid var(--border);
 }
 .kmrow:last-child{border-bottom:none}
-.kmrow.hdr{color:var(--text3);font-size:9px;text-transform:uppercase;letter-spacing:.06em}
+.kmrow.hdr{color:var(--text3);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}
 .kmlbl{color:var(--text2)}
 .kmbw{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden}
 .kmb{height:100%;border-radius:4px;transition:width .4s}
 .kmb.ok{background:var(--success)}.kmb.snv{background:var(--danger)}
 .kmb.insuf{background:var(--warning)}.kmb.inc{background:var(--text3)}
 .badge{
-  display:inline-block;padding:1px 7px;border-radius:3px;
-  font-family:var(--mono);font-size:9px;font-weight:600;
+  display:inline-block;padding:2px 8px;border-radius:3px;
+  font-family:var(--mono);font-size:11px;font-weight:600;
   letter-spacing:.04em;text-transform:uppercase;
 }
 .b-ok{background:rgba(63,185,80,.15);color:var(--success)}
@@ -281,21 +342,32 @@ main{
 .b-bom{background:rgba(63,185,80,.15);color:var(--success)}
 .b-ace{background:rgba(210,153,34,.15);color:var(--warning)}
 .b-deg{background:rgba(218,54,51,.15);color:var(--danger)}
-.dtable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+.dtable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px}
 .dtable th{
-  text-align:left;color:var(--text3);font-size:9px;text-transform:uppercase;
-  letter-spacing:.06em;padding:6px 10px;border-bottom:1px solid var(--border);font-weight:500;
+  text-align:left;color:var(--text3);font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.04em;padding:8px 9px;border-bottom:1px solid var(--border);font-weight:500;
 }
 .dtable th.tr{text-align:right}
 .dtable th.tc{text-align:center}
 .dtable td{
-  padding:7px 10px;border-bottom:1px solid var(--border);
+  padding:8px 9px;border-bottom:1px solid var(--border);
   color:var(--text2);vertical-align:middle;
 }
 .dtable tr:last-child td{border-bottom:none}
 .dtable tr:hover td{background:var(--surface2)}
 .tr{text-align:right}
 .evlist{display:flex;flex-direction:column;gap:8px}
+.event-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.event-filter{
+  background:var(--surface2);border:1px solid var(--border);border-radius:4px;
+  color:var(--text2);cursor:pointer;font-family:var(--mono);font-size:11.5px;
+  padding:6px 10px;
+}
+.event-filter.active{border-color:var(--primary);color:var(--primary2);background:rgba(9,105,218,.08)}
+.sevtag{font-family:var(--mono);font-size:10.5px;font-weight:700;text-transform:uppercase}
+.sevtag.critica{color:var(--danger)}
+.sevtag.alta{color:var(--warning)}
+.sevtag.moderada{color:var(--text3)}
 .evcard{
   background:var(--surface2);border:1px solid var(--border);
   border-radius:6px;padding:10px 14px;border-left:3px solid var(--text3);
@@ -304,17 +376,18 @@ main{
 .evcard.alta{border-left-color:var(--warning)}
 .evcard.moderada{border-left-color:var(--text3)}
 .evhdr{display:flex;align-items:center;gap:8px;margin-bottom:4px}
-.evtipo{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.evkm{font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:auto}
-.evdesc{font-size:11px;color:var(--text2);line-height:1.5}
-.evmet{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px}
+.evtipo{font-family:var(--mono);font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.evkm{font-family:var(--mono);font-size:11.5px;color:var(--text3);margin-left:auto}
+.evdesc{font-size:12.5px;color:var(--text2);line-height:1.5}
+.evmet{font-family:var(--mono);font-size:11.5px;color:var(--text3);margin-top:3px}
 .empty{
   display:flex;flex-direction:column;align-items:center;
   justify-content:center;padding:60px 20px;gap:12px;text-align:center;
 }
 .emicon{font-size:32px;opacity:.3}
-.emtxt{font-size:12px;color:var(--text3);max-width:300px;line-height:1.6}
+.emtxt{font-size:13.5px;color:var(--text3);max-width:340px;line-height:1.6}
 .spark{display:flex;align-items:flex-end;gap:2px;height:40px}
+.dash-spark-card .spark{height:112px;margin-top:auto}
 .sparkb{flex:1;background:var(--primary);opacity:.6;border-radius:2px 2px 0 0;min-height:2px}
 
 /* FOOTER */
@@ -407,8 +480,8 @@ footer .fhi{color:var(--text2)}
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--danger);
-  border: 3px solid rgba(255,255,255,0.9);
+  background: var(--warning);
+  border: 3px solid #F85149;
   color: #fff;
   display: inline-flex;
   align-items: center;
@@ -519,8 +592,8 @@ aside .cut-grid {
 }
 .cut-output-row .btn {
   flex: none;
-  padding: 6px 10px;
-  font-size: 10px;
+  padding: 8px 12px;
+  font-size: 11px;
   white-space: nowrap;
 }
 .cut-confirm-backdrop {
@@ -638,6 +711,7 @@ aside .cut-grid {
     </div>
 
     <div id="side-processamento" class="side-mode active">
+    <div class="side-step">1. Entrada</div>
     <div class="field">
       <label data-tip="Shapefile do SNV (DNIT)\nBusca recursiva em todo o projeto">SNV — Sistema Nacional de Viação</label>
       <select id="selSnv" onchange="onSnvChange()">
@@ -655,6 +729,7 @@ aside .cut-grid {
       </div>
     </div>
 
+    <div class="side-step">2. Saída</div>
     <div class="field">
       <label data-tip="Pasta de destino dos arquivos gerados\n(.geojson e .csv)">Diretório de saída</label>
       <div class="cut-output-row">
@@ -663,6 +738,7 @@ aside .cut-grid {
       </div>
     </div>
 
+    <div class="side-step">3. Parâmetros</div>
     <div class="field">
       <label data-tip="Comprimento de cada segmento de análise\nMenor = mais detalhado">Tamanho do segmento (km)</label>
       <div class="irow">
@@ -672,14 +748,12 @@ aside .cut-grid {
       </div>
     </div>
 
-    <div class="field">
-      <label data-tip="Velocidade mediana calculada automaticamente\nao selecionar o vídeo">Velocidade mediana</label>
-      <div class="velbox">
-        <span class="velnum" id="velnum">—</span>
-        <span class="velunit">km/h</span>
-        <span class="velsub" id="velsub">mediana calculada</span>
-      </div>
+    <div class="advtoggle side-processamento-extra" id="advT" onclick="toggleAdv()">
+      <span class="advicon">▶</span>
+      <span>Configurações Avançadas</span>
     </div>
+
+    <span id="velnum" style="display:none">—</span>
     </div>
 
     <div id="side-corte" class="side-mode">
@@ -722,16 +796,6 @@ aside .cut-grid {
   </div>
 
   <div class="ssec side-processamento-extra">
-    <div class="stitle">Câmera GoPro</div>
-    <div class="ibox" id="infoGopro"><span class="iempty">Selecione um vídeo</span></div>
-  </div>
-
-  <div class="ssec side-processamento-extra">
-    <div class="stitle">SNV Selecionado</div>
-    <div class="ibox" id="infoSnv"><span class="iempty">Selecione um shapefile</span></div>
-  </div>
-
-  <div class="ssec side-processamento-extra">
     <div class="brow">
       <button class="btn btn-p" id="btnP" onclick="processar()" disabled>Processar</button>
       <button class="btn btn-d"  id="btnC" onclick="cancelar()" style="display:none">Cancelar</button>
@@ -739,22 +803,26 @@ aside .cut-grid {
     </div>
   </div>
 
-  <div class="advtoggle side-processamento-extra" id="advT" onclick="toggleAdv()">
-    <span class="advicon">▶</span>
-    <span>Configurações Avançadas</span>
-  </div>
-
-  <div class="advbody side-processamento-extra" id="advB">
-    <div class="ssec" style="padding-top:10px">
-
-      <div class="tgroup">
+  <div class="adv-overlay" id="advOverlay" onclick="fecharAdv()"></div>
+  <div class="advbody" id="advB" aria-hidden="true">
+    <div class="advhead">
+      <div class="advtitle">Configurações Avançadas</div>
+      <button class="advclose" type="button" onclick="fecharAdv()" aria-label="Fechar">×</button>
+    </div>
+    <div class="advscroll">
+      <details class="advsection" open>
+        <summary>Limiares Físicos</summary>
+        <div class="tgroup">
         <div class="tgtitle">Limiares Físicos — gp12_features.py</div>
         <div class="tfield"><label data-tip="GPSP acima deste valor = sinal ruim (DOP > 2.5)">GPSP ruim</label><input type="number" id="t_gpsp_ruim" value="250"></div>
         <div class="tfield"><label data-tip="Velocidade máxima em m/s (~216 km/h)">Vel. máx. (m/s)</label><input type="number" id="t_max_vel" value="60"></div>
         <div class="tfield"><label data-tip="Aceleração máxima em m/s²">Acel. máx. (m/s²)</label><input type="number" id="t_max_acel" value="15"></div>
-      </div>
+        </div>
+      </details>
 
-      <div class="tgroup">
+      <details class="advsection" open>
+        <summary>Diagnóstico da Câmera</summary>
+        <div class="tgroup">
         <div class="tgtitle">Limiares de Detecção — diagnostico_camera.py</div>
         <div class="tfield"><label data-tip="Gap > Xs = interrupção crítica no stream">Gap crítico (s)</label><input type="number" id="t_gap_crit" value="30"></div>
         <div class="tfield"><label data-tip="Gap > Xs = interrupção moderada">Gap moderado (s)</label><input type="number" id="t_gap_mod" value="5"></div>
@@ -764,17 +832,21 @@ aside .cut-grid {
         <div class="tfield"><label data-tip="Queda relativa de velocidade no fim (0–1)">Queda vel. bateria</label><input type="number" id="t_queda_vel" value="0.40" step="0.05"></div>
         <div class="tfield"><label data-tip="Velocidade mínima ao fim = encerramento abrupto (m/s)">Vel. encerramento</label><input type="number" id="t_vel_enc" value="5.0"></div>
         <div class="tfield"><label data-tip="Ignora encerramento abrupto nos ultimos X km da rota">Tol. fim rota (km)</label><input type="number" id="t_tol_fim" value="0.05" step="0.01"></div>
-        <div class="tfield"><label data-tip="Salto máximo entre pontos adjacentes (m)">Salto máx. pontos (m)</label><input type="number" id="t_salto_m" value="25.0"></div>
+        <div class="tfield"><label data-tip="Salto máximo entre pontos adjacentes (m)">Salto máx. pontos (m)</label><input type="number" id="t_salto_m" value="50.0"></div>
         <div class="tfield"><label data-tip="Vel. média máxima por segmento (m/s)">Vel. máx. segmento</label><input type="number" id="t_vel_max" value="55.5"></div>
-      </div>
+        </div>
+      </details>
 
-      <div class="tgroup">
+      <details class="advsection" open>
+        <summary>Qualidade GPS</summary>
+        <div class="tgroup">
         <div class="tgtitle">GPSP e Raio de Confiança — avaliador_qualidade.py</div>
         <div class="tfield"><label data-tip="GPSP máximo para sinal Excelente (DOP < 2.0)">GPSP Excelente (≤)</label><input type="number" id="t_gpsp_exc" value="200"></div>
         <div class="tfield"><label data-tip="GPSP máximo para sinal Bom (DOP < 5.0)">GPSP Bom (≤)</label><input type="number" id="t_gpsp_bom" value="500"></div>
         <div class="tfield"><label data-tip="GPSP máximo para sinal Aceitável (DOP < 10.0)">GPSP Aceitável (≤)</label><input type="number" id="t_gpsp_ace" value="1000"></div>
-        <div class="tfield"><label data-tip="Distância máxima (m) para SNV desatualizado">Limiar SNV desatual. (m)</label><input type="number" id="t_dist_snv" value="100"></div>
-      </div>
+        <div class="tfield"><label data-tip="Distância máxima (m) para erro no SNV">Limiar erro SNV (m)</label><input type="number" id="t_dist_snv" value="100"></div>
+        </div>
+      </details>
     </div>
 
     <div class="abrow">
@@ -786,21 +858,27 @@ aside .cut-grid {
 
 <main>
   <div class="tabbar">
-    <div class="tab active" onclick="swTab('log',this)">Log</div>
-    <div class="tab" onclick="swTab('dash',this)">Dashboard</div>
+    <div class="tab active" onclick="swTab('dash',this)">Dashboard</div>
     <div class="tab" onclick="swTab('conf',this)">Conformidade SNV</div>
     <div class="tab" onclick="swTab('qual',this)">Qualidade GPS</div>
-    <div class="tab" onclick="swTab('cam',this)">Câmera</div>
+    <div class="tab" onclick="swTab('cam',this)">Alertas</div>
     <div class="tab" onclick="swTab('tab',this)">Tabela Detalhada</div>
     <div class="tab" onclick="swTab('mapa',this)">Mapa</div>
+    <div class="tab" onclick="swTab('log',this)">Log</div>
   </div>
   <div class="mcontent">
-    <div id="p-log" class="tpanel active">
+    <div id="p-log" class="tpanel">
       <div class="logbox" id="logbox">
         <div class="lempty">Nenhum processamento realizado.<br>Configure os parâmetros e clique em Processar.</div>
       </div>
     </div>
-    <div id="p-dash" class="tpanel"><div id="d-dash"><div class="empty"><div class="emicon">◈</div><div class="emtxt">Dashboard será exibido após o processamento.</div></div></div></div>
+    <div id="p-dash" class="tpanel active"><div id="d-dash">
+      <div class="dash-info-grid dash-info-hidden">
+        <div class="dash-info-card"><div class="stitle">Câmera GoPro</div><div class="ibox" id="infoGopro"><span class="iempty">Selecione um vídeo</span></div></div>
+        <div class="dash-info-card"><div class="stitle">SNV Selecionado</div><div class="ibox" id="infoSnv"><span class="iempty">Selecione um shapefile</span></div></div>
+      </div>
+      <div class="empty"><div class="emicon">◈</div><div class="emtxt">Dashboard será exibido após o processamento.</div></div>
+    </div></div>
     <div id="p-conf" class="tpanel"><div id="d-conf"><div class="empty"><div class="emicon">◈</div><div class="emtxt">Conformidade SNV por segmento.</div></div></div></div>
     <div id="p-qual" class="tpanel"><div id="d-qual"><div class="empty"><div class="emicon">◈</div><div class="emtxt">Qualidade do sinal GPS por segmento.</div></div></div></div>
     <div id="p-cam"  class="tpanel"><div id="d-cam" ><div class="empty"><div class="emicon">◈</div><div class="emtxt">Diagnóstico de câmera e gravação.</div></div></div></div>
@@ -849,6 +927,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   await carregarDefaults();
   await carregarListas();
   initTooltip();
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape") fecharAdv();
+  });
 });
 
 async function carregarDefaults() {
@@ -1036,8 +1117,8 @@ function atualizarPontosGpsSelecionadosParaCorte() {
       ? tempo >= inicio && tempo <= fim
       : S.temposCorteGps.includes(tempo);
     layer.setStyle(selecionado ? {
-      fillColor: "#F85149",
-      color: "#B62324",
+      fillColor: "#8250DF",
+      color: "#5A32A3",
       weight: 2,
       fillOpacity: 0.95,
     } : {
@@ -1387,7 +1468,7 @@ async function processar() {
   document.getElementById("btnP").style.display = "none";
   document.getElementById("btnC").style.display = "";
   setStatus("running","Processando…");
-  swTab("log", document.querySelector(".tab"));
+  swTab("log", document.querySelector('.tab[onclick*="log"]'));
   document.getElementById("logbox").innerHTML = "";
   const iniciar = await fetch("/api/processar",{ method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(params) });
   const inicio = await iniciar.json().catch(() => ({}));
@@ -1523,20 +1604,10 @@ async function cortarVideo() {
   }
   const fps = fpsVideoCorteSelecionado();
   if (sourcePath && fps !== null && fps < 59.9) {
-    avisoCorteNegrito(status, `O vídeo tem ${fps} fps. O corte só é permitido para vídeos em 59.94 fps ou 60 fps.`);
+    avisoCorteNegrito(status, `O vídeo tem ${fps} fps. O corte só é permitido para vídeos com FPS acima de 59.9.`);
     progressBar.className = "cut-progress-bar erro";
     progressBar.style.width = "0%";
     step.textContent = "FPS insuficiente para corte.";
-    return;
-  }
-  const fov = fovVideoCorteSelecionado();
-  if (sourcePath && fov.linear !== true) {
-    avisoCorteNegrito(status, fov.linear === false
-      ? `O vídeo está com FOV ${fov.nome}. O corte só é permitido para vídeos em FOV Linear.`
-      : "Não foi possível confirmar que o FOV do vídeo é Linear. O corte foi bloqueado.");
-    progressBar.className = "cut-progress-bar erro";
-    progressBar.style.width = "0%";
-    step.textContent = "FOV incompatível para corte.";
     return;
   }
   const confirmado = await confirmarCorteVideo(fimEfetivo - startSeconds, startTime, fimConfirmacao, distanciaSnv, resolucao, fps);
@@ -1638,7 +1709,7 @@ function limparResultadoProcessamento(rodape, status) {
   _eventoAtual = 0;
   _eventoNavControl = null;
 
-  document.getElementById("d-dash").innerHTML = painelVazio("Dashboard será exibido após novo processamento.");
+  document.getElementById("d-dash").innerHTML = dashboardInfoCards(true) + painelVazio("Dashboard será exibido após novo processamento.");
   document.getElementById("d-conf").innerHTML = painelVazio("Conformidade SNV será exibida após novo processamento.");
   document.getElementById("d-qual").innerHTML = painelVazio("Qualidade GPS será exibida após novo processamento.");
   document.getElementById("d-cam").innerHTML = painelVazio("Diagnóstico de câmera será exibido após novo processamento.");
@@ -1680,7 +1751,7 @@ async function finalizar() {
     setStatus("done", "Concluído — " + d.segmentos.length + " segmentos");
 
     // Muda automaticamente para o Dashboard
-    const tabDash = document.querySelectorAll(".tab")[1];
+    const tabDash = document.querySelector('.tab[onclick*="dash"]');
     swTab("dash", tabDash);
 
   } catch(e) {
@@ -1702,19 +1773,34 @@ function addLog(tipo, msg) {
 }
 
 // ── Renders ───────────────────────────────────────────────────
+function dashboardInfoCards(hidden=false) {
+  const goproHtml = document.getElementById("infoGopro")?.innerHTML || '<span class="iempty">Selecione um vídeo</span>';
+  const snvHtml = document.getElementById("infoSnv")?.innerHTML || '<span class="iempty">Selecione um shapefile</span>';
+  return `<div class="dash-info-grid${hidden ? " dash-info-hidden" : ""}">
+    <div class="dash-info-card"><div class="stitle">Câmera GoPro</div><div class="ibox" id="infoGopro">${goproHtml}</div></div>
+    <div class="dash-info-card"><div class="stitle">SNV Selecionado</div><div class="ibox" id="infoSnv">${snvHtml}</div></div>
+  </div>`;
+}
+
+function severidadeEvento(e) {
+  const texto = `${e?.severidade || ""} ${e?.justificativa || ""}`.toUpperCase();
+  if (texto.includes("CRÍTICA") || texto.includes("CRITICA")) return "critica";
+  if (texto.includes("ALTA")) return "alta";
+  return "moderada";
+}
+
 function renderDash(d) {
   const segs = d.segmentos||[], evts = d.eventos||[];
   const tot = segs.length;
-  const nOk  = segs.filter(s=>s.conformidade==="dentro_da_tolerancia").length;
-  const nSnv = segs.filter(s=>s.conformidade==="snv_desatualizado").length;
-  const nCrit= evts.filter(e=>(e.justificativa||"").includes("CRÍTICA")).length;
+  const nCrit= evts.filter(e=>severidadeEvento(e)==="critica").length;
+  const nAlertas = evts.length - nCrit;
   const vels = segs.map(s=>parseFloat(s.vel_media_kmh)||0).filter(Boolean);
   const dmax = Math.max(...segs.map(s=>parseFloat(s.dist_max_m)||0),1);
   const kpis = `<div class="dgrid">
-    <div class="kpi ${nOk===tot?"green":"blue"}"><div class="kpilbl">Conforme</div><div class="kpival">${tot?Math.round(nOk/tot*100):0}%</div><div class="kpisub">${nOk} de ${tot} segmentos</div></div>
-    <div class="kpi ${nSnv>0?"red":"green"}"><div class="kpilbl">SNV Desatualizado</div><div class="kpival">${nSnv}</div><div class="kpisub">segmento(s)</div></div>
-    <div class="kpi blue"><div class="kpilbl">Vel. Mediana</div><div class="kpival">${mediana(vels).toFixed(0)}</div><div class="kpisub">km/h</div></div>
-    <div class="kpi ${nCrit>0?"amber":"green"}"><div class="kpilbl">Eventos Câmera</div><div class="kpival">${evts.length}</div><div class="kpisub">${nCrit} crítico(s)</div></div>
+    <div class="kpi blue"><div class="kpilbl">Segmentos</div><div class="kpival">${tot}</div><div class="kpisub">total processado</div></div>
+    <div class="kpi ${evts.length?"amber":"green"}"><div class="kpilbl">Eventos</div><div class="kpival">${evts.length}</div><div class="kpisub">ocorrência(s)</div></div>
+    <div class="kpi ${nCrit?"red":"green"}"><div class="kpilbl">Críticos</div><div class="kpival">${nCrit}</div><div class="kpisub">prioridade máxima</div></div>
+    <div class="kpi ${nAlertas?"amber":"green"}"><div class="kpilbl">Alertas</div><div class="kpival">${nAlertas}</div><div class="kpisub">alta/moderada</div></div>
   </div>`;
   const rows = segs.map(s=>{
     const c=s.conformidade||"";
@@ -1723,23 +1809,23 @@ function renderDash(d) {
     return `<div class="kmrow">
       <span class="kmlbl">km ${(s.km_inicio||0).toFixed(1)}–${(s.km_fim||0).toFixed(1)}</span>
       <div class="kmbw"><div class="kmb ${bc}" style="width:${pct.toFixed(0)}%"></div></div>
-      <span style="text-align:right;font-family:var(--mono);font-size:10px">${(s.dist_max_m||0).toFixed(0)}m</span>
+      <span style="text-align:right;font-family:var(--mono);font-size:11.5px">${(s.dist_max_m||0).toFixed(0)}m</span>
       <span style="text-align:center">${badgeConf(c)}</span>
-      <span style="text-align:right;font-family:var(--mono);font-size:10px">${(parseFloat(s.vel_media_kmh)||0).toFixed(0)} km/h</span>
+      <span style="text-align:right;font-family:var(--mono);font-size:11.5px">${(parseFloat(s.vel_media_kmh)||0).toFixed(0)} km/h</span>
     </div>`;
   }).join("");
   const vmax = Math.max(...vels,1);
-  const spark = `<div class="ccard"><div class="ctitle">Velocidade média por segmento (km/h)</div>
+  const spark = `<div class="ccard dash-spark-card"><div class="ctitle">Velocidade média por segmento (km/h)</div>
     <div class="spark">${vels.map(v=>`<div class="sparkb" style="height:${Math.max(4,(v/vmax)*100).toFixed(0)}%" title="${v.toFixed(0)} km/h"></div>`).join("")}</div>
-    <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:var(--mono);font-size:10px;color:var(--text3)">
+    <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:var(--mono);font-size:11.5px;color:var(--text3)">
       <span>km ${segs[0]?.km_inicio?.toFixed(1)||0}</span>
       <span>${mediana(vels).toFixed(0)} km/h mediana</span>
       <span>km ${segs[segs.length-1]?.km_fim?.toFixed(1)||0}</span>
     </div></div>`;
-  document.getElementById("d-dash").innerHTML = kpis +
-    `<div class="ccard"><div class="ctitle">Distância máxima ao SNV por segmento</div>
+  document.getElementById("d-dash").innerHTML = `<div class="dashboard-top">${dashboardInfoCards()}${kpis}${spark}</div>` +
+    `<div class="ccard dash-distance-card"><div class="ctitle">Distância máxima ao SNV por segmento</div>
     <div class="kmrow hdr"><span>Segmento</span><span>Barra</span><span>Dist. máx.</span><span>Conformidade</span><span>Vel.</span></div>
-    ${rows}</div>` + spark;
+    ${rows}</div>`;
 }
 
 function renderConf(d) {
@@ -1751,18 +1837,17 @@ function renderConf(d) {
     <td class="tr">${(s.dist_p95_m||0).toFixed(1)} m</td>
     <td class="tr">${s.raio_conf_m||"—"} m</td>
     <td style="text-align:center">${s.sistematico==="True"||s.sistematico===true?"Sim":"Não"}</td>
-    <td style="max-width:260px;font-size:10px;color:var(--text2);line-height:1.4">${esc(s.justificativa||"")}</td>
   </tr>`).join("");
   document.getElementById("d-conf").innerHTML = `<div class="ccard"><div class="ctitle">Conformidade da trajetória com o SNV/DNIT</div>
     <div style="overflow-x:auto"><table class="dtable">
-      <tr><th>Segmento</th><th>Conformidade</th><th class="tr">Dist. Méd.</th><th class="tr">Dist. Máx.</th><th class="tr">P95</th><th class="tr">Raio Conf.</th><th class="tc">Sistemático</th><th>Justificativa</th></tr>
+      <tr><th>Segmento</th><th>Conformidade</th><th class="tr">Dist. Méd.</th><th class="tr">Dist. Máx.</th><th class="tr">P95</th><th class="tr">Raio Conf.</th><th class="tc">Sistemático</th></tr>
       ${rows}</table></div></div>`;
 }
 
 function renderQual(d) {
   const rows = (d.segmentos||[]).map(s=>`<tr>
     <td style="font-family:var(--mono);white-space:nowrap">km ${(s.km_inicio||0).toFixed(1)}–${(s.km_fim||0).toFixed(1)}</td>
-    <td>${badgeIQ(s.iq_sinal||"")}</td>
+    <td class="tc">${badgeIQ(s.iq_sinal||"")}</td>
     <td class="tr">${(s.gpsp_medio||0).toFixed(0)}</td>
     <td class="tr">${(s.dop_medio||0).toFixed(2)}</td>
     <td class="tr">${(s.pct_fix_3d||0).toFixed(0)}%</td>
@@ -1777,6 +1862,7 @@ function renderQual(d) {
 }
 
 const CAMERA_EVENT_SCREENSHOT_MODE = false;
+let _filtroEventosCamera = "todos";
 
 function eventosCameraParaPrint() {
   const nomes = [
@@ -1786,7 +1872,7 @@ function eventosCameraParaPrint() {
     ["encerramento_abrupto", "CRÍTICA", "Gravação terminou com a câmera ainda em movimento.", "velocidade no final acima do limite de encerramento", "verificar desligamento por bateria, botão acionado ou interrupção acidental"],
     ["descontinuidade_espacial", "CRÍTICA", "Salto de posição incompatível entre pontos próximos.", "distância entre pontos consecutivos acima do limite físico", "verificar se houve corte, retomada em outro local ou erro de GPS"],
     ["velocidade_atipica", "MODERADA", "Trecho com velocidade muito fora do padrão esperado.", "velocidade média do segmento fora do limite configurado", "avaliar se houve parada, congestionamento ou leitura incorreta"],
-    ["veiculo_parado", "MODERADA", "Veículo permaneceu parado durante parte da gravação.", "velocidade próxima de zero por tempo prolongado", "avaliar se a parada faz parte do levantamento"],
+    ["veiculo_parado", "CRÍTICA", "Veículo permaneceu parado durante parte da gravação.", "velocidade próxima de zero por tempo prolongado", "avaliar se a parada faz parte do levantamento"],
     ["azimute_irregular", "MODERADA", "Mudança brusca de direção em distância muito curta.", "variação de direção acima do limite com pouco deslocamento", "verificar possível oscilação do GPS"],
     ["km_por_segundo_baixo", "MODERADA", "Avanço da rota muito baixo em relação ao tempo.", "quilometragem avançou pouco por segundo", "verificar lentidão, parada ou instabilidade no sinal"],
     ["erro_snv", "ALTA", "Possível inconsistência identificada na comparação com o SNV.", "ponto GPS distante do traçado de referência", "avaliar o trecho no mapa e comparar com a base SNV utilizada"],
@@ -1806,30 +1892,59 @@ function renderCam(d) {
       <div style="color:var(--success);font-family:var(--mono);font-size:12px;padding:20px 0">✓ Nenhum evento detectado. Gravação íntegra.</div></div>`;
     return;
   }
-  const cards = evts.map(e=>{
+  const contagens = {
+    todos: evts.length,
+    critica: evts.filter(e=>severidadeEvento(e)==="critica").length,
+    alta: evts.filter(e=>severidadeEvento(e)==="alta").length,
+    moderada: evts.filter(e=>severidadeEvento(e)==="moderada").length,
+  };
+  const filtrados = _filtroEventosCamera === "todos"
+    ? evts
+    : evts.filter(e=>severidadeEvento(e) === _filtroEventosCamera);
+  const toolbar = `<div class="event-toolbar">
+    ${[
+      ["todos", "Todos", contagens.todos],
+      ["critica", "Críticos", contagens.critica],
+      ["alta", "Altos", contagens.alta],
+      ["moderada", "Moderados", contagens.moderada],
+    ].map(([id,label,total])=>`<button class="event-filter ${_filtroEventosCamera===id?"active":""}" onclick="setFiltroEventosCamera('${id}')">${label} (${total})</button>`).join("")}
+  </div>`;
+  const rows = filtrados.map(e=>{
     const j = e.justificativa||"";
-    const sev = j.includes("CRÍTICA")?"critica":j.includes("ALTA")?"alta":"moderada";
+    const sev = severidadeEvento(e);
     const parts = j.split("|");
     const desc = parts[0]?.replace(/\[.*?\]\s*/,"").trim()||"";
     const met  = (parts.find(p=>p.includes("Métrica"))||"").replace("Métrica:","").trim();
     const acao = (parts.find(p=>p.includes("Ação"))||"").replace("Ação:","").trim();
-    return `<div class="evcard ${sev}">
-      <div class="evhdr"><span class="evtipo">${esc(e.conformidade||"evento")}</span><span class="evkm">km ${(e.km_inicio||0).toFixed(1)}–${(e.km_fim||0).toFixed(1)}</span></div>
-      <div class="evdesc">${esc(desc)}</div>
-      ${met?`<div class="evmet">${esc(met)}</div>`:""}
-      ${acao?`<div class="evmet" style="color:var(--warning)">${esc(acao)}</div>`:""}
-    </div>`;
+    return `<tr>
+      <td><span class="sevtag ${sev}">${sev === "critica" ? "Crítico" : sev === "alta" ? "Alto" : "Moderado"}</span></td>
+      <td style="font-family:var(--mono);white-space:nowrap">km ${(e.km_inicio||0).toFixed(1)}–${(e.km_fim||0).toFixed(1)}</td>
+      <td>${esc((e.conformidade||"evento").replace(/_/g," "))}</td>
+      <td>${esc(desc)}</td>
+      <td>${esc(met||"—")}</td>
+      <td>${esc(acao||"—")}</td>
+    </tr>`;
   }).join("");
-  document.getElementById("d-cam").innerHTML = `<div class="ccard"><div class="ctitle">Diagnóstico de gravação — câmera GoPro</div><div class="evlist">${cards}</div></div>`;
+  document.getElementById("d-cam").innerHTML = `<div class="ccard"><div class="ctitle">Diagnóstico de gravação — câmera GoPro</div>
+    ${toolbar}
+    <div style="overflow-x:auto"><table class="dtable">
+      <tr><th>Severidade</th><th>Trecho</th><th>Tipo</th><th>Descrição</th><th>Métrica</th><th>Ação</th></tr>
+      ${rows || `<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:18px">Nenhum evento nesse filtro.</td></tr>`}
+    </table></div></div>`;
+}
+
+function setFiltroEventosCamera(filtro) {
+  _filtroEventosCamera = filtro;
+  if (S.resultado) renderCam(S.resultado);
 }
 
 function renderTab(d) {
   const rows = (d.segmentos||[]).map(s=>`<tr>
     <td style="font-family:var(--mono);white-space:nowrap">km ${(s.km_inicio||0).toFixed(1)}–${(s.km_fim||0).toFixed(1)}</td>
-    <td>${badgeIQ(s.iq_sinal||"")}</td>
+    <td class="tc">${badgeIQ(s.iq_sinal||"")}</td>
     <td class="tr">${(s.dop_medio||0).toFixed(2)}</td>
     <td class="tr">${(s.pct_fix_3d||0).toFixed(0)}%</td>
-    <td>${badgeConf(s.conformidade||"")}</td>
+    <td class="tc">${badgeConf(s.conformidade||"")}</td>
     <td class="tr">${(s.dist_media_m||0).toFixed(1)}</td>
     <td class="tr">${(s.dist_max_m||0).toFixed(1)}</td>
     <td class="tr">${(s.dist_p95_m||0).toFixed(1)}</td>
@@ -1838,13 +1953,13 @@ function renderTab(d) {
   </tr>`).join("");
   document.getElementById("d-tab").innerHTML = `<div class="ccard"><div class="ctitle">Tabela detalhada por segmento km a km</div>
     <div style="overflow-x:auto"><table class="dtable">
-      <tr><th>Segmento</th><th>IQ GPS</th><th>DOP</th><th>Fix 3D</th><th>Conformidade</th><th>Dist.Méd(m)</th><th>Dist.Máx(m)</th><th>P95(m)</th><th>Vel(km/h)</th><th>N amostras</th></tr>
+      <tr><th>Segmento</th><th class="tc">IQ GPS</th><th class="tr">DOP</th><th class="tr">Fix 3D</th><th class="tc">Conformidade</th><th class="tr">Dist.Méd(m)</th><th class="tr">Dist.Máx(m)</th><th class="tr">P95(m)</th><th class="tr">Vel(km/h)</th><th class="tr">N amostras</th></tr>
       ${rows}</table></div></div>`;
 }
 
 // ── Helpers ───────────────────────────────────────────────────
 function badgeConf(v) {
-  const m={"dentro_da_tolerancia":["ok","Conforme"],"snv_desatualizado":["snv","SNV desatual."],"sinal_gps_insuficiente":["insuf","GPS insuf."],"inconclusivo":["inc","Inconclusivo"]};
+  const m={"dentro_da_tolerancia":["ok","Conforme"],"snv_desatualizado":["snv","Erro no SNV"],"sinal_gps_insuficiente":["insuf","GPS insuf."],"inconclusivo":["inc","Inconclusivo"]};
   const[c,l]=m[v]||["inc",v||"—"];
   return `<span class="badge b-${c}">${l}</span>`;
 }
@@ -1864,6 +1979,7 @@ function swTab(name, btn) {
   if(name === "mapa") onTabMapa();
 }
 function swSideMode(name, btn) {
+  if (name !== "processamento") fecharAdv();
   document.querySelectorAll(".side-mode").forEach(p=>p.classList.remove("active"));
   document.querySelectorAll(".side-tab").forEach(t=>t.classList.remove("active"));
   document.getElementById("side-"+name).classList.add("active");
@@ -1878,8 +1994,19 @@ function spin(id, d) {
   el.value=Math.min(parseFloat(el.max||9999),Math.max(parseFloat(el.min||0.5),Math.round(v*10)/10));
 }
 function toggleAdv() {
-  const b=document.getElementById("advB"),t=document.getElementById("advT");
-  b.classList.toggle("open"); t.classList.toggle("advopen");
+  const b=document.getElementById("advB"),t=document.getElementById("advT"),o=document.getElementById("advOverlay");
+  const abrir = !b.classList.contains("open");
+  b.classList.toggle("open", abrir);
+  b.setAttribute("aria-hidden", abrir ? "false" : "true");
+  o?.classList.toggle("open", abrir);
+  t?.classList.toggle("advopen", abrir);
+}
+function fecharAdv() {
+  const b=document.getElementById("advB"),t=document.getElementById("advT"),o=document.getElementById("advOverlay");
+  b?.classList.remove("open");
+  b?.setAttribute("aria-hidden", "true");
+  o?.classList.remove("open");
+  t?.classList.remove("advopen");
 }
 function setStatus(tipo,txt) {
   document.getElementById("sdot").className="sdot "+tipo;
@@ -1970,7 +2097,7 @@ async function renderMapa(d) {
   document.getElementById("d-mapa").innerHTML = `
     <div class="map-stat">
       <div class="mstat"><div class="mstat-val" style="color:var(--success)">${nOk}</div><div class="mstat-lbl">Conforme</div></div>
-      <div class="mstat"><div class="mstat-val" style="color:var(--danger)">${nSnv}</div><div class="mstat-lbl">SNV Desatualizado</div></div>
+      <div class="mstat"><div class="mstat-val" style="color:var(--danger)">${nSnv}</div><div class="mstat-lbl">Erro no SNV</div></div>
       <div class="mstat"><div class="mstat-val" style="color:var(--warning)">${nIns}</div><div class="mstat-lbl">GPS Insuficiente</div></div>
       <div class="mstat"><div class="mstat-val" style="color:var(--text)">${dmax}m</div><div class="mstat-lbl">Desvio Máx.</div></div>
     </div>
@@ -2001,7 +2128,7 @@ async function renderMapa(d) {
     <div class="map-legend">
       <strong style="color:var(--text2);margin-right:4px">GoPro:</strong>
       <span class="leg-item"><span class="leg-line" style="background:#3FB950"></span>Conforme</span>
-      <span class="leg-item"><span class="leg-line" style="background:#DA3633"></span>SNV desatualizado</span>
+      <span class="leg-item"><span class="leg-line" style="background:#DA3633"></span>Erro no SNV</span>
       <span class="leg-item"><span class="leg-line" style="background:#D29922"></span>GPS insuficiente</span>
       <span class="leg-item"><span class="leg-line" style="background:#6E7681"></span>Inconclusivo</span>
       <span style="margin-left:6px;color:var(--text3)">|</span>
@@ -2105,8 +2232,7 @@ async function carregarCamada(tipo) {
               <span style="color:${COR_CONF[p.conformidade]||'#6E7781'}">${conf.replace(/_/g," ")}</span><br>
               IQ GPS: ${iq} | DOP: ${p.dop_medio != null ? parseFloat(p.dop_medio).toFixed(2) : "—"}<br>
               Dist. média: ${dmed} | Dist. máx: ${dmax}<br>
-              Velocidade: ${vel}<br>
-              ${p.justificativa ? '<hr style="margin:4px 0"><small>'+esc(p.justificativa)+'</small>' : ''}
+              Velocidade: ${vel}
             </div>`);
           layer.on("mouseover", () => layer.setStyle({weight:8,opacity:1}));
           layer.on("mouseout",  () => _layers["segmentos"]?.resetStyle(layer));
@@ -2177,11 +2303,14 @@ async function carregarCamada(tipo) {
           const ico = "!";
           // divIcon com tamanho grande e sombra forte — sempre visível
           const eventosGrupo = Array.isArray(props.eventos_grupo) && props.eventos_grupo.length ? props.eventos_grupo : [props];
-          const temVeiculoParado = eventosGrupo.some(ev => (ev.evento || "").toLowerCase() === "veiculo_parado");
-          const corIcone = cor;
+          const grupoTemCritico = eventosGrupo.some(ev => {
+            const raw = `${ev.severidade || ""} ${ev.justificativa || ""}`.toLowerCase();
+            return raw.includes("críti") || raw.includes("criti");
+          });
+          const corIcone = grupoTemCritico ? COR_SEV["alta"] : cor;
           const raioIcone = "50%";
           const textoIcone = ico;
-          const bordaIcone = temVeiculoParado ? "3px solid #F85149" : "3px solid rgba(255,255,255,0.9)";
+          const bordaIcone = grupoTemCritico ? "3px solid #F85149" : "3px solid rgba(255,255,255,0.9)";
           const sombraIcone = `0 0 0 3px ${cor}55,0 3px 10px rgba(0,0,0,.7)`;
           const badge = eventosGrupo.length > 1
             ? `<span style="

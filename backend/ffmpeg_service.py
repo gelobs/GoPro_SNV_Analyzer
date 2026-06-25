@@ -88,6 +88,33 @@ def get_video_duration(output: str) -> Optional[float]:
     return hours * 3600 + minutes * 60 + seconds
 
 
+def get_video_specs(output: str) -> Tuple[Optional[int], Optional[int], Optional[float]]:
+    video_line = next(
+        (line for line in output.splitlines() if " Video:" in line),
+        "",
+    )
+    if not video_line:
+        return None, None, None
+
+    resolution_match = re.search(r"(?P<w>\d{3,5})x(?P<h>\d{3,5})", video_line)
+    fps_match = re.search(r"(?P<fps>\d+(?:\.\d+)?)\s*fps", video_line)
+
+    width = int(resolution_match.group("w")) if resolution_match else None
+    height = int(resolution_match.group("h")) if resolution_match else None
+    fps = float(fps_match.group("fps")) if fps_match else None
+    return width, height, fps
+
+
+def needs_standard_conversion(output: str) -> bool:
+    width, height, fps = get_video_specs(output)
+    if width is None or height is None or fps is None:
+        return True
+
+    resolution_out_of_standard = width != 1920 or height != 1080
+    fps_out_of_standard = abs(fps - 60000 / 1001) > 0.2 and abs(fps - 60.0) > 0.2
+    return resolution_out_of_standard or fps_out_of_standard
+
+
 def probe_streams(output: str) -> List[Dict[str, Union[str, int]]]:
     streams: List[Dict[str, Union[str, int]]] = []
     current_stream: Optional[Dict[str, Union[str, int]]] = None
@@ -183,6 +210,7 @@ def cut_segment(
     log: Optional[Callable[[str], None]] = None,
     progress_start: int = 70,
     progress_end: int = 95,
+    convert_to_standard: bool = True,
 ) -> Tuple[bool, str]:
     command = [
         ffmpeg_path,
@@ -199,14 +227,21 @@ def cut_segment(
         "0",
         "-c",
         "copy",
-        "-c:v",
-        "libx264",
-        "-vf",
-        "scale=1920:1080",
-        "-r",
-        "60000/1001",
-        "-crf",
-        "10",
+    ]
+
+    if convert_to_standard:
+        command.extend([
+            "-c:v",
+            "libx264",
+            "-vf",
+            "scale=1920:1080",
+            "-r",
+            "60000/1001",
+            "-crf",
+            "7",
+        ])
+
+    command.extend([
         "-copy_unknown",
         "-avoid_negative_ts",
         "make_zero",
@@ -215,7 +250,7 @@ def cut_segment(
         "-progress",
         "pipe:1",
         str(target),
-    ]
+    ])
 
     try:
         process = subprocess.Popen(

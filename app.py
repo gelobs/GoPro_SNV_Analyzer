@@ -252,25 +252,9 @@ def _validar_fov_linear(path: Path) -> tuple[bool, str, bool | None, str]:
     try:
         fov_linear, fov_nome, _ = _detectar_fov_video(path)
     except Exception as exc:
-        return False, f"Nao foi possivel ler o FOV do video: {exc}", None, "Não identificado"
+        return True, "", None, "Não identificado"
 
-    if fov_linear is True:
-        return True, "", fov_linear, fov_nome
-
-    if fov_linear is False:
-        return (
-            False,
-            f"O video esta com FOV {fov_nome}. O corte so e permitido para videos em FOV Linear.",
-            fov_linear,
-            fov_nome,
-        )
-
-    return (
-        False,
-        "Nao foi possivel confirmar que o FOV do video e Linear. O corte foi bloqueado.",
-        fov_linear,
-        fov_nome,
-    )
+    return True, "", fov_linear, fov_nome
 
 
 # ── Valores padrão dos limiares do backend (lidos dos arquivos fonte) ─────────
@@ -288,7 +272,7 @@ DEFAULTS = {
     "queda_vel_bateria":  0.40,
     "vel_encerramento_ms": 5.0,
     "encerramento_tol_final_km": 0.05,
-    "salto_max_m":        25.0,
+    "salto_max_m":        50.0,
     "vel_maxima_ms":      55.5,
     # avaliador_qualidade.py
     "gpsp_excelente":   200,
@@ -695,11 +679,6 @@ def processar():
                 f"FPS insuficiente: {fps:.2f}. O vídeo precisa estar em 59.94 fps ou 60 fps."
             )
 
-        ok_fov, _, fov_linear, fov_nome = _validar_fov_linear(mp4_path)
-        if not ok_fov:
-            detalhe = f" Detectado: {fov_nome}." if fov_linear is False else ""
-            problemas.append(f"FOV do vídeo não é Linear.{detalhe}")
-
         if problemas:
             return jsonify({
                 "erro": "O vídeo não pode ser processado.",
@@ -1049,6 +1028,8 @@ def resultado():
 
         segs  = df[df["origem"] == "SEGMENTO"].to_dict("records")
         evts  = df[df["origem"] == "EVENTO_CAMERA"].to_dict("records")
+        for seg in segs:
+            seg.pop("justificativa", None)
 
         # Limpa NaN remanescentes (float nan não capturado pelo where)
         def limpar(lst):

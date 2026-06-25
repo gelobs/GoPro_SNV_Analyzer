@@ -249,7 +249,7 @@ def _imprimir_sumario(conformidades, qualidades, eventos) -> None:
     print(f"  Dentro da tolerância   : {n_conf}/{total_seg} "
           f"({n_conf/total_seg*100:.0f}%)")
     if n_snv:
-        print(f"  SNV desatualizado      : {n_snv}/{total_seg} segmento(s) — "
+        print(f"  Erro no SNV            : {n_snv}/{total_seg} segmento(s) — "
               f"dist. máxima: {dist_maxima_snv:.0f}m")
     if n_insuf:
         print(f"  Sinal GPS insuficiente : {n_insuf}/{total_seg} segmento(s)")

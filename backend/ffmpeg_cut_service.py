@@ -11,6 +11,7 @@ from backend.ffmpeg_service import (
     duration_error,
     get_video_duration,
     inspect_input,
+    needs_standard_conversion,
     probe_streams,
     resolve_ffmpeg_path,
     seconds_to_mmss,
@@ -80,6 +81,7 @@ def split_video_on_cut(
     inspect_output = inspect_input(ffmpeg_path, source)
     map_args = build_map_args(probe_streams(inspect_output))
     duration_seconds = get_video_duration(inspect_output)
+    convert_to_standard = needs_standard_conversion(inspect_output)
 
     if not map_args:
         return False, "Nao foi possivel identificar streams compativeis para o corte.", []
@@ -146,6 +148,7 @@ def split_video_on_cut(
                 log=log,
                 progress_start=progress_start,
                 progress_end=progress_end,
+                convert_to_standard=convert_to_standard,
             )
             if not ok:
                 return False, output, []
