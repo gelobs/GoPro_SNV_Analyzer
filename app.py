@@ -248,6 +248,22 @@ def _detectar_fov_video(path: Path, ffprobe_info: dict | None = None) -> tuple[b
     return None, "Não identificado", "ExifTool/ffprobe"
 
 
+def _coluna_rodovia_snv(colunas) -> str | None:
+    return next((c for c in colunas
+                 if any(k in c.lower() for k in
+                    ["sigla", "ds_sigla", "nome_rod", "nm_rod", "rodovia",
+                     "codigo", "cd_rod", "br_", "snv_", "nome"])),
+                None)
+
+
+def _rodovias_snv_processadas(snv_gdf) -> list[str]:
+    sig_col = _coluna_rodovia_snv([c for c in snv_gdf.columns if c != "geometry"])
+    if not sig_col:
+        return []
+    valores = snv_gdf[sig_col].dropna().astype(str)
+    return sorted(v for v in valores.unique().tolist() if v.strip())
+
+
 def _validar_fov_linear(path: Path) -> tuple[bool, str, bool | None, str]:
     try:
         fov_linear, fov_nome, _ = _detectar_fov_video(path)
@@ -272,7 +288,7 @@ DEFAULTS = {
     "queda_vel_bateria":  0.40,
     "vel_encerramento_ms": 5.0,
     "encerramento_tol_final_km": 0.05,
-    "salto_max_m":        50.0,
+    "salto_max_m":        100.0,
     "vel_maxima_ms":      55.5,
     # avaliador_qualidade.py
     "gpsp_excelente":   200,
@@ -603,11 +619,7 @@ def info_snv():
         data_col = next((c for c in colunas
                          if any(k in c.lower() for k in ["data","dt_","date","versao","revisao"])),
                         None)
-        sig_col  = next((c for c in colunas
-                         if any(k in c.lower() for k in
-                            ["sigla","ds_sigla","nome_rod","nm_rod","rodovia",
-                             "codigo","cd_rod","br_","snv_","nome"])),
-                        None)
+        sig_col = _coluna_rodovia_snv(colunas)
 
         return jsonify({
             "num_segmentos": len(full),
@@ -849,9 +861,6 @@ def cortar_video_api():
                 "success": False,
                 "message": f"O video tem {fps:.2f} fps. O corte so e permitido para videos em 59.94 fps ou 60 fps.",
             }), 400
-        ok_fov, fov_message, _, _ = _validar_fov_linear(source_path)
-        if not ok_fov:
-            return jsonify({"success": False, "message": fov_message}), 400
     output_dir = Path(output_dir_raw)
     if not output_dir.is_absolute():
         output_dir = BASE_DIR / output_dir
@@ -888,10 +897,6 @@ def cortar_video_api():
                 "success": False,
                 "message": f"O video tem {fps:.2f} fps. O corte so e permitido para videos em 59.94 fps ou 60 fps.",
             }), 400
-        ok_fov, fov_message, _, _ = _validar_fov_linear(input_path)
-        if not ok_fov:
-            input_path.unlink(missing_ok=True)
-            return jsonify({"success": False, "message": fov_message}), 400
     _cut_jobs[job_id] = {
         "done": False,
         "success": None,
@@ -1045,12 +1050,21 @@ def resultado():
                 out.append(clean)
             return out
 
+        meta_path = csv_path.with_name(csv_path.name.replace("_relatorio.csv", "_meta.json"))
+        meta = {}
+        if meta_path.exists():
+            try:
+                meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            except Exception:
+                meta = {}
+
         return jsonify({
             "segmentos":    limpar(segs),
             "eventos":      limpar(evts),
             "arquivo":      csv_path.name,
             "csv_path":     str(csv_path),
             "total_linhas": len(df),
+            "rodovias_processadas": meta.get("rodovias_processadas", []),
         })
     except Exception as e:
         return jsonify({"erro": str(e)})
@@ -1104,11 +1118,17 @@ def _executar_pipeline(params: dict):
             gps = extract_hero12_gps(mp4_path_str)
             print("Recortando SNV...")
             snv_t = recortar_snv(snv, gps, buffer_km=0.5)
+            rodovias_processadas = _rodovias_snv_processadas(snv_t)
             df, qual, conf, evts = validar_rota(
                 gps, snv_t,
                 tamanho_seg_km=seg_km,
             )
             exportar_para_gis(df, qual, conf, evts, prefixo=saida)
+            meta_path = Path(f"{saida}_meta.json")
+            meta_path.write_text(
+                json.dumps({"rodovias_processadas": rodovias_processadas}, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
             print("Concluído.")
 
         log("ok", "Processamento concluído com sucesso.")

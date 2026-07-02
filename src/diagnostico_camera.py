@@ -71,7 +71,7 @@ DELTA_GPSP_BATERIA    = 150    # aumento de GPSP indicativo de bateria fraca
 QUEDA_VEL_BATERIA     = 0.40   # queda relativa de velocidade no fim
 VEL_ENCERRAMENTO_MS   =  5.0   # câmera em movimento ao fim da gravação (m/s)
 ENCERRAMENTO_TOL_FINAL_KM = 0.05  # ignora encerramento nos ultimos X km
-SALTO_MAX_M           = 50.0   # deslocamento impossível entre pontos adjacentes
+SALTO_MAX_M           = 100.0   # deslocamento impossível entre pontos adjacentes
 VEL_MAXIMA_MS         = 55.5   # > 200 km/h = spike impossível em rodovia
 VEL_PARADO_MS         =  0.50  # tolera jitter da GoPro em parada (~1.8 km/h)
 PARADA_VEICULO_MIN_S  =  5.0
@@ -605,3 +605,4 @@ def imprimir_diagnostico(eventos: list) -> None:
           f"{len(por_sev[Severidade.ALTA])} alto(s) | "
           f"{len(por_sev[Severidade.MODERADA])} moderado(s)")
     print(SEP)
+

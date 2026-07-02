@@ -110,6 +110,14 @@ select option{background:var(--surface2)}
 }
 .irow2{display:flex;justify-content:space-between;gap:8px}
 .ival{color:var(--text);text-align:right}
+.irow2.stack{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start}
+.rodovia-list{
+  max-height:86px;overflow-y:auto;padding-right:4px;color:var(--text);
+  font-family:var(--mono);font-size:17px;line-height:1.7;text-align:right;
+}
+.rodovia-list::-webkit-scrollbar{width:4px}
+.rodovia-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.rodovia-item{display:block}
 .iempty{color:var(--text3);font-style:italic}
 .velbox{
   background:var(--bg);border:1px solid var(--border);border-radius:4px;
@@ -120,17 +128,29 @@ select option{background:var(--surface2)}
 .velsub{font-size:10px;color:var(--text3);margin-left:auto}
 .brow{display:flex;gap:6px;margin-top:4px}
 .btn{
-  flex:1;padding:9px 0;border:1px solid var(--border);border-radius:4px;
-  font-family:var(--mono);font-size:12px;font-weight:500;cursor:pointer;
-  transition:all .15s;text-align:center;letter-spacing:.05em;background:transparent;
+  flex:1;padding:9px 16px;border:1px solid transparent;border-radius:999px;
+  font-family:var(--mono);font-size:11.5px;font-weight:700;cursor:pointer;
+  transition:background .15s,border-color .15s,color .15s,box-shadow .15s,transform .05s;
+  text-align:center;letter-spacing:.08em;text-transform:uppercase;background:transparent;
+  color:var(--primary);line-height:1.2;
+}
+.btn:hover{background:rgba(9,105,218,.08)}
+.btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(9,105,218,.18)}
+.btn:active{transform:translateY(1px);background:rgba(9,105,218,.14)}
+.btn:disabled{
+  background:transparent;border-color:transparent;color:#9fbce8;
+  cursor:not-allowed;transform:none;box-shadow:none;opacity:.75;
 }
 .btn-p{background:var(--primary);border-color:var(--primary);color:#fff}
 .btn-p:hover{background:var(--primary2);border-color:var(--primary2)}
-.btn-p:disabled{background:var(--surface3);border-color:var(--border);color:var(--text3);cursor:not-allowed}
-.btn-d{color:var(--danger)}
-.btn-d:hover{background:rgba(218,54,51,.12)}
-.btn-n{color:var(--text2)}
-.btn-n:hover{background:var(--surface3)}
+.btn-p:active{background:#0759b8;border-color:#0759b8}
+.btn-p:disabled{background:#7fa6db;border-color:#7fa6db;color:#fff;cursor:not-allowed}
+.btn-n{border-color:var(--primary);color:var(--primary);background:transparent}
+.btn-n:hover{background:rgba(9,105,218,.08);border-color:var(--primary2);color:var(--primary2)}
+.btn-d{border-color:var(--danger);color:var(--danger);background:transparent}
+.btn-d:hover{background:rgba(218,54,51,.10)}
+.btn-s{background:#22c55e;border-color:#22c55e;color:#fff}
+.btn-s:hover{background:#16a34a;border-color:#16a34a}
 .advtoggle{
   display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;
   font-size:11px;color:var(--text2);padding:0;border-top:none;
@@ -201,23 +221,27 @@ select option{background:var(--surface2)}
 }
 .side-tab {
   background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text2);
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  color: var(--primary);
   cursor: pointer;
   font-family: var(--mono);
-  font-size: 10px;
-  padding: 7px 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  padding: 8px 10px;
   text-align: center;
   transition: background .15s, border-color .15s, color .15s;
+  text-transform: uppercase;
 }
 .side-tab:hover {
-  background: var(--surface3);
-  color: var(--text);
+  background: rgba(9,105,218,.08);
+  color: var(--primary2);
 }
 .side-tab.active {
+  background: var(--primary);
   border-color: var(--primary);
-  color: var(--primary2);
+  color: #fff;
 }
 .side-mode {
   display: none;
@@ -257,8 +281,8 @@ main{
   border-bottom:1px solid var(--border);padding:0 16px;gap:0;flex-shrink:0;
 }
 .tab{
-  font-family:var(--mono);font-size:12.5px;color:var(--text3);
-  padding:12px 14px;cursor:pointer;border-bottom:2px solid transparent;
+  font-family:var(--mono);font-size:14px;color:var(--text3);
+  padding:18px 21px;cursor:pointer;border-bottom:2px solid transparent;
   transition:all .15s;white-space:nowrap;
 }
 .tab:hover{color:var(--text2)}
@@ -288,29 +312,49 @@ main{
 .lempty{color:var(--text3);font-style:italic;padding:40px 0;text-align:center}
 
 /* DASHBOARD */
-.dashboard-top{display:grid;grid-template-columns:330px minmax(430px,.9fr) minmax(260px,1fr);gap:12px;margin-bottom:20px;align-items:stretch}
-.dgrid{display:grid;grid-template-columns:repeat(2,minmax(160px,1fr));gap:10px;margin-bottom:0}
-.dash-info-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:0}
+.dashboard-top{display:grid;grid-template-columns:420px 320px 460px;gap:12px;margin-bottom:20px;align-items:stretch}
+.dashboard-metrics{display:grid;grid-template-columns:max-content 360px;gap:16px;align-items:start;justify-content:start}
+.event-summary-card{background:var(--surface);border:1px solid rgba(210,153,34,.32);border-radius:8px;padding:20px 24px 22px;margin-bottom:0;min-height:320px}
+.event-summary-head{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:22px}
+.event-summary-title{
+  font-size:30px;font-weight:800;color:var(--text);
+  text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);text-align:center;
+}
+.event-summary-total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;text-align:left;width:100%}
+.event-summary-total .label{font-size:19px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:var(--mono);font-weight:700}
+.event-summary-total .value{font-family:var(--mono);font-size:72px;font-weight:800;line-height:1;color:var(--warning)}
+.event-summary-row{display:grid;grid-template-columns:1fr auto;gap:12px;border-top:1px solid var(--border);padding:13px 0;font-family:var(--mono)}
+.event-summary-row:last-child{padding-bottom:0}
+.event-summary-row span:first-child{font-size:15px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.event-summary-row span:last-child{font-size:22px;font-weight:700;color:var(--text)}
+.event-summary-row.crit span:last-child{color:var(--danger)}
+.event-summary-row.warn span:last-child{color:var(--warning)}
+.dash-info-grid{display:grid;grid-template-columns:1fr;grid-template-rows:1fr 1fr;gap:12px;margin-bottom:0}
 .dash-info-grid.dash-info-hidden{display:none}
-.dash-info-card{max-width:330px;background:var(--surface);border:1px solid rgba(31,111,235,.3);border-radius:8px;padding:16px 17px}
+.dash-info-card{max-width:420px;background:var(--surface);border:1px solid rgba(31,111,235,.3);border-radius:8px;padding:20px 22px}
 .dash-info-card .stitle{
-  color:var(--text3);font-size:12px;letter-spacing:.07em;margin-bottom:10px;
+  color:var(--text3);font-size:13.5px;letter-spacing:.07em;margin-bottom:12px;
   text-transform:uppercase;font-family:var(--mono);font-weight:600;
 }
-.dash-info-card .ibox{border:none;background:transparent;padding:0;font-size:12px;line-height:1.85}
-@media (max-width:1100px){.dashboard-top{grid-template-columns:1fr}.dash-info-card{max-width:none}}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:13px 14px}
-.kpilbl{font-size:11.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-.kpival{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--text)}
-.kpisub{font-size:11.5px;color:var(--text3);margin-top:3px}
-.kpi.green{border-color:rgba(63,185,80,.3)}.kpi.green .kpival{color:var(--success)}
-.kpi.red{border-color:rgba(218,54,51,.3)}.kpi.red .kpival{color:var(--danger)}
-.kpi.blue{border-color:rgba(31,111,235,.3)}.kpi.blue .kpival{color:var(--primary2)}
-.kpi.amber{border-color:rgba(210,153,34,.3)}.kpi.amber .kpival{color:var(--warning)}
-.kpi.neutral{border-color:rgba(110,118,129,.3)}.kpi.neutral .kpival{color:var(--text2)}
+.dash-info-card .ibox{border:none;background:transparent;padding:0;font-size:13.5px;line-height:1.95}
+.dash-info-card.snv-info-card .ibox{font-size:17px;line-height:2.15}
+@media (max-width:1100px){.dashboard-top,.dashboard-metrics{grid-template-columns:1fr}.dash-info-card{max-width:none}}
 .ccard{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px}
-.dash-spark-card{margin-bottom:0;min-height:100%;display:flex;flex-direction:column}
+.dash-alert-card{margin-bottom:0;max-height:100%;overflow:hidden}
+.dash-alert-list{display:flex;flex-direction:column;gap:8px;max-height:390px;overflow-y:auto;padding-right:4px}
+.dash-alert-item{display:grid;grid-template-columns:105px 1fr auto;gap:12px;align-items:center;border-bottom:1px solid var(--border);padding:9px 0}
+.dash-alert-item:last-child{border-bottom:none}
+.dash-alert-type{font-family:var(--mono);font-size:13px;color:var(--text2);text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dash-alert-km{font-family:var(--mono);font-size:13px;color:var(--text3);text-align:left;white-space:nowrap}
+.dash-alert-card .sevtag{font-size:12px}
+.dash-alert-empty{font-size:13px;color:var(--text3);line-height:1.5}
+.dash-spark-card{margin-bottom:0;align-self:start;display:flex;flex-direction:column}
+.dashboard-metrics .dash-spark-card{width:100%;height:auto}
+.dash-distance-card{width:max-content;max-width:100%}
 .dash-distance-card .ctitle{font-size:14px}
+.dash-distance-list{max-height:315px;overflow-y:auto;padding-right:4px}
+.dash-distance-list::-webkit-scrollbar{width:5px}
+.dash-distance-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 .dash-distance-card .kmrow{font-size:12.5px}
 .dash-distance-card .kmrow.hdr{font-size:11.5px}
 .ctitle{
@@ -318,17 +362,15 @@ main{
   margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em;
 }
 .kmrow{
-  display:grid;grid-template-columns:80px 1fr 90px 110px 70px;
+  display:grid;grid-template-columns:96px 92px 128px 82px;
   align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;
   padding:5px 0;border-bottom:1px solid var(--border);
 }
 .kmrow:last-child{border-bottom:none}
 .kmrow.hdr{color:var(--text3);font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}
+.kmrow.hdr span:nth-child(2),.kmrow.hdr span:nth-child(4){text-align:right}
+.kmrow.hdr span:nth-child(3){text-align:center}
 .kmlbl{color:var(--text2)}
-.kmbw{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden}
-.kmb{height:100%;border-radius:4px;transition:width .4s}
-.kmb.ok{background:var(--success)}.kmb.snv{background:var(--danger)}
-.kmb.insuf{background:var(--warning)}.kmb.inc{background:var(--text3)}
 .badge{
   display:inline-block;padding:2px 8px;border-radius:3px;
   font-family:var(--mono);font-size:11px;font-weight:600;
@@ -355,15 +397,24 @@ main{
 }
 .dtable tr:last-child td{border-bottom:none}
 .dtable tr:hover td{background:var(--surface2)}
+.conf-table{font-size:15px}
+.conf-table th{font-size:13.5px;padding:10px 11px}
+.conf-table td{padding:10px 11px}
+.conf-table .badge{font-size:13px;padding:3px 10px}
+.alerts-table{font-size:15px}
+.alerts-table th{font-size:13.5px;padding:10px 11px}
+.alerts-table td{padding:10px 11px}
+.alerts-table .sevtag{font-size:13px}
 .tr{text-align:right}
 .evlist{display:flex;flex-direction:column;gap:8px}
 .event-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
 .event-filter{
-  background:var(--surface2);border:1px solid var(--border);border-radius:4px;
+  background:transparent;border:1px solid var(--primary);border-radius:999px;
   color:var(--text2);cursor:pointer;font-family:var(--mono);font-size:11.5px;
-  padding:6px 10px;
+  font-weight:700;letter-spacing:.06em;padding:7px 12px;text-transform:uppercase;
 }
-.event-filter.active{border-color:var(--primary);color:var(--primary2);background:rgba(9,105,218,.08)}
+.event-filter:hover{background:rgba(9,105,218,.08);color:var(--primary2)}
+.event-filter.active{border-color:var(--primary);color:#fff;background:var(--primary)}
 .sevtag{font-family:var(--mono);font-size:10.5px;font-weight:700;text-transform:uppercase}
 .sevtag.critica{color:var(--danger)}
 .sevtag.alta{color:var(--warning)}
@@ -603,25 +654,26 @@ aside .cut-grid {
   display: none;
   align-items: center;
   justify-content: center;
-  background: rgba(36,41,47,.35);
+  background: rgba(255,255,255,.42);
+  backdrop-filter: blur(1px);
   padding: 20px;
 }
 .cut-confirm-box {
-  width: min(420px, 100%);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 18px 50px rgba(27,31,36,.18);
-  padding: 18px;
+  width: min(430px, 100%);
+  background: #fff;
+  border: none;
+  border-radius: 6px;
+  box-shadow: 0 22px 52px rgba(27,31,36,.28);
+  padding: 30px 32px 26px;
 }
 .cut-confirm-box.danger {
-  border-color: var(--danger);
-  box-shadow: 0 18px 50px rgba(207,34,46,.14), 0 18px 50px rgba(27,31,36,.18);
+  box-shadow: 0 22px 52px rgba(207,34,46,.16), 0 22px 52px rgba(27,31,36,.26);
 }
 .cut-confirm-title {
-  font-size: 14px;
+  color: var(--text);
+  font-size: 21px;
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 22px;
 }
 .cut-confirm-title.danger {
   color: var(--danger);
@@ -629,9 +681,10 @@ aside .cut-grid {
 .cut-confirm-text {
   color: var(--text2);
   font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.6;
-  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.75;
+  margin-bottom: 30px;
 }
 .cut-confirm-warning {
   background: rgba(207,34,46,.08);
@@ -644,8 +697,27 @@ aside .cut-grid {
 }
 .cut-confirm-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 14px;
+}
+.cut-confirm-actions .btn {
+  flex: none;
+  border-color: transparent;
+  background: transparent;
+  color: var(--primary);
+  font-size: 14px;
+  padding: 8px 10px;
+}
+.cut-confirm-actions .btn:hover {
+  background: rgba(9,105,218,.08);
+  color: var(--primary2);
+}
+.cut-confirm-actions .btn-d {
+  color: var(--danger);
+}
+.cut-confirm-actions .btn-d:hover {
+  background: rgba(218,54,51,.10);
+  color: var(--danger);
 }
 
 /* TOOLTIP */
@@ -799,7 +871,7 @@ aside .cut-grid {
     <div class="brow">
       <button class="btn btn-p" id="btnP" onclick="processar()" disabled>Processar</button>
       <button class="btn btn-d"  id="btnC" onclick="cancelar()" style="display:none">Cancelar</button>
-      <button class="btn btn-n"  onclick="limpar()">Limpar</button>
+      <button class="btn btn-d"  onclick="limpar()">Limpar</button>
     </div>
   </div>
 
@@ -832,7 +904,7 @@ aside .cut-grid {
         <div class="tfield"><label data-tip="Queda relativa de velocidade no fim (0–1)">Queda vel. bateria</label><input type="number" id="t_queda_vel" value="0.40" step="0.05"></div>
         <div class="tfield"><label data-tip="Velocidade mínima ao fim = encerramento abrupto (m/s)">Vel. encerramento</label><input type="number" id="t_vel_enc" value="5.0"></div>
         <div class="tfield"><label data-tip="Ignora encerramento abrupto nos ultimos X km da rota">Tol. fim rota (km)</label><input type="number" id="t_tol_fim" value="0.05" step="0.01"></div>
-        <div class="tfield"><label data-tip="Salto máximo entre pontos adjacentes (m)">Salto máx. pontos (m)</label><input type="number" id="t_salto_m" value="50.0"></div>
+        <div class="tfield"><label data-tip="Salto máximo entre pontos adjacentes (m)">Salto máx. pontos (m)</label><input type="number" id="t_salto_m" value="100.0"></div>
         <div class="tfield"><label data-tip="Vel. média máxima por segmento (m/s)">Vel. máx. segmento</label><input type="number" id="t_vel_max" value="55.5"></div>
         </div>
       </details>
@@ -859,10 +931,8 @@ aside .cut-grid {
 <main>
   <div class="tabbar">
     <div class="tab active" onclick="swTab('dash',this)">Dashboard</div>
-    <div class="tab" onclick="swTab('conf',this)">Conformidade SNV</div>
-    <div class="tab" onclick="swTab('qual',this)">Qualidade GPS</div>
+    <div class="tab" onclick="swTab('conf',this)">Conformidade SNV / GPS</div>
     <div class="tab" onclick="swTab('cam',this)">Alertas</div>
-    <div class="tab" onclick="swTab('tab',this)">Tabela Detalhada</div>
     <div class="tab" onclick="swTab('mapa',this)">Mapa</div>
     <div class="tab" onclick="swTab('log',this)">Log</div>
   </div>
@@ -874,15 +944,13 @@ aside .cut-grid {
     </div>
     <div id="p-dash" class="tpanel active"><div id="d-dash">
       <div class="dash-info-grid dash-info-hidden">
-        <div class="dash-info-card"><div class="stitle">Câmera GoPro</div><div class="ibox" id="infoGopro"><span class="iempty">Selecione um vídeo</span></div></div>
-        <div class="dash-info-card"><div class="stitle">SNV Selecionado</div><div class="ibox" id="infoSnv"><span class="iempty">Selecione um shapefile</span></div></div>
+        <div class="dash-info-card snv-info-card"><div class="stitle">Informações do SNV</div><div class="ibox" id="infoSnv"><span class="iempty">Selecione um shapefile</span></div></div>
+        <div class="dash-info-card"><div class="stitle">Informações do Vídeo</div><div class="ibox" id="infoGopro"><span class="iempty">Selecione um vídeo</span></div></div>
       </div>
       <div class="empty"><div class="emicon">◈</div><div class="emtxt">Dashboard será exibido após o processamento.</div></div>
     </div></div>
-    <div id="p-conf" class="tpanel"><div id="d-conf"><div class="empty"><div class="emicon">◈</div><div class="emtxt">Conformidade SNV por segmento.</div></div></div></div>
-    <div id="p-qual" class="tpanel"><div id="d-qual"><div class="empty"><div class="emicon">◈</div><div class="emtxt">Qualidade do sinal GPS por segmento.</div></div></div></div>
+    <div id="p-conf" class="tpanel"><div id="d-conf"><div class="empty"><div class="emicon">◈</div><div class="emtxt">Conformidade SNV e qualidade GPS por segmento.</div></div></div></div>
     <div id="p-cam"  class="tpanel"><div id="d-cam" ><div class="empty"><div class="emicon">◈</div><div class="emtxt">Diagnóstico de câmera e gravação.</div></div></div></div>
-    <div id="p-tab"  class="tpanel"><div id="d-tab" ><div class="empty"><div class="emicon">◈</div><div class="emtxt">Tabela detalhada por segmento.</div></div></div></div>
     <div id="p-mapa" class="tpanel"><div id="d-mapa"><div class="empty"><div class="emicon">◈</div><div class="emtxt">Mapa será exibido após o processamento.</div></div></div></div>
   </div>
 </main>
@@ -902,7 +970,7 @@ aside .cut-grid {
     <div class="cut-confirm-title">Confirmar corte de vídeo</div>
     <div class="cut-confirm-text" id="cutConfirmText"></div>
     <div class="cut-confirm-actions">
-      <button class="btn btn-n" type="button" id="cutConfirmCancel">Cancelar</button>
+      <button class="btn btn-d" type="button" id="cutConfirmCancel">Cancelar</button>
       <button class="btn btn-p" type="button" id="cutConfirmOk">Confirmar</button>
     </div>
   </div>
@@ -920,7 +988,7 @@ aside .cut-grid {
 
 <script>
 // ── Estado global ─────────────────────────────────────────────
-const S = { rodando:false, avancado:{}, defaults:{}, resultado:null, temposCorteGps:[], pontosCorteGps:[], distanciaCorteSnv:undefined };
+const S = { rodando:false, avancado:{}, defaults:{}, resultado:null, snvInfo:null, temposCorteGps:[], pontosCorteGps:[], distanciaCorteSnv:undefined };
 
 // ── Init ──────────────────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", async () => {
@@ -981,14 +1049,15 @@ async function onSnvChange() {
   const sel = document.getElementById("selSnv");
   const shp = sel.value;
   const shpPath = sel.options[sel.selectedIndex]?.dataset?.path || "";
-  if (!shp) { document.getElementById("infoSnv").innerHTML = '<span class="iempty">Selecione um shapefile</span>'; checkReady(); return; }
+  if (!shp) { S.snvInfo = null; document.getElementById("infoSnv").innerHTML = '<span class="iempty">Selecione um shapefile</span>'; checkReady(); return; }
   document.getElementById("infoSnv").innerHTML = '<span class="iempty">Carregando...</span>';
   try {
     const r = await fetch("/api/info_snv", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({shp, path:shpPath}) });
     const d = await r.json();
+    S.snvInfo = d.erro ? null : d;
     document.getElementById("infoSnv").innerHTML = d.erro
       ? '<span style="color:var(--danger)">'+esc(d.erro)+'</span>'
-      : infoHtml([["Segmentos",d.num_segmentos?.toLocaleString("pt-BR")||"?"],["CRS",d.crs||"?"],["Atualização",d.data_atualizacao||"?"],["Rodovias",(d.rodovias||[]).slice(0,5).join(", ")||"?"],["Tamanho",d.tamanho_kb+" KB"]]);
+      : infoHtml([["Segmentos",d.num_segmentos?.toLocaleString("pt-BR")||"?"],["Projeção",d.crs||"?"],["Versão",d.data_atualizacao||"?"],["Rodovias",(d.rodovias||[]).slice(0,5).join(", ")||"?"],["Tamanho",d.tamanho_kb+" KB"]]);
   } catch(e) { document.getElementById("infoSnv").innerHTML='<span style="color:var(--danger)">'+esc(e.message)+'</span>'; }
   checkReady();
 }
@@ -1012,7 +1081,7 @@ async function onMp4Change() {
     ]);
     document.getElementById("infoGopro").innerHTML = ir.erro
       ? '<span style="color:var(--danger)">'+esc(ir.erro)+'</span>'
-      : infoHtml([["Modelo",ir.modelo||"—"],["Firmware",ir.firmware||"—"],["Duração",ir.duracao_fmt||"—"],["Resolução",ir.resolucao||"—"],["FOV",(ir.fov||"—") + (ir.fov_fonte ? " (" + ir.fov_fonte + ")" : "")],["FPS",(ir.fps||"—")+" fps"],["Gravado",ir.criacao?.substring(0,10)||"—"],["Tamanho",(ir.tamanho_mb||"?")+" MB"]]);
+      : infoHtml([["Câmera",ir.modelo||"—"],["Firmware",ir.firmware||"—"],["Duração",ir.duracao_fmt||"—"],["Resolução",ir.resolucao||"—"],["FOV",ir.fov||"—"],["FPS",(ir.fps||"—")+" fps"],["Gravado",ir.criacao?.substring(0,10)||"—"],["Tamanho",(ir.tamanho_mb||"?")+" MB"]]);
     if (!ir.erro) syncCutVideoFromProcessing(mp4, mp4Path, ir.duracao_s, ir.width, ir.height, ir.fov_linear, ir.fov, ir.fps);
     if (vr.velocidade_kmh) {
       document.getElementById("velnum").textContent = vr.velocidade_kmh;
@@ -1710,10 +1779,8 @@ function limparResultadoProcessamento(rodape, status) {
   _eventoNavControl = null;
 
   document.getElementById("d-dash").innerHTML = dashboardInfoCards(true) + painelVazio("Dashboard será exibido após novo processamento.");
-  document.getElementById("d-conf").innerHTML = painelVazio("Conformidade SNV será exibida após novo processamento.");
-  document.getElementById("d-qual").innerHTML = painelVazio("Qualidade GPS será exibida após novo processamento.");
+  document.getElementById("d-conf").innerHTML = painelVazio("Conformidade SNV e qualidade GPS serão exibidas após novo processamento.");
   document.getElementById("d-cam").innerHTML = painelVazio("Diagnóstico de câmera será exibido após novo processamento.");
-  document.getElementById("d-tab").innerHTML = painelVazio("Tabela detalhada será exibida após novo processamento.");
   document.getElementById("d-mapa").innerHTML = painelVazio("Mapa será exibido após novo processamento.");
   document.getElementById("ftxt").textContent = rodape;
   setStatus("idle", status);
@@ -1745,7 +1812,7 @@ async function finalizar() {
     S.resultado = d;
     document.getElementById("ftxt").textContent =
       d.arquivo + " | " + d.segmentos.length + " segmentos";
-    renderDash(d); renderConf(d); renderQual(d); renderCam(d); renderTab(d);
+    renderDash(d); renderConf(d); renderCam(d);
     // Pré-carrega o mapa em background (não bloqueia UI)
     renderMapa(d).catch(e => console.warn("Mapa:", e));
     setStatus("done", "Concluído — " + d.segmentos.length + " segmentos");
@@ -1753,6 +1820,8 @@ async function finalizar() {
     // Muda automaticamente para o Dashboard
     const tabDash = document.querySelector('.tab[onclick*="dash"]');
     swTab("dash", tabDash);
+    const sideCut = document.querySelector('.side-tab[onclick*="corte"]');
+    swSideMode("corte", sideCut);
 
   } catch(e) {
     addLog("erro", "Exceção ao carregar resultado: " + e.message);
@@ -1775,11 +1844,28 @@ function addLog(tipo, msg) {
 // ── Renders ───────────────────────────────────────────────────
 function dashboardInfoCards(hidden=false) {
   const goproHtml = document.getElementById("infoGopro")?.innerHTML || '<span class="iempty">Selecione um vídeo</span>';
-  const snvHtml = document.getElementById("infoSnv")?.innerHTML || '<span class="iempty">Selecione um shapefile</span>';
+  const snvHtml = snvInfoHtml() || document.getElementById("infoSnv")?.innerHTML || '<span class="iempty">Selecione um shapefile</span>';
   return `<div class="dash-info-grid${hidden ? " dash-info-hidden" : ""}">
-    <div class="dash-info-card"><div class="stitle">Câmera GoPro</div><div class="ibox" id="infoGopro">${goproHtml}</div></div>
-    <div class="dash-info-card"><div class="stitle">SNV Selecionado</div><div class="ibox" id="infoSnv">${snvHtml}</div></div>
+    <div class="dash-info-card snv-info-card"><div class="stitle">Informações do SNV</div><div class="ibox" id="infoSnv">${snvHtml}</div></div>
+    <div class="dash-info-card"><div class="stitle">Informações do Vídeo</div><div class="ibox" id="infoGopro">${goproHtml}</div></div>
   </div>`;
+}
+
+function snvInfoHtml() {
+  const info = S.snvInfo;
+  if (!info) return "";
+  const rodoviasProcessadas = S.resultado?.rodovias_processadas || [];
+  const rodovias = rodoviasProcessadas.length ? rodoviasProcessadas : (info.rodovias || []);
+  const rodoviasHtml = rodovias.length
+    ? `<div class="rodovia-list">${rodovias.map(r=>`<span class="rodovia-item">${esc(r)}</span>`).join("")}</div>`
+    : "?";
+  return infoHtml([
+    ["Segmentos", info.num_segmentos?.toLocaleString("pt-BR") || "?"],
+    ["Projeção", info.crs || "?"],
+    ["Versão", info.data_atualizacao || "?"],
+    ["Tamanho", info.tamanho_kb + " KB"],
+    ["Rodovias processadas", rodoviasHtml, "html-list"],
+  ]);
 }
 
 function severidadeEvento(e) {
@@ -1795,20 +1881,40 @@ function renderDash(d) {
   const nCrit= evts.filter(e=>severidadeEvento(e)==="critica").length;
   const nAlertas = evts.length - nCrit;
   const vels = segs.map(s=>parseFloat(s.vel_media_kmh)||0).filter(Boolean);
-  const dmax = Math.max(...segs.map(s=>parseFloat(s.dist_max_m)||0),1);
-  const kpis = `<div class="dgrid">
-    <div class="kpi blue"><div class="kpilbl">Segmentos</div><div class="kpival">${tot}</div><div class="kpisub">total processado</div></div>
-    <div class="kpi ${evts.length?"amber":"green"}"><div class="kpilbl">Eventos</div><div class="kpival">${evts.length}</div><div class="kpisub">ocorrência(s)</div></div>
-    <div class="kpi ${nCrit?"red":"green"}"><div class="kpilbl">Críticos</div><div class="kpival">${nCrit}</div><div class="kpisub">prioridade máxima</div></div>
-    <div class="kpi ${nAlertas?"amber":"green"}"><div class="kpilbl">Alertas</div><div class="kpival">${nAlertas}</div><div class="kpisub">alta/moderada</div></div>
+  const kpis = `<div class="event-summary-card">
+    <div class="event-summary-head">
+      <div class="event-summary-title">Eventos</div>
+      <div class="event-summary-total">
+        <div class="label">Ocorrências</div>
+        <div class="value">${evts.length}</div>
+      </div>
+    </div>
+    <div class="event-summary-row"><span>Quilômetros processados</span><span>${tot}</span></div>
+    <div class="event-summary-row crit"><span>Críticos</span><span>${nCrit}</span></div>
+    <div class="event-summary-row warn"><span>Alto/moderado</span><span>${nAlertas}</span></div>
+  </div>`;
+  const alertRows = evts.map(e=>{
+    const sev = severidadeEvento(e);
+    const tipo = String(e.conformidade || e.evento || e.tipo || "alerta").replaceAll("_"," ");
+    const kmI = Number(e.km_inicio ?? 0);
+    const kmF = Number(e.km_fim ?? kmI);
+    const trecho = Math.abs(kmF - kmI) < 0.01
+      ? `km ${kmI.toFixed(1)}`
+      : `km ${kmI.toFixed(1)}–${kmF.toFixed(1)}`;
+    const label = sev === "critica" ? "Crítica" : sev === "alta" ? "Alta" : "Moderada";
+    return `<div class="dash-alert-item">
+      <span class="dash-alert-km">${trecho}</span>
+      <span class="dash-alert-type" title="${esc(tipo)}">${esc(tipo)}</span>
+      <span class="sevtag ${sev}">${label}</span>
+    </div>`;
+  }).join("");
+  const alertCard = `<div class="ccard dash-alert-card"><div class="ctitle">Alertas no mapa</div>
+    <div class="dash-alert-list">${alertRows || '<div class="dash-alert-empty">Nenhum alerta encontrado.</div>'}</div>
   </div>`;
   const rows = segs.map(s=>{
     const c=s.conformidade||"";
-    const bc=c.includes("toleran")?"ok":c.includes("snv")?"snv":c.includes("insuf")?"insuf":"inc";
-    const pct=Math.min(100,((parseFloat(s.dist_max_m)||0)/dmax)*100);
     return `<div class="kmrow">
       <span class="kmlbl">km ${(s.km_inicio||0).toFixed(1)}–${(s.km_fim||0).toFixed(1)}</span>
-      <div class="kmbw"><div class="kmb ${bc}" style="width:${pct.toFixed(0)}%"></div></div>
       <span style="text-align:right;font-family:var(--mono);font-size:11.5px">${(s.dist_max_m||0).toFixed(0)}m</span>
       <span style="text-align:center">${badgeConf(c)}</span>
       <span style="text-align:right;font-family:var(--mono);font-size:11.5px">${(parseFloat(s.vel_media_kmh)||0).toFixed(0)} km/h</span>
@@ -1822,10 +1928,16 @@ function renderDash(d) {
       <span>${mediana(vels).toFixed(0)} km/h mediana</span>
       <span>km ${segs[segs.length-1]?.km_fim?.toFixed(1)||0}</span>
     </div></div>`;
-  document.getElementById("d-dash").innerHTML = `<div class="dashboard-top">${dashboardInfoCards()}${kpis}${spark}</div>` +
-    `<div class="ccard dash-distance-card"><div class="ctitle">Distância máxima ao SNV por segmento</div>
-    <div class="kmrow hdr"><span>Segmento</span><span>Barra</span><span>Dist. máx.</span><span>Conformidade</span><span>Vel.</span></div>
-    ${rows}</div>`;
+  document.getElementById("d-dash").innerHTML = `<div class="dashboard-top">${dashboardInfoCards()}${kpis}${alertCard}</div>
+    <div class="dashboard-metrics">
+      <div class="ccard dash-distance-card"><div class="ctitle">Distância máxima ao SNV por quilômetro</div>
+        <div class="dash-distance-list">
+          <div class="kmrow hdr"><span>Segmento</span><span>Dist. máx.</span><span>Conformidade</span><span>Vel.</span></div>
+          ${rows}
+        </div>
+      </div>
+      ${spark}
+    </div>`;
 }
 
 function renderConf(d) {
@@ -1837,27 +1949,30 @@ function renderConf(d) {
     <td class="tr">${(s.dist_p95_m||0).toFixed(1)} m</td>
     <td class="tr">${s.raio_conf_m||"—"} m</td>
     <td style="text-align:center">${s.sistematico==="True"||s.sistematico===true?"Sim":"Não"}</td>
-  </tr>`).join("");
-  document.getElementById("d-conf").innerHTML = `<div class="ccard"><div class="ctitle">Conformidade da trajetória com o SNV/DNIT</div>
-    <div style="overflow-x:auto"><table class="dtable">
-      <tr><th>Segmento</th><th>Conformidade</th><th class="tr">Dist. Méd.</th><th class="tr">Dist. Máx.</th><th class="tr">P95</th><th class="tr">Raio Conf.</th><th class="tc">Sistemático</th></tr>
-      ${rows}</table></div></div>`;
-}
-
-function renderQual(d) {
-  const rows = (d.segmentos||[]).map(s=>`<tr>
-    <td style="font-family:var(--mono);white-space:nowrap">km ${(s.km_inicio||0).toFixed(1)}–${(s.km_fim||0).toFixed(1)}</td>
-    <td class="tc">${badgeIQ(s.iq_sinal||"")}</td>
     <td class="tr">${(s.gpsp_medio||0).toFixed(0)}</td>
     <td class="tr">${(s.dop_medio||0).toFixed(2)}</td>
     <td class="tr">${(s.pct_fix_3d||0).toFixed(0)}%</td>
     <td class="tr">${(s.pct_anomalos||0).toFixed(1)}%</td>
-    <td class="tr">${s.raio_conf_m||"—"} m</td>
     <td class="tr">${(s.vel_media_kmh||0).toFixed(0)} km/h</td>
+    <td class="tc">${badgeIQ(s.iq_sinal||"")}</td>
   </tr>`).join("");
-  document.getElementById("d-qual").innerHTML = `<div class="ccard"><div class="ctitle">Índice de qualidade do sinal GPS (GPMF @ 18Hz)</div>
-    <div style="overflow-x:auto"><table class="dtable">
-      <tr><th>Segmento</th><th>IQ</th><th class="tr">GPSP</th><th class="tr">DOP</th><th class="tr">Fix 3D</th><th class="tr">Anomalias</th><th class="tr">Raio Conf.</th><th class="tr">Vel.</th></tr>
+  document.getElementById("d-conf").innerHTML = `<div class="ccard"><div class="ctitle">Conformidade SNV e qualidade GPS por segmento</div>
+    <div style="overflow-x:auto"><table class="dtable conf-table">
+      <tr>
+        <th>Segmento</th>
+        <th>Conformidade</th>
+        <th class="tr">Dist. Méd.</th>
+        <th class="tr">Dist. Máx.</th>
+        <th class="tr">P95</th>
+        <th class="tr">Raio Conf.</th>
+        <th class="tc">Sistemático</th>
+        <th class="tr">GPSP</th>
+        <th class="tr">DOP</th>
+        <th class="tr">Fix 3D</th>
+        <th class="tr">Anomalias</th>
+        <th class="tr">Vel.</th>
+        <th class="tc">IQ GPS</th>
+      </tr>
       ${rows}</table></div></div>`;
 }
 
@@ -1927,7 +2042,7 @@ function renderCam(d) {
   }).join("");
   document.getElementById("d-cam").innerHTML = `<div class="ccard"><div class="ctitle">Diagnóstico de gravação — câmera GoPro</div>
     ${toolbar}
-    <div style="overflow-x:auto"><table class="dtable">
+    <div style="overflow-x:auto"><table class="dtable alerts-table">
       <tr><th>Severidade</th><th>Trecho</th><th>Tipo</th><th>Descrição</th><th>Métrica</th><th>Ação</th></tr>
       ${rows || `<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:18px">Nenhum evento nesse filtro.</td></tr>`}
     </table></div></div>`;
@@ -1936,25 +2051,6 @@ function renderCam(d) {
 function setFiltroEventosCamera(filtro) {
   _filtroEventosCamera = filtro;
   if (S.resultado) renderCam(S.resultado);
-}
-
-function renderTab(d) {
-  const rows = (d.segmentos||[]).map(s=>`<tr>
-    <td style="font-family:var(--mono);white-space:nowrap">km ${(s.km_inicio||0).toFixed(1)}–${(s.km_fim||0).toFixed(1)}</td>
-    <td class="tc">${badgeIQ(s.iq_sinal||"")}</td>
-    <td class="tr">${(s.dop_medio||0).toFixed(2)}</td>
-    <td class="tr">${(s.pct_fix_3d||0).toFixed(0)}%</td>
-    <td class="tc">${badgeConf(s.conformidade||"")}</td>
-    <td class="tr">${(s.dist_media_m||0).toFixed(1)}</td>
-    <td class="tr">${(s.dist_max_m||0).toFixed(1)}</td>
-    <td class="tr">${(s.dist_p95_m||0).toFixed(1)}</td>
-    <td class="tr">${(s.vel_media_kmh||0).toFixed(0)}</td>
-    <td class="tr">${s.n_amostras||0}</td>
-  </tr>`).join("");
-  document.getElementById("d-tab").innerHTML = `<div class="ccard"><div class="ctitle">Tabela detalhada por segmento km a km</div>
-    <div style="overflow-x:auto"><table class="dtable">
-      <tr><th>Segmento</th><th class="tc">IQ GPS</th><th class="tr">DOP</th><th class="tr">Fix 3D</th><th class="tc">Conformidade</th><th class="tr">Dist.Méd(m)</th><th class="tr">Dist.Máx(m)</th><th class="tr">P95(m)</th><th class="tr">Vel(km/h)</th><th class="tr">N amostras</th></tr>
-      ${rows}</table></div></div>`;
 }
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -1969,7 +2065,12 @@ function badgeIQ(v) {
   return `<span class="badge b-${c}">${l}</span>`;
 }
 function infoHtml(rows) {
-  return rows.map(([k,v])=>`<div class="irow2"><span>${k}</span><span class="ival">${esc(String(v||"—"))}</span></div>`).join("");
+  return rows.map(([k,v,tipo])=>{
+    if (tipo === "html-list") {
+      return `<div class="irow2 stack"><span>${k}</span><div>${v || "—"}</div></div>`;
+    }
+    return `<div class="irow2"><span>${k}</span><span class="ival">${esc(String(v||"—"))}</span></div>`;
+  }).join("");
 }
 function swTab(name, btn) {
   document.querySelectorAll(".tpanel").forEach(p=>p.classList.remove("active"));
@@ -2039,6 +2140,7 @@ function resetDef() {
   S.avancado={};
 }
 function limpar() {
+  S.snvInfo = null;
   document.getElementById("selMp4").value="";
   document.getElementById("selSnv").value="";
   document.getElementById("infoGopro").innerHTML='<span class="iempty">Selecione um vídeo</span>';
