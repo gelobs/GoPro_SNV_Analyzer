@@ -268,10 +268,13 @@ def _validar_fov_linear(path: Path) -> tuple[bool, str, bool | None, str]:
     try:
         fov_linear, fov_nome, _ = _detectar_fov_video(path)
     except Exception as exc:
-        return True, "", None, "Não identificado"
+        return False, f"Nao foi possivel identificar o FOV do video: {exc}", None, "Nao identificado"
 
-    return True, "", fov_linear, fov_nome
-
+    if fov_linear is True:
+        return True, "", fov_linear, fov_nome
+    if fov_linear is False:
+        return False, f"O FOV do video e {fov_nome}. O processamento so e permitido para videos com FOV linear.", fov_linear, fov_nome
+    return False, "Nao foi possivel identificar se o FOV do video e linear.", fov_linear, fov_nome
 
 # ── Valores padrão dos limiares do backend (lidos dos arquivos fonte) ─────────
 DEFAULTS = {
@@ -691,6 +694,10 @@ def processar():
                 f"FPS insuficiente: {fps:.2f}. O vídeo precisa estar em 59.94 fps ou 60 fps."
             )
 
+        ok_fov, fov_message, _, _ = _validar_fov_linear(mp4_path)
+        if not ok_fov:
+            problemas.append(fov_message)
+
         if problemas:
             return jsonify({
                 "erro": "O vídeo não pode ser processado.",
@@ -861,6 +868,9 @@ def cortar_video_api():
                 "success": False,
                 "message": f"O video tem {fps:.2f} fps. O corte so e permitido para videos em 59.94 fps ou 60 fps.",
             }), 400
+        ok_fov, fov_message, _, _ = _validar_fov_linear(source_path)
+        if not ok_fov:
+            return jsonify({"success": False, "message": fov_message}), 400
     output_dir = Path(output_dir_raw)
     if not output_dir.is_absolute():
         output_dir = BASE_DIR / output_dir
@@ -897,6 +907,10 @@ def cortar_video_api():
                 "success": False,
                 "message": f"O video tem {fps:.2f} fps. O corte so e permitido para videos em 59.94 fps ou 60 fps.",
             }), 400
+        ok_fov, fov_message, _, _ = _validar_fov_linear(input_path)
+        if not ok_fov:
+            input_path.unlink(missing_ok=True)
+            return jsonify({"success": False, "message": fov_message}), 400
     _cut_jobs[job_id] = {
         "done": False,
         "success": None,
@@ -1223,3 +1237,5 @@ if __name__ == "__main__":
         use_reloader=False
     )
     print("Backend carregado com sucesso")
+
+

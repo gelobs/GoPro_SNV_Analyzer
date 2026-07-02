@@ -27,6 +27,8 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
+from segmentacao_km import iter_segmentos_km
+
 
 class IndiceQualidade(Enum):
     EXCELENTE  = "excelente"    # DOP < 2.0, fix 3D, sem anomalias
@@ -81,13 +83,12 @@ def avaliar_qualidade(df: pd.DataFrame,
     Retorna lista de QualidadeSegmento.
     """
     resultados = []
+    km_min = df["km"].min()
     km_max = df["km"].max()
-    km = 0.0
 
-    while km < km_max:
-        seg = df[(df["km"] >= km) & (df["km"] < km + tamanho_seg_km)]
+    for km, km_fim in iter_segmentos_km(km_min, km_max, tamanho_seg_km):
+        seg = df[(df["km"] >= km) & (df["km"] < km_fim)]
         if len(seg) < 5:
-            km += tamanho_seg_km
             continue
 
         gpsp_med  = seg["precision"].mean()
@@ -100,7 +101,7 @@ def avaliar_qualidade(df: pd.DataFrame,
 
         resultados.append(QualidadeSegmento(
             km_inicio        = round(km, 2),
-            km_fim           = round(min(km + tamanho_seg_km, km_max), 2),
+            km_fim           = round(km_fim, 2),
             iq               = iq,
             gpsp_medio       = round(gpsp_med, 0),
             gpsp_max         = round(gpsp_max, 0),
@@ -114,7 +115,6 @@ def avaliar_qualidade(df: pd.DataFrame,
             vel_max_kmh      = round(vel.max(), 1),
             nota             = _gerar_nota(iq, gpsp_med, pct_fix, pct_anom),
         ))
-        km += tamanho_seg_km
 
     return resultados
 

@@ -30,6 +30,8 @@ import numpy as np
 import pandas as pd
 from pyproj import Geod
 
+from segmentacao_km import iter_segmentos_km
+
 
 class EventoCamera(Enum):
     GAP_STREAM           = "gap_stream"
@@ -277,15 +279,14 @@ def _detectar_descontinuidades(df: pd.DataFrame,
     """
     eventos = []
     R = 6_371_000
+    km_min = df["km"].min()
     km_max = df["km"].max()
-    km = 0.0
     seg_ant = None
     km_ant  = None
 
-    while km < km_max:
-        seg = df[(df["km"] >= km) & (df["km"] < km + tamanho_seg_km)]
+    for km, km_fim in iter_segmentos_km(km_min, km_max, tamanho_seg_km):
+        seg = df[(df["km"] >= km) & (df["km"] < km_fim)]
         if len(seg) < 10:
-            km += tamanho_seg_km
             continue
 
         N = min(10, max(3, len(seg)//20))
@@ -317,7 +318,7 @@ def _detectar_descontinuidades(df: pd.DataFrame,
                     evento     = EventoCamera.DESCONTINUIDADE,
                     severidade = sev,
                     km_inicio  = round(km_ant, 2),
-                    km_fim     = round(km + tamanho_seg_km, 2),
+                    km_fim     = round(km_fim, 2),
                     descricao  = (
                         f"Descontinuidade espacial de {dist_m:.0f}m "
                         f"na junção dos segmentos km {km_ant:.1f}–{km:.1f}"
@@ -335,7 +336,6 @@ def _detectar_descontinuidades(df: pd.DataFrame,
                 ))
         seg_ant = seg
         km_ant  = km
-        km += tamanho_seg_km
     return eventos
 
 
@@ -503,13 +503,12 @@ def _detectar_velocidade_atipica(df: pd.DataFrame,
     Detecta segmentos com velocidade média fisicamente impossível.
     """
     eventos = []
-    km_max  = df["km"].max()
-    km = 0.0
+    km_min = df["km"].min()
+    km_max = df["km"].max()
 
-    while km < km_max:
-        seg = df[(df["km"] >= km) & (df["km"] < km + tamanho_seg_km)]
+    for km, km_fim in iter_segmentos_km(km_min, km_max, tamanho_seg_km):
+        seg = df[(df["km"] >= km) & (df["km"] < km_fim)]
         if len(seg) < 5:
-            km += tamanho_seg_km
             continue
 
         vel_seg = seg["speed2d"].mean()
@@ -520,7 +519,7 @@ def _detectar_velocidade_atipica(df: pd.DataFrame,
                 evento     = EventoCamera.VELOCIDADE_ATIPICA,
                 severidade = Severidade.ALTA,
                 km_inicio  = round(km, 2),
-                km_fim     = round(km + tamanho_seg_km, 2),
+                km_fim     = round(km_fim, 2),
                 descricao  = "Segmento com velocidade fisicamente impossível em rodovia",
                 metrica    = (
                     f"média = {vel_seg*3.6:.1f} km/h | "
@@ -532,7 +531,6 @@ def _detectar_velocidade_atipica(df: pd.DataFrame,
                 ),
                 km_pico = round(km_pico, 2),
             ))
-        km += tamanho_seg_km
     return eventos
 
 
