@@ -20,7 +20,7 @@ body{
   font-family:var(--sans);background:var(--bg);color:var(--text);
   display:grid;
   grid-template-rows:52px 1fr 36px;
-  grid-template-columns:330px 1fr;
+  grid-template-columns:365px 1fr;
   grid-template-areas:"hdr hdr" "side main" "ftr ftr";
   height:100vh;overflow:hidden;
 }
@@ -53,23 +53,23 @@ aside{
 }
 aside::-webkit-scrollbar{width:4px}
 aside::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
-.ssec{border-bottom:1px solid var(--border);padding:16px 18px}
+.ssec{border-bottom:1px solid var(--border);padding:18px 20px}
 .ssec:last-child{border-bottom:none}
 .stitle{
-  font-family:var(--mono);font-size:11px;font-weight:600;
-  color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;
+  font-family:var(--mono);font-size:12px;font-weight:600;
+  color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;
 }
-.field{margin-bottom:11px}
+.field{margin-bottom:12px}
 .side-step{
-  color:var(--primary);font-family:var(--mono);font-size:10px;font-weight:600;
-  letter-spacing:.08em;margin:10px 0 8px;text-transform:uppercase;
+  color:var(--primary);font-family:var(--mono);font-size:11px;font-weight:600;
+  letter-spacing:.08em;margin:11px 0 9px;text-transform:uppercase;
 }
 .side-step:first-child{margin-top:0}
-.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:5px}
+.field label{display:block;font-size:13px;color:var(--text2);margin-bottom:6px}
 select,input[type=text],input[type=number],input[type=file]{
   width:100%;background:var(--bg);border:1px solid var(--border);
-  color:var(--text);font-family:var(--mono);font-size:12px;
-  padding:8px 10px;border-radius:4px;appearance:none;outline:none;
+  color:var(--text);font-family:var(--mono);font-size:13px;
+  padding:9px 11px;border-radius:4px;appearance:none;outline:none;
   transition:border-color .2s;
 }
 select:focus,input:focus{border-color:var(--primary)}
@@ -80,9 +80,9 @@ input[type=file]::file-selector-button {
   color: var(--text2);
   cursor: pointer;
   font-family: var(--mono);
-  font-size: 10px;
-  margin-right: 8px;
-  padding: 4px 8px;
+  font-size: 11px;
+  margin-right: 9px;
+  padding: 4px 9px;
 }
 input[type=file]::file-selector-button:hover {
   background: var(--border);
@@ -91,21 +91,21 @@ input[type=file]::file-selector-button:hover {
 select option{background:var(--surface2)}
 .irow{display:flex;align-items:center;gap:4px}
 .irow input{flex:1;text-align:center}
-.select-row{display:flex;align-items:center;gap:6px}
+.select-row{display:flex;align-items:center;gap:7px}
 .select-row select{min-width:0;flex:1}
-.select-row .btn{flex:none;padding:8px 12px;font-size:11px}
+.select-row .btn{flex:none;padding:9px 14px;font-size:12px}
 .select-row .btn,
-.cut-output-row .btn{width:112px}
+.cut-output-row .btn{width:124px}
 .spbtn{
-  width:30px;height:30px;background:var(--surface3);border:1px solid var(--border);
-  border-radius:4px;color:var(--text2);font-size:14px;cursor:pointer;
+  width:33px;height:33px;background:var(--surface3);border:1px solid var(--border);
+  border-radius:4px;color:var(--text2);font-size:15px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
   transition:background .15s,color .15s;font-family:var(--mono);
 }
 .spbtn:hover{background:var(--border);color:var(--text)}
 .ibox{
   background:var(--bg);border:1px solid var(--border);border-radius:4px;
-  padding:8px 10px;font-family:var(--mono);font-size:10px;color:var(--text2);
+  padding:9px 11px;font-family:var(--mono);font-size:11px;color:var(--text2);
   line-height:1.7;
 }
 .irow2{display:flex;justify-content:space-between;gap:8px}
@@ -121,15 +121,15 @@ select option{background:var(--surface2)}
 .iempty{color:var(--text3);font-style:italic}
 .velbox{
   background:var(--bg);border:1px solid var(--border);border-radius:4px;
-  padding:6px 10px;display:flex;align-items:baseline;gap:6px;
+  padding:7px 11px;display:flex;align-items:baseline;gap:7px;
 }
-.velnum{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--primary2)}
-.velunit{font-size:11px;color:var(--text3)}
-.velsub{font-size:10px;color:var(--text3);margin-left:auto}
-.brow{display:flex;gap:6px;margin-top:4px}
+.velnum{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--primary2)}
+.velunit{font-size:12px;color:var(--text3)}
+.velsub{font-size:11px;color:var(--text3);margin-left:auto}
+.brow{display:flex;gap:7px;margin-top:4px}
 .btn{
-  flex:1;padding:9px 16px;border:1px solid transparent;border-radius:999px;
-  font-family:var(--mono);font-size:11.5px;font-weight:700;cursor:pointer;
+  flex:1;padding:10px 18px;border:1px solid transparent;border-radius:999px;
+  font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;
   transition:background .15s,border-color .15s,color .15s,box-shadow .15s,transform .05s;
   text-align:center;letter-spacing:.08em;text-transform:uppercase;background:transparent;
   color:var(--primary);line-height:1.2;
@@ -153,7 +153,7 @@ select option{background:var(--surface2)}
 .btn-s:hover{background:#16a34a;border-color:#16a34a}
 .advtoggle{
   display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;
-  font-size:11px;color:var(--text2);padding:0;border-top:none;
+  font-size:12px;color:var(--text2);padding:0;border-top:none;
 }
 .advtoggle:hover{color:var(--text)}
 .advicon{font-size:10px;transition:transform .2s}
@@ -216,8 +216,8 @@ select option{background:var(--surface2)}
 .side-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 7px;
+  margin-bottom: 14px;
 }
 .side-tab {
   background: var(--bg);
@@ -226,10 +226,10 @@ select option{background:var(--surface2)}
   color: var(--primary);
   cursor: pointer;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 700;
   letter-spacing: .07em;
-  padding: 8px 10px;
+  padding: 9px 11px;
   text-align: center;
   transition: background .15s, border-color .15s, color .15s;
   text-transform: uppercase;
@@ -313,11 +313,11 @@ main{
 
 /* DASHBOARD */
 .dashboard-top{display:grid;grid-template-columns:420px 320px 460px;gap:12px;margin-bottom:20px;align-items:stretch}
-.dashboard-metrics{display:grid;grid-template-columns:max-content 360px;gap:16px;align-items:start;justify-content:start}
+.dashboard-metrics{display:grid;grid-template-columns:720px 460px;gap:16px;align-items:stretch;justify-content:start}
 .event-summary-card{background:var(--surface);border:1px solid rgba(210,153,34,.32);border-radius:8px;padding:20px 24px 22px;margin-bottom:0;min-height:320px}
 .event-summary-head{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:22px}
 .event-summary-title{
-  font-size:30px;font-weight:800;color:var(--text);
+  font-size:23px;font-weight:800;color:var(--text);
   text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);text-align:center;
 }
 .event-summary-total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;text-align:left;width:100%}
@@ -328,7 +328,8 @@ main{
 .event-summary-row span:first-child{font-size:15px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
 .event-summary-row span:last-child{font-size:22px;font-weight:700;color:var(--text)}
 .event-summary-row.crit span:last-child{color:var(--danger)}
-.event-summary-row.warn span:last-child{color:var(--warning)}
+.event-summary-row.warn span:last-child{color:#BC4C00}
+.event-summary-row.low span:last-child{color:#D29922}
 .dash-info-grid{display:grid;grid-template-columns:1fr;grid-template-rows:1fr 1fr;gap:12px;margin-bottom:0}
 .dash-info-grid.dash-info-hidden{display:none}
 .dash-info-card{max-width:420px;background:var(--surface);border:1px solid rgba(31,111,235,.3);border-radius:8px;padding:20px 22px}
@@ -348,15 +349,32 @@ main{
 .dash-alert-km{font-family:var(--mono);font-size:13px;color:var(--text3);text-align:left;white-space:nowrap}
 .dash-alert-card .sevtag{font-size:12px}
 .dash-alert-empty{font-size:13px;color:var(--text3);line-height:1.5}
-.dash-spark-card{margin-bottom:0;align-self:start;display:flex;flex-direction:column}
-.dashboard-metrics .dash-spark-card{width:100%;height:auto}
-.dash-distance-card{width:max-content;max-width:100%}
+.dash-spark-card{margin-bottom:0;align-self:stretch;display:flex;flex-direction:column}
+.dashboard-metrics .dash-spark-card{width:100%;height:88%;align-self:start}
+.spark-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.spark-head .ctitle{margin-bottom:0}
+.spark-filter-wrap{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.spark-filter{
+  width:auto;min-width:128px;padding:6px 30px 6px 10px;font-size:11.5px;font-weight:700;
+  border-radius:4px;background:
+    linear-gradient(45deg, transparent 50%, var(--text2) 50%) calc(100% - 16px) 50%/5px 5px no-repeat,
+    linear-gradient(135deg, var(--text2) 50%, transparent 50%) calc(100% - 11px) 50%/5px 5px no-repeat,
+    var(--bg);
+  color:var(--text2);border:1px solid var(--border);appearance:none;
+}
+.dash-distance-card{width:720px;max-width:100%}
 .dash-distance-card .ctitle{font-size:14px}
 .dash-distance-list{max-height:315px;overflow-y:auto;padding-right:4px}
 .dash-distance-list::-webkit-scrollbar{width:5px}
 .dash-distance-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-.dash-distance-card .kmrow{font-size:12.5px}
-.dash-distance-card .kmrow.hdr{font-size:11.5px}
+.dash-distance-card .kmrow{grid-template-columns:180px 130px 210px 110px;font-size:14px}
+.dash-distance-card .kmrow.hdr{font-size:12.5px}
+#d-dash .dash-info-card .stitle,
+#d-dash .ctitle{
+  color:var(--text);
+  font-size:17px;
+  font-weight:800;
+}
 .ctitle{
   font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--text2);
   margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em;
@@ -378,7 +396,7 @@ main{
 }
 .b-ok{background:rgba(63,185,80,.15);color:var(--success)}
 .b-snv{background:rgba(218,54,51,.15);color:var(--danger)}
-.b-insuf{background:rgba(210,153,34,.15);color:var(--warning)}
+.b-insuf{background:rgba(218,54,51,.15);color:var(--danger)}
 .b-inc{background:rgba(110,118,129,.15);color:var(--text3)}
 .b-exc{background:rgba(56,139,253,.15);color:var(--primary2)}
 .b-bom{background:rgba(63,185,80,.15);color:var(--success)}
@@ -417,15 +435,15 @@ main{
 .event-filter.active{border-color:var(--primary);color:#fff;background:var(--primary)}
 .sevtag{font-family:var(--mono);font-size:10.5px;font-weight:700;text-transform:uppercase}
 .sevtag.critica{color:var(--danger)}
-.sevtag.alta{color:var(--warning)}
-.sevtag.moderada{color:var(--text3)}
+.sevtag.alta{color:#BC4C00}
+.sevtag.moderada{color:#D29922}
 .evcard{
   background:var(--surface2);border:1px solid var(--border);
   border-radius:6px;padding:10px 14px;border-left:3px solid var(--text3);
 }
 .evcard.critica{border-left-color:var(--danger)}
-.evcard.alta{border-left-color:var(--warning)}
-.evcard.moderada{border-left-color:var(--text3)}
+.evcard.alta{border-left-color:#BC4C00}
+.evcard.moderada{border-left-color:#D29922}
 .evhdr{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .evtipo{font-family:var(--mono);font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
 .evkm{font-family:var(--mono);font-size:11.5px;color:var(--text3);margin-left:auto}
@@ -437,9 +455,24 @@ main{
 }
 .emicon{font-size:32px;opacity:.3}
 .emtxt{font-size:13.5px;color:var(--text3);max-width:340px;line-height:1.6}
-.spark{display:flex;align-items:flex-end;gap:2px;height:40px}
+.spark{display:flex;align-items:flex-end;gap:5px;height:40px}
 .dash-spark-card .spark{height:112px;margin-top:auto}
-.sparkb{flex:1;background:var(--primary);opacity:.6;border-radius:2px 2px 0 0;min-height:2px}
+.spark-group{flex:1;display:flex;align-items:flex-end;gap:2px;height:100%;min-width:0;cursor:pointer}
+.spark-group:hover .sparkb{opacity:1;filter:saturate(1.25)}
+.sparkb{flex:1;opacity:.75;border-radius:2px 2px 0 0;min-height:2px}
+.sparkb.min{background:#D29922}
+.sparkb.med{background:var(--primary)}
+.sparkb.max{background:#2DA44E}
+.spark-legend{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:8px;font-family:var(--mono);font-size:11.5px;color:var(--text2)}
+.spark-legend-item{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.spark-legend-color{width:9px;height:9px;border-radius:2px;display:inline-block;flex:none}
+.spark-legend-color.min{background:#D29922}
+.spark-legend-color.med{background:var(--primary)}
+.spark-legend-color.max{background:#2DA44E}
+.spark-km-hover{
+  margin-top:7px;text-align:center;font-family:var(--mono);font-size:12px;
+  font-weight:700;color:var(--text2);min-height:34px;line-height:1.45;
+}
 
 /* FOOTER */
 footer{
@@ -502,12 +535,14 @@ footer .fhi{color:var(--text2)}
 }
 .leg-line { width: 18px; height: 3px; border-radius: 2px; flex-shrink: 0; }
 .map-stat {
-  display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;
+  display: flex; gap: 8px; flex-wrap: wrap;
 }
+.map-stat-overlay{max-width:420px;justify-content:flex-end}
 .mstat {
-  background: var(--surface); border: 1px solid var(--border);
+  background: rgba(255,255,255,.96); border: 1px solid var(--border);
   border-radius: 6px; padding: 8px 14px;
   font-family: var(--mono); font-size: 11px;
+  box-shadow: 0 4px 14px rgba(27,31,36,.12);
 }
 .mstat-val { font-size: 18px; font-weight: 600; }
 .mstat-lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
@@ -732,10 +767,10 @@ aside .cut-grid {
 .leaflet-tooltip-dark::before { border-right-color: #D0D7DE; }
 .leaflet-popup-content-wrapper {
   background: #FFFFFF; color: #24292F;
-  border: 1px solid #D0D7DE; border-radius: 6px;
+  border: 1px solid #D0D7DE; border-radius: 8px;
 }
 .leaflet-popup-tip { background: #FFFFFF; }
-.leaflet-popup-content { margin: 10px 14px; }
+.leaflet-popup-content { margin: 13px 18px; font-size:13px; }
 .leaflet-popup.gps-popup-fade-out {
   opacity: 0;
   transform: translateY(5px);
@@ -988,7 +1023,7 @@ aside .cut-grid {
 
 <script>
 // ── Estado global ─────────────────────────────────────────────
-const S = { rodando:false, avancado:{}, defaults:{}, resultado:null, snvInfo:null, temposCorteGps:[], pontosCorteGps:[], distanciaCorteSnv:undefined };
+const S = { rodando:false, avancado:{}, defaults:{}, resultado:null, snvInfo:null, temposCorteGps:[], pontosCorteGps:[], distanciaCorteSnv:undefined, filtroVelocidade:"todas" };
 
 // ── Init ──────────────────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", async () => {
@@ -1081,7 +1116,7 @@ async function onMp4Change() {
     ]);
     document.getElementById("infoGopro").innerHTML = ir.erro
       ? '<span style="color:var(--danger)">'+esc(ir.erro)+'</span>'
-      : infoHtml([["Câmera",ir.modelo||"—"],["Firmware",ir.firmware||"—"],["Duração",ir.duracao_fmt||"—"],["Resolução",ir.resolucao||"—"],["FOV",ir.fov||"—"],["FPS",(ir.fps||"—")+" fps"],["Gravado",ir.criacao?.substring(0,10)||"—"],["Tamanho",(ir.tamanho_mb||"?")+" MB"]]);
+      : infoHtml([["Câmera",ir.modelo||"—"],["Firmware",ir.firmware||"—"],["Duração",ir.duracao_fmt||"—"],["Resolução",ir.resolucao||"—"],["FOV",ir.fov||"—"],["FPS",(ir.fps||"—")+" fps"],["Data da gravação",ir.criacao?.substring(0,10)||"—"],["Tamanho",(ir.tamanho_mb||"?")+" MB"]]);
     if (!ir.erro) syncCutVideoFromProcessing(mp4, mp4Path, ir.duracao_s, ir.width, ir.height, ir.fov_linear, ir.fov, ir.fps);
     if (vr.velocidade_kmh) {
       document.getElementById("velnum").textContent = vr.velocidade_kmh;
@@ -1529,7 +1564,7 @@ async function processar() {
     mp4: selMp4.value, mp4_path: selMp4.options[selMp4.selectedIndex]?.dataset?.path||"",
     shp: selSnv.value, shp_path: selSnv.options[selSnv.selectedIndex]?.dataset?.path||"",
     saida: document.getElementById("inpSaida").value,
-    tamanho_seg_km: parseFloat(document.getElementById("segKm").value),
+    tamanho_seg_km: parseNumero(document.getElementById("segKm").value),
     avancado: S.avancado,
   };
   resetarEstadoCorteVideo();
@@ -1860,12 +1895,39 @@ function snvInfoHtml() {
     ? `<div class="rodovia-list">${rodovias.map(r=>`<span class="rodovia-item">${esc(r)}</span>`).join("")}</div>`
     : "?";
   return infoHtml([
-    ["Segmentos", info.num_segmentos?.toLocaleString("pt-BR") || "?"],
     ["Projeção", info.crs || "?"],
     ["Versão", info.data_atualizacao || "?"],
-    ["Tamanho", info.tamanho_kb + " KB"],
-    ["Rodovias processadas", rodoviasHtml, "html-list"],
+    ["Quilômetros processados", formatKmProcessados(S.resultado?.segmentos)],
+    ["Segmentos processados", rodoviasHtml, "html-list"],
   ]);
+}
+
+function kmProcessados(segs) {
+  return (segs || []).reduce((total, s) => {
+    const inicio = Number(s.km_inicio);
+    const fim = Number(s.km_fim);
+    if (!Number.isFinite(inicio) || !Number.isFinite(fim) || fim <= inicio) return total;
+    return total + (fim - inicio);
+  }, 0);
+}
+
+function formatKmProcessados(segs) {
+  const km = kmProcessados(segs);
+  if (!km) return "?";
+  return km.toLocaleString("pt-BR", {
+    minimumFractionDigits: km < 10 ? 1 : 0,
+    maximumFractionDigits: 1,
+  }) + " km";
+}
+
+function setFiltroVelocidade(valor) {
+  S.filtroVelocidade = valor || "todas";
+  if (S.resultado) renderDash(S.resultado);
+}
+
+function setKmVelocidadeHover(km) {
+  const el = document.getElementById("sparkKmHover");
+  if (el) el.innerHTML = km || "Passe o mouse sobre um segmento";
 }
 
 function severidadeEvento(e) {
@@ -1879,19 +1941,20 @@ function renderDash(d) {
   const segs = d.segmentos||[], evts = d.eventos||[];
   const tot = segs.length;
   const nCrit= evts.filter(e=>severidadeEvento(e)==="critica").length;
-  const nAlertas = evts.length - nCrit;
+  const nAltos = evts.filter(e=>severidadeEvento(e)==="alta").length;
+  const nModerados = evts.filter(e=>severidadeEvento(e)==="moderada").length;
   const vels = segs.map(s=>parseFloat(s.vel_media_kmh)||0).filter(Boolean);
   const kpis = `<div class="event-summary-card">
     <div class="event-summary-head">
-      <div class="event-summary-title">Eventos</div>
+      <div class="event-summary-title">Alertas no mapa</div>
       <div class="event-summary-total">
         <div class="label">Ocorrências</div>
         <div class="value">${evts.length}</div>
       </div>
     </div>
-    <div class="event-summary-row"><span>Quilômetros processados</span><span>${tot}</span></div>
     <div class="event-summary-row crit"><span>Críticos</span><span>${nCrit}</span></div>
-    <div class="event-summary-row warn"><span>Alto/moderado</span><span>${nAlertas}</span></div>
+    <div class="event-summary-row warn"><span>Médios</span><span>${nAltos}</span></div>
+    <div class="event-summary-row low"><span>Baixos</span><span>${nModerados}</span></div>
   </div>`;
   const alertRows = evts.map(e=>{
     const sev = severidadeEvento(e);
@@ -1901,14 +1964,14 @@ function renderDash(d) {
     const trecho = Math.abs(kmF - kmI) < 0.01
       ? `km ${kmI.toFixed(1)}`
       : `km ${kmI.toFixed(1)}–${kmF.toFixed(1)}`;
-    const label = sev === "critica" ? "Crítica" : sev === "alta" ? "Alta" : "Moderada";
+    const label = sev === "critica" ? "Erro crítico" : sev === "alta" ? "Médio" : "Moderado";
     return `<div class="dash-alert-item">
       <span class="dash-alert-km">${trecho}</span>
       <span class="dash-alert-type" title="${esc(tipo)}">${esc(tipo)}</span>
       <span class="sevtag ${sev}">${label}</span>
     </div>`;
   }).join("");
-  const alertCard = `<div class="ccard dash-alert-card"><div class="ctitle">Alertas no mapa</div>
+  const alertCard = `<div class="ccard dash-alert-card"><div class="ctitle">Detalhes dos alertas</div>
     <div class="dash-alert-list">${alertRows || '<div class="dash-alert-empty">Nenhum alerta encontrado.</div>'}</div>
   </div>`;
   const rows = segs.map(s=>{
@@ -1920,12 +1983,45 @@ function renderDash(d) {
       <span style="text-align:right;font-family:var(--mono);font-size:11.5px">${(parseFloat(s.vel_media_kmh)||0).toFixed(0)} km/h</span>
     </div>`;
   }).join("");
-  const vmax = Math.max(...vels,1);
-  const spark = `<div class="ccard dash-spark-card"><div class="ctitle">Velocidade média por segmento (km/h)</div>
-    <div class="spark">${vels.map(v=>`<div class="sparkb" style="height:${Math.max(4,(v/vmax)*100).toFixed(0)}%" title="${v.toFixed(0)} km/h"></div>`).join("")}</div>
+  const velocidadesSegmentos = segs.map(s => ({
+    min: parseFloat(s.vel_min_kmh) || 0,
+    med: parseFloat(s.vel_media_kmh) || 0,
+    max: parseFloat(s.vel_max_kmh) || 0,
+    km: `km ${Number(s.km_inicio || 0).toFixed(1)}–${Number(s.km_fim || 0).toFixed(1)}`,
+  }));
+  const filtroVel = S.filtroVelocidade || "todas";
+  const valoresVisiveis = velocidadesSegmentos.flatMap(v => filtroVel === "todas" ? [v.min, v.med, v.max] : [v[filtroVel]]);
+  const vmax = Math.max(...valoresVisiveis,1);
+  const barra = (classe, valor) => `<div class="sparkb ${classe}" style="height:${Math.max(4,(valor/vmax)*100).toFixed(0)}%"></div>`;
+  const barras = velocidadesSegmentos.map(v => {
+    const title = `mín. ${v.min.toFixed(0)} km/h | média ${v.med.toFixed(0)} km/h | máx. ${v.max.toFixed(0)} km/h`;
+    const detalhes = `${v.km}<br>mín. ${v.min.toFixed(0)} km/h | média ${v.med.toFixed(0)} km/h | máx. ${v.max.toFixed(0)} km/h`;
+    const conteudo = filtroVel === "todas"
+      ? barra("min", v.min) + barra("med", v.med) + barra("max", v.max)
+      : barra(filtroVel, v[filtroVel]);
+    return `<div class="spark-group" title="${title}" onmouseenter="setKmVelocidadeHover('${detalhes}')" onmouseleave="setKmVelocidadeHover('')">${conteudo}</div>`;
+  }).join("");
+  const spark = `<div class="ccard dash-spark-card">
+    <div class="spark-head">
+      <div class="ctitle">Velocidade por segmento (km/h)</div>
+      <label class="spark-filter-wrap">Filtro
+        <select class="spark-filter" onchange="setFiltroVelocidade(this.value)">
+          <option value="todas" ${filtroVel==="todas"?"selected":""}>Todas</option>
+          <option value="min" ${filtroVel==="min"?"selected":""}>Vel mínima</option>
+          <option value="med" ${filtroVel==="med"?"selected":""}>Vel média</option>
+          <option value="max" ${filtroVel==="max"?"selected":""}>Vel máxima</option>
+        </select>
+      </label>
+    </div>
+    <div class="spark">${barras}</div>
+    <div class="spark-legend">
+      <span class="spark-legend-item"><span class="spark-legend-color min"></span>Vel mínima</span>
+      <span class="spark-legend-item"><span class="spark-legend-color med"></span>Vel média</span>
+      <span class="spark-legend-item"><span class="spark-legend-color max"></span>Vel máxima</span>
+    </div>
+    <div class="spark-km-hover" id="sparkKmHover">Passe o mouse sobre um segmento</div>
     <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:var(--mono);font-size:11.5px;color:var(--text3)">
       <span>km ${segs[0]?.km_inicio?.toFixed(1)||0}</span>
-      <span>${mediana(vels).toFixed(0)} km/h mediana</span>
       <span>km ${segs[segs.length-1]?.km_fim?.toFixed(1)||0}</span>
     </div></div>`;
   document.getElementById("d-dash").innerHTML = `<div class="dashboard-top">${dashboardInfoCards()}${kpis}${alertCard}</div>
@@ -2019,9 +2115,9 @@ function renderCam(d) {
   const toolbar = `<div class="event-toolbar">
     ${[
       ["todos", "Todos", contagens.todos],
-      ["critica", "Críticos", contagens.critica],
-      ["alta", "Altos", contagens.alta],
-      ["moderada", "Moderados", contagens.moderada],
+      ["critica", "Crítico", contagens.critica],
+      ["alta", "Médio", contagens.alta],
+      ["moderada", "Moderado", contagens.moderada],
     ].map(([id,label,total])=>`<button class="event-filter ${_filtroEventosCamera===id?"active":""}" onclick="setFiltroEventosCamera('${id}')">${label} (${total})</button>`).join("")}
   </div>`;
   const rows = filtrados.map(e=>{
@@ -2032,7 +2128,7 @@ function renderCam(d) {
     const met  = (parts.find(p=>p.includes("Métrica"))||"").replace("Métrica:","").trim();
     const acao = (parts.find(p=>p.includes("Ação"))||"").replace("Ação:","").trim();
     return `<tr>
-      <td><span class="sevtag ${sev}">${sev === "critica" ? "Crítico" : sev === "alta" ? "Alto" : "Moderado"}</span></td>
+      <td><span class="sevtag ${sev}">${sev === "critica" ? "Crítico" : sev === "alta" ? "Médio" : "Moderado"}</span></td>
       <td style="font-family:var(--mono);white-space:nowrap">km ${(e.km_inicio||0).toFixed(1)}–${(e.km_fim||0).toFixed(1)}</td>
       <td>${esc((e.conformidade||"evento").replace(/_/g," "))}</td>
       <td>${esc(desc)}</td>
@@ -2055,7 +2151,7 @@ function setFiltroEventosCamera(filtro) {
 
 // ── Helpers ───────────────────────────────────────────────────
 function badgeConf(v) {
-  const m={"dentro_da_tolerancia":["ok","Conforme"],"snv_desatualizado":["snv","Erro no SNV"],"sinal_gps_insuficiente":["insuf","GPS insuf."],"inconclusivo":["inc","Inconclusivo"]};
+  const m={"dentro_da_tolerancia":["ok","Conforme"],"snv_desatualizado":["snv","Longe do SNV"],"sinal_gps_insuficiente":["insuf","GPS incompleto"],"inconclusivo":["inc","Inconclusivo"]};
   const[c,l]=m[v]||["inc",v||"—"];
   return `<span class="badge b-${c}">${l}</span>`;
 }
@@ -2091,8 +2187,9 @@ function swSideMode(name, btn) {
 }
 function spin(id, d) {
   const el=document.getElementById(id);
-  const v=parseFloat(el.value)+d;
-  el.value=Math.min(parseFloat(el.max||9999),Math.max(parseFloat(el.min||0.5),Math.round(v*10)/10));
+  const atual=parseNumero(el.value);
+  const v=(isNaN(atual)?0:atual)+d;
+  el.value=Math.min(parseNumero(el.max||9999),Math.max(parseNumero(el.min||0.5),Math.round(v*10)/10));
 }
 function toggleAdv() {
   const b=document.getElementById("advB"),t=document.getElementById("advT"),o=document.getElementById("advOverlay");
@@ -2150,7 +2247,14 @@ function limpar() {
   document.getElementById("btnP").disabled=true;
   limparResultadoProcessamento("Resultados limpos", "Aguardando");
 }
-function getN(id) { const v=parseFloat(document.getElementById(id).value); return isNaN(v)?null:v; }
+function parseNumero(valor) {
+  const v=parseFloat(String(valor ?? "").replace(",", "."));
+  return v;
+}
+function getN(id) {
+  const v=parseNumero(document.getElementById(id).value);
+  return isNaN(v)?null:v;
+}
 function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function mediana(a) { if(!a.length)return 0; const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; }
 function shortP(p) { if(!p)return""; const parts=p.replace(/\\/g,"/").split("/"); return parts.slice(-2).join("/"); }
@@ -2161,11 +2265,12 @@ let _layers = { segmentos: null, pontos: null, eventos: null };
 let _eventosMapa = [];
 let _eventoAtual = 0;
 let _eventoNavControl = null;
+let _mapStatsControl = null;
 
 const COR_CONF = {
   "dentro_da_tolerancia":   "#3FB950",
   "snv_desatualizado":      "#DA3633",
-  "sinal_gps_insuficiente": "#D29922",
+  "sinal_gps_insuficiente": "#DA3633",
   "inconclusivo":           "#6E7681",
 };
 const COR_IQ = {
@@ -2176,8 +2281,8 @@ const COR_IQ = {
 };
 const COR_SEV = {
   "crítica":   "#DA3633",
-  "alta":      "#D29922",
-  "moderada":  "#6E7681",
+  "alta":      "#BC4C00",
+  "moderada":  "#D29922",
 };
 
 async function renderMapa(d) {
@@ -2197,17 +2302,10 @@ async function renderMapa(d) {
   }
 
   document.getElementById("d-mapa").innerHTML = `
-    <div class="map-stat">
-      <div class="mstat"><div class="mstat-val" style="color:var(--success)">${nOk}</div><div class="mstat-lbl">Conforme</div></div>
-      <div class="mstat"><div class="mstat-val" style="color:var(--danger)">${nSnv}</div><div class="mstat-lbl">Erro no SNV</div></div>
-      <div class="mstat"><div class="mstat-val" style="color:var(--warning)">${nIns}</div><div class="mstat-lbl">GPS Insuficiente</div></div>
-      <div class="mstat"><div class="mstat-val" style="color:var(--text)">${dmax}m</div><div class="mstat-lbl">Desvio Máx.</div></div>
-    </div>
-
     <!-- Seletor de SNV para comparação -->
     <div class="snv-compare-bar">
       <div class="snv-compare-left">
-        <span class="snv-compare-label">Comparar com SNV:</span>
+        <span class="snv-compare-label">Escolher SNV:</span>
         <select id="mapSnvSel" onchange="onMapSnvChange()" class="snv-compare-sel">
           <option value="">— Nenhum —</option>
           ${snvOpts}
@@ -2230,22 +2328,16 @@ async function renderMapa(d) {
     <div class="map-legend">
       <strong style="color:var(--text2);margin-right:4px">GoPro:</strong>
       <span class="leg-item"><span class="leg-line" style="background:#3FB950"></span>Conforme</span>
-      <span class="leg-item"><span class="leg-line" style="background:#DA3633"></span>Erro no SNV</span>
-      <span class="leg-item"><span class="leg-line" style="background:#D29922"></span>GPS insuficiente</span>
+      <span class="leg-item"><span class="leg-line" style="background:#DA3633"></span>Longe do SNV</span>
       <span class="leg-item"><span class="leg-line" style="background:#6E7681"></span>Inconclusivo</span>
       <span style="margin-left:6px;color:var(--text3)">|</span>
       <strong style="color:var(--text2);margin:0 4px">SNV:</strong>
       <span class="leg-item"><span class="leg-line" style="background:#FF69B4;border:1px dashed #888"></span>Traçado SNV</span>
       <span style="margin-left:6px;color:var(--text3)">|</span>
       <strong style="color:var(--text2);margin:0 4px">Alertas:</strong>
-      <span class="leg-item"><span class="leg-alert" style="background:#DA3633">!</span>Crítico</span>
-      <span class="leg-item"><span class="leg-alert" style="background:#D29922">!</span>Alto</span>
+      <span class="leg-item"><span class="leg-alert" style="background:#DA3633">!</span>Erro crítico</span>
+      <span class="leg-item"><span class="leg-alert" style="background:#D29922">!</span>Médio</span>
       <span class="leg-item"><span class="leg-alert" style="background:#6E7681">!</span>Moderado</span>
-      <span style="margin-left:6px;color:var(--text3)">|</span>
-      <strong style="color:var(--text2);margin:0 4px">Tipo:</strong>
-      <span class="leg-item"><span class="leg-alert" style="background:#DA3633;border-color:#F85149">!</span>Erro no GPS</span>
-      <span class="leg-item"><span class="leg-alert" style="background:#D29922">!</span>Possível erro no GPS</span>
-      <span class="leg-item"><span class="leg-alert" style="background:#6E7681">!</span>Erro moderado</span>
       <span style="margin-left:6px;color:var(--text3)">|</span>
       <strong style="color:var(--text2);margin:0 4px">GPS:</strong>
       <span class="leg-item"><span class="leg-dot" style="background:#388BFD"></span>Excelente</span>
@@ -2277,6 +2369,7 @@ async function renderMapa(d) {
   _eventosMapa = [];
   _eventoAtual = 0;
   _eventoNavControl = null;
+  _mapStatsControl = null;
   _map = L.map("mapLeaflet", { zoomControl: true, maxZoom: 40 });
 
   // Tile OpenStreetMap
@@ -2285,6 +2378,8 @@ async function renderMapa(d) {
     maxZoom: 40,
     maxNativeZoom: 19,
   }).addTo(_map);
+
+  criarControleResumoMapa(nOk, nSnv, nIns, dmax);
 
   // Carrega camadas
   await Promise.all([
@@ -2451,7 +2546,7 @@ async function carregarCamada(tipo) {
           const lon = parseFloat(coords[0]);
           const lat = parseFloat(coords[1]);
           const zoomBtn = Number.isFinite(lat) && Number.isFinite(lon)
-            ? `<button class="btn btn-p" style="margin-top:8px;width:100%;padding:5px 8px;font-size:10px"
+            ? `<button class="btn btn-p" style="margin-top:10px;width:100%;padding:7px 10px;font-size:13px"
                  onclick="zoomEventoMapa(${lat},${lon})">Visualizar</button>`
             : "";
           if (Number.isFinite(lat) && Number.isFinite(lon)) {
@@ -2463,18 +2558,18 @@ async function carregarCamada(tipo) {
             const sevItemRaw = (ev.severidade || "").toLowerCase();
             const sevItem = sevItemRaw.includes("criti") ? "crítica" : sevItemRaw.includes("alta") ? "alta" : "moderada";
             const corItem = COR_SEV[sevItem] || "#888";
-            const margem = index ? "margin-top:8px;padding-top:8px;border-top:1px solid #D0D7DE" : "";
+            const margem = index ? "margin-top:10px;padding-top:10px;border-top:1px solid #D0D7DE" : "";
             return `
               <div style="${margem}">
                 <div style="color:${corItem};font-weight:700">${sevItem.toUpperCase()} — ${km}</div>
                 <strong>${esc(tipo2)}</strong><br>
-                <small style="color:#57606A">${esc(ev.descricao||ev.justificativa||"")}</small>
-                ${ev.metrica ? `<br><code style="font-size:10px;color:#6E7781">${esc(ev.metrica)}</code>` : ""}
+                <small style="color:#57606A;font-size:13px;line-height:1.45">${esc(ev.descricao||ev.justificativa||"")}</small>
+                ${ev.metrica ? `<br><code style="font-size:13px;color:#6E7781">${esc(ev.metrica)}</code>` : ""}
               </div>`;
           }).join("");
           layer.bindPopup(`
-            <div style="font-family:monospace;font-size:12px;min-width:200px">
-              <div style="background:${cor};color:#fff;padding:4px 8px;margin:-8px -12px 8px;border-radius:4px 4px 0 0;font-weight:700">
+            <div style="font-family:monospace;font-size:15.5px;min-width:260px">
+              <div style="background:${cor};color:#fff;padding:6px 10px;margin:-10px -14px 10px;border-radius:6px 6px 0 0;font-weight:700">
                 ${eventosGrupo.length > 1 ? eventosGrupo.length + " ERROS" : sev.toUpperCase()}
               </div>
               ${itens}
@@ -2500,6 +2595,27 @@ function prioridadeEventoMapa(props) {
   if (sev.includes("criti")) return 3;
   if (sev.includes("alta")) return 2;
   return 1;
+}
+
+function criarControleResumoMapa(nOk, nSnv, nIns, dmax) {
+  if (!_map) return;
+  if (_mapStatsControl) {
+    _map.removeControl(_mapStatsControl);
+    _mapStatsControl = null;
+  }
+  _mapStatsControl = L.control({ position: "topright" });
+  _mapStatsControl.onAdd = () => {
+    const div = L.DomUtil.create("div", "map-stat map-stat-overlay");
+    div.innerHTML = `
+      <div class="mstat"><div class="mstat-val" style="color:var(--success)">${nOk}</div><div class="mstat-lbl">Conforme</div></div>
+      <div class="mstat"><div class="mstat-val" style="color:var(--danger)">${nSnv}</div><div class="mstat-lbl">Longe do SNV</div></div>
+      <div class="mstat"><div class="mstat-val" style="color:var(--danger)">${nIns}</div><div class="mstat-lbl">GPS incompleto</div></div>
+      <div class="mstat"><div class="mstat-val" style="color:var(--text)">${dmax}m</div><div class="mstat-lbl">Desvio Máx.</div></div>`;
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    return div;
+  };
+  _mapStatsControl.addTo(_map);
 }
 
 function isAlertaVelocidadeBaixa(props) {

@@ -121,8 +121,8 @@ def _aplicar_offset_km_inicial(
         pos_m = geom.project(gps_pt)
         frac = 0.0 if geom.length <= 0 else max(0.0, min(1.0, pos_m / geom.length))
         km_oficial = km_ini + (km_fim - km_ini) * frac
-        offset = km_oficial % tamanho_seg_km
-        if offset <= 1e-6 or abs(offset - tamanho_seg_km) <= 1e-6:
+        offset = km_oficial % 1.0
+        if offset <= 1e-6 or abs(offset - 1.0) <= 1e-6:
             return df
 
         out = df.copy()
