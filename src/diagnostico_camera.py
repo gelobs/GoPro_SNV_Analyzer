@@ -30,6 +30,8 @@ import numpy as np
 import pandas as pd
 from pyproj import Geod
 
+from segmentacao_km import iter_segmentos_km
+
 
 class EventoCamera(Enum):
     GAP_STREAM           = "gap_stream"
@@ -71,11 +73,12 @@ DELTA_GPSP_BATERIA    = 150    # aumento de GPSP indicativo de bateria fraca
 QUEDA_VEL_BATERIA     = 0.40   # queda relativa de velocidade no fim
 VEL_ENCERRAMENTO_MS   =  5.0   # câmera em movimento ao fim da gravação (m/s)
 ENCERRAMENTO_TOL_FINAL_KM = 0.05  # ignora encerramento nos ultimos X km
-SALTO_MAX_M           = 25.0   # deslocamento impossível entre pontos adjacentes
+SALTO_MAX_M           = 100.0   # deslocamento impossível entre pontos adjacentes
 VEL_MAXIMA_MS         = 55.5   # > 200 km/h = spike impossível em rodovia
 VEL_PARADO_MS         =  0.50  # tolera jitter da GoPro em parada (~1.8 km/h)
 PARADA_VEICULO_MIN_S  =  5.0
-AZIMUTE_DIST_MAX_M    =  1.0   # virada brusca em distancia curta = oscilacao GPS
+AZIMUTE_DIST_MIN_M    =  1.0   # ignora microdeslocamentos que geram falso positivo
+AZIMUTE_DIST_MAX_M    =  5.0   # virada brusca em distancia curta = oscilacao GPS
 AZIMUTE_MIN_GRAUS     = 20.0
 AZIMUTE_PASSO_MIN_M   =  0.05
 AZIMUTE_INTERVALO_S   =  1.0
@@ -276,15 +279,14 @@ def _detectar_descontinuidades(df: pd.DataFrame,
     """
     eventos = []
     R = 6_371_000
+    km_min = df["km"].min()
     km_max = df["km"].max()
-    km = 0.0
     seg_ant = None
     km_ant  = None
 
-    while km < km_max:
-        seg = df[(df["km"] >= km) & (df["km"] < km + tamanho_seg_km)]
+    for km, km_fim in iter_segmentos_km(km_min, km_max, tamanho_seg_km):
+        seg = df[(df["km"] >= km) & (df["km"] < km_fim)]
         if len(seg) < 10:
-            km += tamanho_seg_km
             continue
 
         N = min(10, max(3, len(seg)//20))
@@ -303,18 +305,20 @@ def _detectar_descontinuidades(df: pd.DataFrame,
                       * np.sin(dlon/2)**2)
             dist_m = R * 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a))
 
-            if dist_m > SALTO_MAX_M:
-                t_a    = cauda["timestamp"].iloc[-1]
-                t_b    = cabeca["timestamp"].iloc[0]
-                km_pico = cabeca["km"].iloc[0]
-                dt     = max((t_b - t_a).total_seconds(), 1/18)
-                vel    = (dist_m / dt) * 3.6
-                sev    = Severidade.CRITICA if dist_m > 100 else Severidade.ALTA
+            t_a    = cauda["timestamp"].iloc[-1]
+            t_b    = cabeca["timestamp"].iloc[0]
+            km_pico = cabeca["km"].iloc[0]
+            dt     = max((t_b - t_a).total_seconds(), 1/18)
+            vel    = (dist_m / dt) * 3.6
+            vel_limite = VEL_MAXIMA_MS * 3.6 * 1.25
+
+            if dist_m > SALTO_MAX_M and vel > vel_limite:
+                sev    = Severidade.CRITICA if dist_m > 100 or vel > vel_limite * 2 else Severidade.ALTA
                 eventos.append(EventoDiagnostico(
                     evento     = EventoCamera.DESCONTINUIDADE,
                     severidade = sev,
                     km_inicio  = round(km_ant, 2),
-                    km_fim     = round(km + tamanho_seg_km, 2),
+                    km_fim     = round(km_fim, 2),
                     descricao  = (
                         f"Descontinuidade espacial de {dist_m:.0f}m "
                         f"na junção dos segmentos km {km_ant:.1f}–{km:.1f}"
@@ -322,7 +326,7 @@ def _detectar_descontinuidades(df: pd.DataFrame,
                     metrica    = (
                         f"distância na junção = {dist_m:.1f}m | "
                         f"velocidade implícita = {vel:.0f} km/h "
-                        f"(limite físico: ~{SALTO_MAX_M*18*3.6:.0f} km/h @ 18Hz)"
+                        f"(limite usado: >{vel_limite:.0f} km/h)"
                     ),
                     acao = (
                         "Verificar se o arquivo é concatenação de gravações "
@@ -332,7 +336,6 @@ def _detectar_descontinuidades(df: pd.DataFrame,
                 ))
         seg_ant = seg
         km_ant  = km
-        km += tamanho_seg_km
     return eventos
 
 
@@ -362,7 +365,11 @@ def _detectar_azimute_irregular(df: pd.DataFrame) -> list:
     for previous, current in zip(segmentos, segmentos[1:]):
         delta = abs((current[0] - previous[0] + 180) % 360 - 180)
         distance = previous[1] + current[1]
-        if distance > AZIMUTE_DIST_MAX_M or delta + 0.001 < AZIMUTE_MIN_GRAUS:
+        if (
+            distance < AZIMUTE_DIST_MIN_M
+            or distance > AZIMUTE_DIST_MAX_M
+            or delta + 0.001 < AZIMUTE_MIN_GRAUS
+        ):
             continue
 
         sample_index = previous[2] + 1
@@ -454,7 +461,7 @@ def _adicionar_evento_km_s_baixo(
     if tempo_parado_s >= PARADA_VEICULO_MIN_S:
         eventos.append(EventoDiagnostico(
             evento     = EventoCamera.VEICULO_PARADO,
-            severidade = Severidade.ALTA,
+            severidade = Severidade.CRITICA,
             km_inicio  = round(km_i, 2),
             km_fim     = round(km_f, 2),
             descricao  = "Veículo parado por tempo prolongado",
@@ -496,13 +503,12 @@ def _detectar_velocidade_atipica(df: pd.DataFrame,
     Detecta segmentos com velocidade média fisicamente impossível.
     """
     eventos = []
-    km_max  = df["km"].max()
-    km = 0.0
+    km_min = df["km"].min()
+    km_max = df["km"].max()
 
-    while km < km_max:
-        seg = df[(df["km"] >= km) & (df["km"] < km + tamanho_seg_km)]
+    for km, km_fim in iter_segmentos_km(km_min, km_max, tamanho_seg_km):
+        seg = df[(df["km"] >= km) & (df["km"] < km_fim)]
         if len(seg) < 5:
-            km += tamanho_seg_km
             continue
 
         vel_seg = seg["speed2d"].mean()
@@ -513,7 +519,7 @@ def _detectar_velocidade_atipica(df: pd.DataFrame,
                 evento     = EventoCamera.VELOCIDADE_ATIPICA,
                 severidade = Severidade.ALTA,
                 km_inicio  = round(km, 2),
-                km_fim     = round(km + tamanho_seg_km, 2),
+                km_fim     = round(km_fim, 2),
                 descricao  = "Segmento com velocidade fisicamente impossível em rodovia",
                 metrica    = (
                     f"média = {vel_seg*3.6:.1f} km/h | "
@@ -525,7 +531,6 @@ def _detectar_velocidade_atipica(df: pd.DataFrame,
                 ),
                 km_pico = round(km_pico, 2),
             ))
-        km += tamanho_seg_km
     return eventos
 
 
@@ -598,3 +603,4 @@ def imprimir_diagnostico(eventos: list) -> None:
           f"{len(por_sev[Severidade.ALTA])} alto(s) | "
           f"{len(por_sev[Severidade.MODERADA])} moderado(s)")
     print(SEP)
+

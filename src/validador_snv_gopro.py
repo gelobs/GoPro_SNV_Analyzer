@@ -21,6 +21,7 @@ from typing import Optional
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+from shapely.geometry import Point
 from shapely.ops import nearest_points
 
 from gp12_features     import build_features, detect_anomalies
@@ -75,6 +76,64 @@ def calcular_distancia_ao_snv(gps_df: pd.DataFrame,
     return df
 
 
+def _aplicar_offset_km_inicial(
+    df: pd.DataFrame,
+    snv_gdf: gpd.GeoDataFrame,
+    tamanho_seg_km: float,
+) -> pd.DataFrame:
+    """
+    Ajusta o km acumulado da GoPro para iniciar na fracao do km oficial SNV.
+
+    Ex.: se o primeiro ponto cai no km oficial 123.5 e o segmento e de 1 km,
+    a rota passa a iniciar em 0.5 para gerar o primeiro bloco 0.5-1.0.
+    """
+    cols = {c.lower(): c for c in snv_gdf.columns}
+    km_ini_col = cols.get("vl_km_inic")
+    km_fim_col = cols.get("vl_km_fina")
+    if not km_ini_col or not km_fim_col or df.empty or tamanho_seg_km <= 0:
+        return df
+
+    try:
+        primeiro = df.iloc[0]
+        gps_pt = gpd.GeoSeries(
+            [Point(float(primeiro["lon"]), float(primeiro["lat"]))],
+            crs=4326,
+        ).to_crs(epsg=32722).iloc[0]
+        snv_utm = snv_gdf.to_crs(epsg=32722)
+
+        melhor = None
+        melhor_dist = None
+        for _, row in snv_utm.iterrows():
+            geom = row.geometry
+            if geom is None or geom.is_empty:
+                continue
+            dist = gps_pt.distance(geom)
+            if melhor_dist is None or dist < melhor_dist:
+                melhor = row
+                melhor_dist = dist
+
+        if melhor is None:
+            return df
+
+        geom = melhor.geometry
+        km_ini = float(melhor[km_ini_col])
+        km_fim = float(melhor[km_fim_col])
+        pos_m = geom.project(gps_pt)
+        frac = 0.0 if geom.length <= 0 else max(0.0, min(1.0, pos_m / geom.length))
+        km_oficial = km_ini + (km_fim - km_ini) * frac
+        offset = km_oficial % 1.0
+        if offset <= 1e-6 or abs(offset - 1.0) <= 1e-6:
+            return df
+
+        out = df.copy()
+        out["km"] = out["km"] + offset
+        print(f"[SNV] km inicial estimado: {km_oficial:.3f} | offset aplicado: {offset:.3f}km")
+        return out
+    except Exception as exc:
+        print(f"[SNV] Nao foi possivel calcular offset de km inicial: {exc}")
+        return df
+
+
 def validar_rota(
     gps_raw:                pd.DataFrame,
     snv_gdf:                gpd.GeoDataFrame,
@@ -115,16 +174,17 @@ def validar_rota(
     print(f"    {n_anom} amostras anômalas detectadas "
           f"({n_anom/len(df)*100:.1f}% do total)")
 
-    # 2. Qualidade GPS por segmento
-    print("[2/5] Avaliando qualidade do sinal por segmento...")
-    qualidades = avaliar_qualidade(df, tamanho_seg_km)
-
     # 3. Distância ao SNV
     print("[3/5] Calculando distância ao SNV (projeção UTM 22S)...")
     df = calcular_distancia_ao_snv(df, snv_gdf)
+    df = _aplicar_offset_km_inicial(df, snv_gdf, tamanho_seg_km)
     d_med = df["dist_snv_m"].mean()
     d_max = df["dist_snv_m"].max()
     print(f"    Distância ao SNV — média: {d_med:.1f}m | máxima: {d_max:.1f}m")
+
+    # 3. Qualidade GPS por segmento
+    print("[3/5] Avaliando qualidade do sinal por segmento...")
+    qualidades = avaliar_qualidade(df, tamanho_seg_km)
 
     # 4. Conformidade por segmento
     print("[4/5] Classificando conformidade com o SNV...")
@@ -249,7 +309,7 @@ def _imprimir_sumario(conformidades, qualidades, eventos) -> None:
     print(f"  Dentro da tolerância   : {n_conf}/{total_seg} "
           f"({n_conf/total_seg*100:.0f}%)")
     if n_snv:
-        print(f"  SNV desatualizado      : {n_snv}/{total_seg} segmento(s) — "
+        print(f"  Erro no SNV            : {n_snv}/{total_seg} segmento(s) — "
               f"dist. máxima: {dist_maxima_snv:.0f}m")
     if n_insuf:
         print(f"  Sinal GPS insuficiente : {n_insuf}/{total_seg} segmento(s)")

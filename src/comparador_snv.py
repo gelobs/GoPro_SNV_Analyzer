@@ -34,6 +34,7 @@ import numpy as np
 import pandas as pd
 
 from avaliador_qualidade import IndiceQualidade, RAIO_CONFIANCA
+from segmentacao_km import iter_segmentos_km
 
 
 class Conformidade(Enum):
@@ -83,13 +84,12 @@ def classificar_conformidade(
     iq_map = {q.km_inicio: q for q in qualidades}
 
     resultados = []
+    km_min = df["km"].min()
     km_max = df["km"].max()
-    km = 0.0
 
-    while km < km_max:
-        seg = df[(df["km"] >= km) & (df["km"] < km + tamanho_seg_km)]
+    for km, km_fim in iter_segmentos_km(km_min, km_max, tamanho_seg_km):
+        seg = df[(df["km"] >= km) & (df["km"] < km_fim)]
         if len(seg) < 5:
-            km += tamanho_seg_km
             continue
 
         dists     = seg["dist_snv_m"].values
@@ -112,7 +112,7 @@ def classificar_conformidade(
 
         resultados.append(ConformidadeSegmento(
             km_inicio     = round(km, 2),
-            km_fim        = round(min(km + tamanho_seg_km, km_max), 2),
+            km_fim        = round(km_fim, 2),
             conformidade  = conformidade,
             dist_media_m  = round(dist_med, 1),
             dist_max_m    = round(dist_max, 1),
@@ -126,7 +126,6 @@ def classificar_conformidade(
             justificativa = _justificar(conformidade, dist_med, dist_max,
                                          dist_p95, iq, sistematico, raio),
         ))
-        km += tamanho_seg_km
 
     return resultados
 
@@ -173,7 +172,7 @@ def _justificar(conf: Conformidade, dist_med: float, dist_max: float,
             f"média: {dist_med:.0f}m. "
             f"Sinal GPS {iq.value} {dop_str}. "
             + ("Divergência sistemática — " if sistematico else "Divergência irregular — ")
-            + "indicativo de traçado SNV desatualizado ou variante de traçado não catalogada."
+            + "indicativo de erro no SNV ou variante de traçado não catalogada."
         ),
         Conformidade.SINAL_GPS_INSUFICIENTE: (
             f"Sinal GPS {iq.value} — raio de confiança posicional: {raio}m. "
@@ -199,7 +198,7 @@ CONF_SIMBOLO = {
 
 CONF_LABEL = {
     Conformidade.DENTRO_TOLERANCIA:      "Dentro da tolerância",
-    Conformidade.SNV_DESATUALIZADO:      "SNV desatualizado",
+    Conformidade.SNV_DESATUALIZADO:      "Erro no SNV",
     Conformidade.SINAL_GPS_INSUFICIENTE: "Sinal GPS insuficiente",
     Conformidade.INCONCLUSIVO:           "Inconclusivo",
 }
@@ -211,7 +210,7 @@ def imprimir_conformidade(resultados: list) -> None:
     print(f"\n{SEP}")
     print("  CONFORMIDADE DA TRAJETÓRIA COM O SNV/DNIT")
     print(f"  Limiar de divergência: {DIST_SNV_DESATUALIZADO_M}m  "
-          f"| ✓ Conforme  ✗ SNV desatualizado  ⚠ Sinal insuficiente  ? Inconclusivo")
+          f"| ✓ Conforme  ✗ Erro no SNV  ⚠ Sinal insuficiente  ? Inconclusivo")
     print(f"  {'Segmento':>14}  {'Conform.':>22}  "
           f"{'dist_med':>8}  {'dist_max':>8}  {'P95':>6}  {'IQ':>10}  "
           f"{'Sist.':>5}  {'Vel.(km/h)':>14}")

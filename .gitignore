@@ -215,3 +215,5 @@ dist/app/
 dist/desktop_app/_internal/
 dist/ICM_Tools/
 exiftool.exe
+.vscode/settings.json
+
