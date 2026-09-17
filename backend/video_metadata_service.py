@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 from typing import Callable, Optional
 
+from backend.subprocess_utils import hidden_subprocess_kwargs
+
 
 FIRMWARE_MODELO = {
     "H24": "Hero 13 Black",
@@ -60,6 +62,7 @@ def _read_exiftool_json(path: Path) -> dict:
         capture_output=True,
         text=True,
         check=False,
+        **hidden_subprocess_kwargs(),
     )
     if completed.returncode != 0 or not completed.stdout:
         return {}
@@ -83,6 +86,7 @@ def _read_ffprobe_json(path: Path) -> dict:
         capture_output=True,
         text=True,
         check=False,
+        **hidden_subprocess_kwargs(),
     )
     return json.loads(completed.stdout) if completed.stdout else {}
 
@@ -305,6 +309,7 @@ def aplicar_metadata_corte(
             capture_output=True,
             text=True,
             check=False,
+            **hidden_subprocess_kwargs(),
         )
         if completed.returncode != 0:
             if exiftool_temp.exists():

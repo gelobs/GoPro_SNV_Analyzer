@@ -12,7 +12,7 @@ if __name__ == '__main__':
     flask_thread.start()
 
     webview.create_window(
-        "GoPro SNV Analyzer",
+        "ICM Tools",
         "http://127.0.0.1:5000",
         width=1400,
         height=900

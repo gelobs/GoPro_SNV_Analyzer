@@ -17,6 +17,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from backend.subprocess_utils import hidden_subprocess_kwargs
+
 
 def extract_hero12_gps(mp4_path: str) -> pd.DataFrame:
     """
@@ -264,6 +266,7 @@ def _read_raw_gpmd(mp4: Path, ffmpeg_cmd: str, ffprobe_cmd: str) -> bytes:
         encoding="utf-8",
         errors="replace",
         check=False,
+        **hidden_subprocess_kwargs(),
     )
     if probe.returncode != 0:
         raise RuntimeError((probe.stderr or probe.stdout or "ffprobe falhou").strip())
@@ -304,6 +307,7 @@ def _read_raw_gpmd(mp4: Path, ffmpeg_cmd: str, ffprobe_cmd: str) -> bytes:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
+        **hidden_subprocess_kwargs(),
     )
     if extract.returncode != 0:
         erro = extract.stderr.decode("utf-8", errors="replace").strip()

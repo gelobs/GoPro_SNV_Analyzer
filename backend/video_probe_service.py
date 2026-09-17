@@ -4,6 +4,7 @@ import subprocess
 from pathlib import Path
 
 from backend.app_paths import BASE_DIR
+from backend.subprocess_utils import hidden_subprocess_kwargs
 
 
 FIRMWARE_MODELO = {
@@ -70,7 +71,13 @@ def ffprobe_json(path: Path, show_format: bool = True) -> dict:
     else:
         cmd += ["-show_streams"]
     cmd.append(str(path))
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+    r = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=15,
+        **hidden_subprocess_kwargs(),
+    )
     return json.loads(r.stdout) if r.stdout else {}
 
 
@@ -97,7 +104,13 @@ def exiftool_json(path: Path) -> dict:
         return {}
 
     cmd = [exiftool_path, "-j", "-G", "-s", str(path)]
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+    r = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=15,
+        **hidden_subprocess_kwargs(),
+    )
     if r.returncode != 0 or not r.stdout:
         return {}
 

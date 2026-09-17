@@ -19,7 +19,7 @@
 body{
   font-family:var(--sans);background:var(--bg);color:var(--text);
   display:grid;
-  grid-template-rows:52px 1fr 36px;
+  grid-template-rows:72px 1fr 36px;
   grid-template-columns:365px 1fr;
   grid-template-areas:"hdr hdr" "side main" "ftr ftr";
   height:100vh;overflow:hidden;
@@ -28,16 +28,16 @@ body{
 /* HEADER */
 header{
   grid-area:hdr;background:var(--surface);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 20px;gap:14px;z-index:10;
+  display:flex;align-items:center;padding:0 30px;gap:16px;z-index:10;
 }
 .logo{
   width:36px;height:36px;background:var(--primary);border-radius:6px;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  display:none;align-items:center;justify-content:center;flex-shrink:0;
 }
 .logo svg{width:20px;height:20px}
 .htitle{display:flex;flex-direction:column;gap:1px}
-.htitle h1{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.05em}
-.htitle span{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+.htitle h1{font-family:var(--sans);font-size:25px;font-weight:700;letter-spacing:0;color:#0F172A}
+.htitle span{display:none}
 .hspace{flex:1}
 .hstatus{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--text2)}
 .sdot{width:7px;height:7px;border-radius:50%;background:var(--text3);transition:background .3s}
@@ -53,6 +53,30 @@ aside{
 }
 aside::-webkit-scrollbar{width:4px}
 aside::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+aside,
+aside .stitle,
+aside .side-step,
+aside .field label,
+aside select,
+aside input[type=text],
+aside input[type=number],
+aside input[type=file],
+aside input[type=file]::file-selector-button,
+aside .side-tab,
+aside .advtoggle,
+aside .advtitle,
+aside .advsection summary,
+aside .tgtitle,
+aside .tfield label,
+aside .tfield input,
+aside .btn,
+aside .spbtn,
+aside .ibox,
+aside .rodovia-list,
+aside .cut-status,
+aside .cut-step {
+  font-family:var(--sans);
+}
 .ssec{border-bottom:1px solid var(--border);padding:18px 20px}
 .ssec:last-child{border-bottom:none}
 .stitle{
@@ -127,8 +151,9 @@ select option{background:var(--surface2)}
 .velunit{font-size:12px;color:var(--text3)}
 .velsub{font-size:11px;color:var(--text3);margin-left:auto}
 .brow{display:flex;gap:7px;margin-top:4px}
+.side-action-row{margin-top:18px}
 .btn{
-  flex:1;padding:10px 18px;border:1px solid transparent;border-radius:999px;
+  flex:1;padding:10px 18px;border:1px solid transparent;border-radius:10px;
   font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;
   transition:background .15s,border-color .15s,color .15s,box-shadow .15s,transform .05s;
   text-align:center;letter-spacing:.08em;text-transform:uppercase;background:transparent;
@@ -158,30 +183,17 @@ select option{background:var(--surface2)}
 .advtoggle:hover{color:var(--text)}
 .advicon{font-size:10px;transition:transform .2s}
 .advopen .advicon{transform:rotate(90deg)}
-.adv-overlay{
-  position:fixed;inset:0;background:rgba(27,31,36,.38);
-  opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:90;
-}
-.adv-overlay.open{opacity:1;pointer-events:auto}
 .advbody{
-  position:fixed;top:0;left:0;width:min(460px,calc(100vw - 24px));height:100vh;
-  background:var(--surface);border-right:1px solid var(--border);
-  box-shadow:8px 0 18px rgba(27,31,36,.08);z-index:100;
-  transform:translateX(-100%);transition:transform .24s ease;
-  display:flex;flex-direction:column;
+  display:none;margin-top:12px;border:1px solid var(--border);
+  border-radius:8px;background:var(--surface2);overflow:hidden;
 }
-.advbody.open{transform:translateX(0)}
+.advbody.open{display:flex;flex-direction:column}
 .advhead{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:18px 20px;border-bottom:1px solid var(--border);flex-shrink:0;
+  padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;
 }
-.advtitle{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);letter-spacing:.05em;text-transform:uppercase}
-.advclose{
-  width:30px;height:30px;border:1px solid var(--border);border-radius:4px;
-  background:var(--surface2);color:var(--text2);cursor:pointer;font-size:18px;line-height:1;
-}
-.advclose:hover{border-color:var(--danger);color:var(--danger)}
-.advscroll{padding:16px 20px 90px;overflow-y:auto;min-height:0;flex:1}
+.advtitle{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text);letter-spacing:.05em;text-transform:uppercase}
+.advscroll{padding:12px;overflow-y:auto;max-height:420px;min-height:0;flex:1}
 .advscroll::-webkit-scrollbar{width:5px}
 .advscroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 .advsection{
@@ -207,11 +219,7 @@ select option{background:var(--surface2)}
 .tfield:last-child{margin-bottom:0}
 .tfield label{font-size:12px;color:var(--text2);line-height:1.35}
 .tfield input{padding:7px 8px;font-size:12px;text-align:right}
-.abrow{
-  position:sticky;bottom:0;display:flex;gap:8px;padding:14px 20px;
-  background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -8px 18px rgba(27,31,36,.06);
-  flex-shrink:0;
-}
+.abrow{display:flex;gap:8px;padding:12px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
 .abrow .btn{font-size:12px;padding:9px 0}
 .side-tabs {
   display: grid;
@@ -278,15 +286,16 @@ main{
 }
 .tabbar{
   display:flex;align-items:center;background:var(--surface);
-  border-bottom:1px solid var(--border);padding:0 16px;gap:0;flex-shrink:0;
+  border-bottom:1px solid var(--border);padding:0 30px;gap:28px;flex-shrink:0;
+  min-height:70px;
 }
 .tab{
-  font-family:var(--mono);font-size:14px;color:var(--text3);
-  padding:18px 21px;cursor:pointer;border-bottom:2px solid transparent;
-  transition:all .15s;white-space:nowrap;
+  font-family:var(--sans);font-size:17px;font-weight:500;color:#001F7A;
+  padding:23px 0 12px;cursor:pointer;border-bottom:3px solid transparent;
+  transition:color .15s,border-color .15s;white-space:nowrap;
 }
-.tab:hover{color:var(--text2)}
-.tab.active{color:var(--primary2);border-bottom-color:var(--primary2)}
+.tab:hover{color:var(--primary2)}
+.tab.active{color:#001F7A;border-bottom-color:#001F7A;font-weight:700}
 .mcontent{flex:1;overflow-y:auto;padding:20px}
 .mcontent::-webkit-scrollbar{width:5px}
 .mcontent::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
@@ -312,34 +321,35 @@ main{
 .lempty{color:var(--text3);font-style:italic;padding:40px 0;text-align:center}
 
 /* DASHBOARD */
-.dashboard-top{display:grid;grid-template-columns:420px 320px 460px;gap:12px;margin-bottom:20px;align-items:stretch}
-.dashboard-metrics{display:grid;grid-template-columns:720px 460px;gap:16px;align-items:stretch;justify-content:start}
-.event-summary-card{background:var(--surface);border:1px solid rgba(210,153,34,.32);border-radius:8px;padding:20px 24px 22px;margin-bottom:0;min-height:320px}
-.event-summary-head{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:22px}
+.dashboard-top{display:grid;grid-template-columns:minmax(420px,640px) minmax(560px,1fr);gap:18px;margin-bottom:20px;align-items:stretch}
+.dashboard-events-area{display:grid;grid-template-rows:auto 1fr;gap:16px;min-width:0}
+.dashboard-metrics{display:grid;grid-template-columns:minmax(360px,460px) minmax(620px,1fr);gap:16px;align-items:start;justify-content:start}
+.event-summary-card{background:var(--surface);border:1px solid rgba(210,153,34,.32);border-radius:8px;padding:14px 16px;margin-bottom:0}
+.event-summary-head{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:0}
 .event-summary-title{
-  font-size:23px;font-weight:800;color:var(--text);
-  text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);text-align:center;
+  font-size:17px;font-weight:800;color:var(--text);
+  text-transform:none;letter-spacing:0;font-family:var(--sans);text-align:left;
 }
-.event-summary-total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;text-align:left;width:100%}
-.event-summary-total .label{font-size:19px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-family:var(--mono);font-weight:700}
-.event-summary-total .value{font-family:var(--mono);font-size:72px;font-weight:800;line-height:1;color:var(--warning)}
-.event-summary-row{display:grid;grid-template-columns:1fr auto;gap:12px;border-top:1px solid var(--border);padding:13px 0;font-family:var(--mono)}
-.event-summary-row:last-child{padding-bottom:0}
-.event-summary-row span:first-child{font-size:15px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
-.event-summary-row span:last-child{font-size:22px;font-weight:700;color:var(--text)}
-.event-summary-row.crit span:last-child{color:var(--danger)}
-.event-summary-row.warn span:last-child{color:#BC4C00}
-.event-summary-row.low span:last-child{color:#D29922}
+.event-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:16px}
+.event-mini-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:6px;
+  padding:16px 18px;min-height:88px;display:flex;flex-direction:column;justify-content:center;
+}
+.event-mini-value{font-family:var(--mono);font-size:26px;font-weight:800;line-height:1;color:var(--primary)}
+.event-mini-label{font-family:var(--sans);font-size:14px;font-weight:600;color:var(--text);margin-top:8px}
+.event-mini-card.crit .event-mini-value{color:var(--danger)}
+.event-mini-card.warn .event-mini-value{color:#BC4C00}
+.event-mini-card.low .event-mini-value{color:#D29922}
 .dash-info-grid{display:grid;grid-template-columns:1fr;grid-template-rows:1fr 1fr;gap:12px;margin-bottom:0}
 .dash-info-grid.dash-info-hidden{display:none}
-.dash-info-card{max-width:420px;background:var(--surface);border:1px solid rgba(31,111,235,.3);border-radius:8px;padding:20px 22px}
+.dash-info-card{max-width:none;background:var(--surface);border:1px solid rgba(31,111,235,.3);border-radius:8px;padding:20px 22px}
 .dash-info-card .stitle{
   color:var(--text3);font-size:13.5px;letter-spacing:.07em;margin-bottom:12px;
   text-transform:uppercase;font-family:var(--mono);font-weight:600;
 }
-.dash-info-card .ibox{border:none;background:transparent;padding:0;font-size:13.5px;line-height:1.95}
+.dash-info-card .ibox{border:none;background:transparent;padding:0;font-size:17px;line-height:2.15}
 .dash-info-card.snv-info-card .ibox{font-size:17px;line-height:2.15}
-@media (max-width:1100px){.dashboard-top,.dashboard-metrics{grid-template-columns:1fr}.dash-info-card{max-width:none}}
+@media (max-width:1100px){.dashboard-top,.dashboard-metrics{grid-template-columns:1fr}.event-summary-grid{grid-template-columns:repeat(2,1fr)}.dash-info-card{max-width:none}}
 .ccard{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px}
 .dash-alert-card{margin-bottom:0;max-height:100%;overflow:hidden}
 .dash-alert-list{display:flex;flex-direction:column;gap:8px;max-height:390px;overflow-y:auto;padding-right:4px}
@@ -349,6 +359,9 @@ main{
 .dash-alert-km{font-family:var(--mono);font-size:13px;color:var(--text3);text-align:left;white-space:nowrap}
 .dash-alert-card .sevtag{font-size:12px}
 .dash-alert-empty{font-size:13px;color:var(--text3);line-height:1.5}
+#d-dash .dash-alert-type,
+#d-dash .dash-alert-km{font-size:16px}
+#d-dash .dash-alert-card .sevtag{font-size:15px}
 .dash-spark-card{margin-bottom:0;align-self:stretch;display:flex;flex-direction:column}
 .dashboard-metrics .dash-spark-card{width:100%;height:88%;align-self:start}
 .spark-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
@@ -362,18 +375,102 @@ main{
     var(--bg);
   color:var(--text2);border:1px solid var(--border);appearance:none;
 }
-.dash-distance-card{width:720px;max-width:100%}
+.dash-distance-card{width:100%;max-width:100%}
 .dash-distance-card .ctitle{font-size:14px}
 .dash-distance-list{max-height:315px;overflow-y:auto;padding-right:4px}
 .dash-distance-list::-webkit-scrollbar{width:5px}
 .dash-distance-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-.dash-distance-card .kmrow{grid-template-columns:180px 130px 210px 110px;font-size:14px}
-.dash-distance-card .kmrow.hdr{font-size:12.5px}
+.dash-distance-card .kmrow{grid-template-columns:1.35fr 1fr 1.2fr 1fr;font-size:16px}
+.dash-distance-card .kmrow.hdr{font-size:14px}
+.dash-distance-card .badge{font-size:14px}
+.dash-distance-card .kmrow span{text-align:center !important}
+.dash-distance-card .kmrow .kmlbl{text-align:left !important}
 #d-dash .dash-info-card .stitle,
 #d-dash .ctitle{
   color:var(--text);
   font-size:17px;
   font-weight:800;
+}
+#d-dash,
+#d-dash *{
+  font-family:var(--sans) !important;
+  letter-spacing:0;
+}
+#d-dash .ibox,
+#d-dash .irow2 span,
+#d-dash .kmlbl,
+#d-dash .kmrow,
+#d-dash .dash-alert-km,
+#d-dash .dash-alert-type,
+#d-dash .spark-filter-wrap,
+#d-dash .spark-legend,
+#d-dash .spark-km-hover{
+  color:#0F172A;
+}
+#d-dash .kmrow.hdr{
+  color:#334155;
+}
+#p-conf,
+#p-cam,
+#p-mapa,
+#p-log{
+  color:#0F172A;
+}
+#p-conf *,
+#p-cam *,
+#p-mapa .snv-compare-bar *,
+#p-mapa .map-controls *,
+#p-mapa .map-legend *,
+#p-mapa .map-event-nav *,
+#p-log *{
+  font-family:var(--sans) !important;
+  letter-spacing:0;
+}
+#p-conf .ctitle,
+#p-cam .ctitle,
+#p-mapa .ctitle,
+#p-conf .dtable th,
+#p-cam .dtable th,
+#p-conf .dtable td,
+#p-cam .dtable td,
+#p-cam .evdesc,
+#p-cam .evmet,
+#p-mapa .snv-compare-label,
+#p-mapa .map-legend,
+#p-log .lempty{
+  color:#0F172A;
+}
+#p-conf .dtable th,
+#p-cam .dtable th,
+#p-mapa .snv-status{
+  color:#334155;
+}
+#p-log .ltime{
+  color:#334155;
+}
+#p-log .l-info .lmsg{
+  color:#0F172A;
+}
+#p-mapa .snv-compare-bar,
+#p-mapa .snv-compare-label,
+#p-mapa .snv-compare-sel,
+#p-mapa .snv-status,
+#p-mapa .map-controls label,
+#p-mapa .map-controls .btn,
+#p-mapa .map-legend,
+#p-mapa .map-event-nav,
+#p-mapa .mstat{
+  font-size:14px !important;
+}
+#p-mapa .snv-status,
+#p-mapa .map-legend{
+  line-height:1.45;
+}
+#p-mapa .mstat-val{
+  font-size:22px;
+}
+#p-mapa .mstat-lbl{
+  font-size:11px;
 }
 .ctitle{
   font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--text2);
@@ -409,6 +506,7 @@ main{
 }
 .dtable th.tr{text-align:right}
 .dtable th.tc{text-align:center}
+.dtable td.tc{text-align:center}
 .dtable td{
   padding:8px 9px;border-bottom:1px solid var(--border);
   color:var(--text2);vertical-align:middle;
@@ -419,10 +517,12 @@ main{
 .conf-table th{font-size:13.5px;padding:10px 11px}
 .conf-table td{padding:10px 11px}
 .conf-table .badge{font-size:13px;padding:3px 10px}
+.conf-table th:last-child,.conf-table td:last-child{text-align:center}
 .alerts-table{font-size:15px}
 .alerts-table th{font-size:13.5px;padding:10px 11px}
 .alerts-table td{padding:10px 11px}
 .alerts-table .sevtag{font-size:13px}
+.btn-alert-view{padding:5px 12px;font-size:11px;white-space:nowrap}
 .tr{text-align:right}
 .evlist{display:flex;flex-direction:column;gap:8px}
 .event-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
@@ -623,8 +723,11 @@ aside .cut-grid {
   flex-wrap: wrap;
 }
 .cut-actions .btn {
-  flex: none;
-  padding: 7px 16px;
+  flex: 1;
+  padding: 10px 18px;
+}
+.cut-actions-after-progress {
+  margin-top: 12px;
 }
 .cut-status {
   font-family: var(--mono);
@@ -860,7 +963,62 @@ aside .cut-grid {
       <span>Configurações Avançadas</span>
     </div>
 
+  <div class="advbody" id="advB" aria-hidden="true">
+        <div class="advhead">
+          <div class="advtitle">Configurações Avançadas</div>
+        </div>
+        <div class="advscroll">
+          <details class="advsection" open>
+            <summary>Limiares Físicos</summary>
+            <div class="tgroup">
+            <div class="tgtitle">Limiares Físicos — gp12_features.py</div>
+            <div class="tfield"><label data-tip="GPSP acima deste valor = sinal ruim (DOP > 2.5)">GPSP ruim</label><input type="number" id="t_gpsp_ruim" value="250"></div>
+            <div class="tfield"><label data-tip="Velocidade máxima em m/s (~216 km/h)">Vel. máx. (m/s)</label><input type="number" id="t_max_vel" value="60"></div>
+            <div class="tfield"><label data-tip="Aceleração máxima em m/s²">Acel. máx. (m/s²)</label><input type="number" id="t_max_acel" value="15"></div>
+            </div>
+          </details>
+    
+          <details class="advsection" open>
+            <summary>Diagnóstico da Câmera</summary>
+            <div class="tgroup">
+            <div class="tgtitle">Limiares de Detecção — diagnostico_camera.py</div>
+            <div class="tfield"><label data-tip="Gap > Xs = interrupção crítica no stream">Gap crítico (s)</label><input type="number" id="t_gap_crit" value="30"></div>
+            <div class="tfield"><label data-tip="Gap > Xs = interrupção moderada">Gap moderado (s)</label><input type="number" id="t_gap_mod" value="5"></div>
+            <div class="tfield"><label data-tip="Pontos consecutivos sem variação = GPS bloqueado">Pontos sem variação</label><input type="number" id="t_pts_var" value="54"></div>
+            <div class="tfield"><label data-tip="Janela de amostras para análise de bateria">Janela bateria (N)</label><input type="number" id="t_jan_bat" value="180"></div>
+            <div class="tfield"><label data-tip="Aumento de GPSP indicativo de bateria fraca">ΔGPSP bateria</label><input type="number" id="t_delta_gpsp" value="150"></div>
+            <div class="tfield"><label data-tip="Queda relativa de velocidade no fim (0–1)">Queda vel. bateria</label><input type="number" id="t_queda_vel" value="0.40" step="0.05"></div>
+            <div class="tfield"><label data-tip="Velocidade mínima ao fim = encerramento abrupto (m/s)">Vel. encerramento</label><input type="number" id="t_vel_enc" value="5.0"></div>
+            <div class="tfield"><label data-tip="Ignora encerramento abrupto nos ultimos X km da rota">Tol. fim rota (km)</label><input type="number" id="t_tol_fim" value="0.05" step="0.01"></div>
+            <div class="tfield"><label data-tip="Salto máximo entre pontos adjacentes (m)">Salto máx. pontos (m)</label><input type="number" id="t_salto_m" value="100.0"></div>
+            <div class="tfield"><label data-tip="Vel. média máxima por segmento (m/s)">Vel. máx. segmento</label><input type="number" id="t_vel_max" value="55.5"></div>
+            </div>
+          </details>
+    
+          <details class="advsection" open>
+            <summary>Qualidade GPS</summary>
+            <div class="tgroup">
+            <div class="tgtitle">GPSP e Raio de Confiança — avaliador_qualidade.py</div>
+            <div class="tfield"><label data-tip="GPSP máximo para sinal Excelente (DOP < 2.0)">GPSP Excelente (≤)</label><input type="number" id="t_gpsp_exc" value="200"></div>
+            <div class="tfield"><label data-tip="GPSP máximo para sinal Bom (DOP < 5.0)">GPSP Bom (≤)</label><input type="number" id="t_gpsp_bom" value="500"></div>
+            <div class="tfield"><label data-tip="GPSP máximo para sinal Aceitável (DOP < 10.0)">GPSP Aceitável (≤)</label><input type="number" id="t_gpsp_ace" value="1000"></div>
+            <div class="tfield"><label data-tip="Distância máxima (m) para erro no SNV">Limiar erro SNV (m)</label><input type="number" id="t_dist_snv" value="100"></div>
+            </div>
+          </details>
+        </div>
+    
+        <div class="abrow">
+          <button class="btn btn-p" onclick="aplicarAdv()" style="flex:2">Aplicar</button>
+          <button class="btn btn-n" onclick="resetDef()" style="flex:1">Reset</button>
+        </div>
+      </div>
+
     <span id="velnum" style="display:none">—</span>
+    <div class="brow side-action-row side-processamento-extra">
+      <button class="btn btn-p" id="btnP" onclick="processar()" disabled>Processar</button>
+      <button class="btn btn-d"  id="btnC" onclick="cancelar()" style="display:none">Cancelar</button>
+      <button class="btn btn-d"  onclick="limpar()">Limpar</button>
+    </div>
     </div>
 
     <div id="side-corte" class="side-mode">
@@ -890,77 +1048,19 @@ aside .cut-grid {
           <button class="btn btn-n" type="button" onclick="escolherPastaCorte()">Escolher...</button>
         </div>
       </div>
-      <div class="cut-actions">
-        <button class="btn btn-p" id="cutBtn" onclick="cortarVideo()">Cortar</button>
-      </div>
       <span class="cut-status" id="cutStatus">Selecione um MP4, informe o trecho a remover e a pasta de saída.</span>
       <div class="cut-progress">
         <div class="cut-progress-bar" id="cutProgressBar"></div>
       </div>
       <div class="cut-step" id="cutStep">Aguardando corte.</div>
+      <div class="cut-actions cut-actions-after-progress">
+        <button class="btn btn-p" id="cutBtn" onclick="cortarVideo()">Cortar</button>
+        <button class="btn btn-d" type="button" onclick="limparCorteVideo()">Limpar</button>
+      </div>
       </div>
     </div>
   </div>
 
-  <div class="ssec side-processamento-extra">
-    <div class="brow">
-      <button class="btn btn-p" id="btnP" onclick="processar()" disabled>Processar</button>
-      <button class="btn btn-d"  id="btnC" onclick="cancelar()" style="display:none">Cancelar</button>
-      <button class="btn btn-d"  onclick="limpar()">Limpar</button>
-    </div>
-  </div>
-
-  <div class="adv-overlay" id="advOverlay" onclick="fecharAdv()"></div>
-  <div class="advbody" id="advB" aria-hidden="true">
-    <div class="advhead">
-      <div class="advtitle">Configurações Avançadas</div>
-      <button class="advclose" type="button" onclick="fecharAdv()" aria-label="Fechar">×</button>
-    </div>
-    <div class="advscroll">
-      <details class="advsection" open>
-        <summary>Limiares Físicos</summary>
-        <div class="tgroup">
-        <div class="tgtitle">Limiares Físicos — gp12_features.py</div>
-        <div class="tfield"><label data-tip="GPSP acima deste valor = sinal ruim (DOP > 2.5)">GPSP ruim</label><input type="number" id="t_gpsp_ruim" value="250"></div>
-        <div class="tfield"><label data-tip="Velocidade máxima em m/s (~216 km/h)">Vel. máx. (m/s)</label><input type="number" id="t_max_vel" value="60"></div>
-        <div class="tfield"><label data-tip="Aceleração máxima em m/s²">Acel. máx. (m/s²)</label><input type="number" id="t_max_acel" value="15"></div>
-        </div>
-      </details>
-
-      <details class="advsection" open>
-        <summary>Diagnóstico da Câmera</summary>
-        <div class="tgroup">
-        <div class="tgtitle">Limiares de Detecção — diagnostico_camera.py</div>
-        <div class="tfield"><label data-tip="Gap > Xs = interrupção crítica no stream">Gap crítico (s)</label><input type="number" id="t_gap_crit" value="30"></div>
-        <div class="tfield"><label data-tip="Gap > Xs = interrupção moderada">Gap moderado (s)</label><input type="number" id="t_gap_mod" value="5"></div>
-        <div class="tfield"><label data-tip="Pontos consecutivos sem variação = GPS bloqueado">Pontos sem variação</label><input type="number" id="t_pts_var" value="54"></div>
-        <div class="tfield"><label data-tip="Janela de amostras para análise de bateria">Janela bateria (N)</label><input type="number" id="t_jan_bat" value="180"></div>
-        <div class="tfield"><label data-tip="Aumento de GPSP indicativo de bateria fraca">ΔGPSP bateria</label><input type="number" id="t_delta_gpsp" value="150"></div>
-        <div class="tfield"><label data-tip="Queda relativa de velocidade no fim (0–1)">Queda vel. bateria</label><input type="number" id="t_queda_vel" value="0.40" step="0.05"></div>
-        <div class="tfield"><label data-tip="Velocidade mínima ao fim = encerramento abrupto (m/s)">Vel. encerramento</label><input type="number" id="t_vel_enc" value="5.0"></div>
-        <div class="tfield"><label data-tip="Ignora encerramento abrupto nos ultimos X km da rota">Tol. fim rota (km)</label><input type="number" id="t_tol_fim" value="0.05" step="0.01"></div>
-        <div class="tfield"><label data-tip="Salto máximo entre pontos adjacentes (m)">Salto máx. pontos (m)</label><input type="number" id="t_salto_m" value="100.0"></div>
-        <div class="tfield"><label data-tip="Vel. média máxima por segmento (m/s)">Vel. máx. segmento</label><input type="number" id="t_vel_max" value="55.5"></div>
-        </div>
-      </details>
-
-      <details class="advsection" open>
-        <summary>Qualidade GPS</summary>
-        <div class="tgroup">
-        <div class="tgtitle">GPSP e Raio de Confiança — avaliador_qualidade.py</div>
-        <div class="tfield"><label data-tip="GPSP máximo para sinal Excelente (DOP < 2.0)">GPSP Excelente (≤)</label><input type="number" id="t_gpsp_exc" value="200"></div>
-        <div class="tfield"><label data-tip="GPSP máximo para sinal Bom (DOP < 5.0)">GPSP Bom (≤)</label><input type="number" id="t_gpsp_bom" value="500"></div>
-        <div class="tfield"><label data-tip="GPSP máximo para sinal Aceitável (DOP < 10.0)">GPSP Aceitável (≤)</label><input type="number" id="t_gpsp_ace" value="1000"></div>
-        <div class="tfield"><label data-tip="Distância máxima (m) para erro no SNV">Limiar erro SNV (m)</label><input type="number" id="t_dist_snv" value="100"></div>
-        </div>
-      </details>
-    </div>
-
-    <div class="abrow">
-      <button class="btn btn-p" onclick="aplicarAdv()" style="flex:2">Aplicar</button>
-      <button class="btn btn-n" onclick="resetDef()" style="flex:1">Reset</button>
-    </div>
-  </div>
 </aside>
 
 <main>
@@ -1523,14 +1623,23 @@ function syncCutVideoFromProcessing(mp4, mp4Path, durationSeconds=null, width=nu
   }
 }
 
-function resetarEstadoCorteVideo() {
+function resetarEstadoCorteVideo(resetarCampos = false) {
   const status = document.getElementById("cutStatus");
   const progressBar = document.getElementById("cutProgressBar");
   const step = document.getElementById("cutStep");
   const btn = document.getElementById("cutBtn");
   const fileInput = document.getElementById("cutVideoFile");
+  const startInput = document.getElementById("cutStart");
+  const endInput = document.getElementById("cutEnd");
+  const outputInput = document.getElementById("cutOutputDir");
   const mp4 = document.getElementById("selMp4")?.value || "";
 
+  if (resetarCampos) {
+    const duracaoVideo = parseFloat(endInput?.dataset?.videoDuration || "");
+    if (startInput) startInput.value = "00:00";
+    if (endInput) endInput.value = Number.isFinite(duracaoVideo) ? fmtCutTime(duracaoVideo) : "";
+    if (outputInput) outputInput.value = "output\\cortes";
+  }
   if (progressBar) {
     progressBar.className = "cut-progress-bar";
     progressBar.style.width = "0%";
@@ -1547,7 +1656,17 @@ function resetarEstadoCorteVideo() {
   S.temposCorteGps = [];
   S.pontosCorteGps = [];
   S.distanciaCorteSnv = undefined;
+  document.querySelectorAll(".leaflet-popup .btn-s").forEach(botao => {
+    botao.classList.remove("btn-s");
+    botao.classList.add("btn-p");
+    botao.textContent = "Cortar vídeo";
+    botao.disabled = false;
+  });
   atualizarPontosGpsSelecionadosParaCorte();
+}
+
+function limparCorteVideo() {
+  resetarEstadoCorteVideo(true);
 }
 
 function checkReady() {
@@ -1927,13 +2046,13 @@ function setFiltroVelocidade(valor) {
 
 function setKmVelocidadeHover(km) {
   const el = document.getElementById("sparkKmHover");
-  if (el) el.innerHTML = km || "Passe o mouse sobre um segmento";
+  if (el) el.innerHTML = km || "Passe o ponteiro do mouse sobre um segmento";
 }
 
 function severidadeEvento(e) {
-  const texto = `${e?.severidade || ""} ${e?.justificativa || ""}`.toUpperCase();
-  if (texto.includes("CRÍTICA") || texto.includes("CRITICA")) return "critica";
-  if (texto.includes("ALTA")) return "alta";
+  const texto = normalizarTexto(`${e?.severidade || ""} ${e?.justificativa || ""}`);
+  if (texto.includes("critica") || texto.includes("cr tica") || texto.startsWith("cr")) return "critica";
+  if (texto.includes("alta")) return "alta";
   return "moderada";
 }
 
@@ -1947,18 +2066,29 @@ function renderDash(d) {
   const kpis = `<div class="event-summary-card">
     <div class="event-summary-head">
       <div class="event-summary-title">Alertas no mapa</div>
-      <div class="event-summary-total">
-        <div class="label">Ocorrências</div>
-        <div class="value">${evts.length}</div>
+      <div class="event-summary-grid">
+        <div class="event-mini-card">
+          <div class="event-mini-value">${evts.length}</div>
+          <div class="event-mini-label">Ocorrências</div>
+        </div>
+        <div class="event-mini-card crit">
+          <div class="event-mini-value">${nCrit}</div>
+          <div class="event-mini-label">Críticos</div>
+        </div>
+        <div class="event-mini-card warn">
+          <div class="event-mini-value">${nAltos}</div>
+          <div class="event-mini-label">Altos</div>
+        </div>
+        <div class="event-mini-card low">
+          <div class="event-mini-value">${nModerados}</div>
+          <div class="event-mini-label">Moderados</div>
+        </div>
       </div>
     </div>
-    <div class="event-summary-row crit"><span>Críticos</span><span>${nCrit}</span></div>
-    <div class="event-summary-row warn"><span>Médios</span><span>${nAltos}</span></div>
-    <div class="event-summary-row low"><span>Baixos</span><span>${nModerados}</span></div>
   </div>`;
   const alertRows = evts.map(e=>{
     const sev = severidadeEvento(e);
-    const tipo = String(e.conformidade || e.evento || e.tipo || "alerta").replaceAll("_"," ");
+    const tipo = nomeEvento(e.conformidade || e.evento || e.tipo || "alerta", e);
     const kmI = Number(e.km_inicio ?? 0);
     const kmF = Number(e.km_fim ?? kmI);
     const trecho = Math.abs(kmF - kmI) < 0.01
@@ -2019,12 +2149,15 @@ function renderDash(d) {
       <span class="spark-legend-item"><span class="spark-legend-color med"></span>Vel média</span>
       <span class="spark-legend-item"><span class="spark-legend-color max"></span>Vel máxima</span>
     </div>
-    <div class="spark-km-hover" id="sparkKmHover">Passe o mouse sobre um segmento</div>
+    <div class="spark-km-hover" id="sparkKmHover">Passe o ponteiro do mouse sobre um segmento</div>
     <div style="display:flex;justify-content:space-between;margin-top:6px;font-family:var(--mono);font-size:11.5px;color:var(--text3)">
       <span>km ${segs[0]?.km_inicio?.toFixed(1)||0}</span>
       <span>km ${segs[segs.length-1]?.km_fim?.toFixed(1)||0}</span>
     </div></div>`;
-  document.getElementById("d-dash").innerHTML = `<div class="dashboard-top">${dashboardInfoCards()}${kpis}${alertCard}</div>
+  document.getElementById("d-dash").innerHTML = `<div class="dashboard-top">
+      ${dashboardInfoCards()}
+      <div class="dashboard-events-area">${kpis}${alertCard}</div>
+    </div>
     <div class="dashboard-metrics">
       <div class="ccard dash-distance-card"><div class="ctitle">Distância máxima ao SNV por quilômetro</div>
         <div class="dash-distance-list">
@@ -2072,32 +2205,10 @@ function renderConf(d) {
       ${rows}</table></div></div>`;
 }
 
-const CAMERA_EVENT_SCREENSHOT_MODE = false;
 let _filtroEventosCamera = "todos";
 
-function eventosCameraParaPrint() {
-  const nomes = [
-    ["gap_stream", "CRÍTICA", "Interrupção no fluxo de dados GPS durante a gravação.", "intervalo sem dados GPS acima do limite configurado", "verificar se houve pausa, falha no arquivo ou corte da gravação"],
-    ["gps_bloqueado", "ALTA", "GPS permaneceu sem variação de posição por tempo prolongado.", "coordenadas repetidas em várias amostras consecutivas", "verificar obstrução de sinal, túnel, sombra ou GPS travado"],
-    ["bateria_fraca", "ALTA", "Padrão compatível com perda de qualidade no final da gravação.", "GPSP aumentou e velocidade caiu no trecho final", "verificar bateria e condições da câmera no fim do vídeo"],
-    ["encerramento_abrupto", "CRÍTICA", "Gravação terminou com a câmera ainda em movimento.", "velocidade no final acima do limite de encerramento", "verificar desligamento por bateria, botão acionado ou interrupção acidental"],
-    ["descontinuidade_espacial", "CRÍTICA", "Salto de posição incompatível entre pontos próximos.", "distância entre pontos consecutivos acima do limite físico", "verificar se houve corte, retomada em outro local ou erro de GPS"],
-    ["velocidade_atipica", "MODERADA", "Trecho com velocidade muito fora do padrão esperado.", "velocidade média do segmento fora do limite configurado", "avaliar se houve parada, congestionamento ou leitura incorreta"],
-    ["veiculo_parado", "CRÍTICA", "Veículo permaneceu parado durante parte da gravação.", "velocidade próxima de zero por tempo prolongado", "avaliar se a parada faz parte do levantamento"],
-    ["azimute_irregular", "MODERADA", "Mudança brusca de direção em distância muito curta.", "variação de direção acima do limite com pouco deslocamento", "verificar possível oscilação do GPS"],
-    ["km_por_segundo_baixo", "MODERADA", "Avanço da rota muito baixo em relação ao tempo.", "quilometragem avançou pouco por segundo", "verificar lentidão, parada ou instabilidade no sinal"],
-    ["erro_snv", "ALTA", "Possível inconsistência identificada na comparação com o SNV.", "ponto GPS distante do traçado de referência", "avaliar o trecho no mapa e comparar com a base SNV utilizada"],
-  ];
-  return nomes.map(([conformidade, sev, desc, metrica, acao], i) => ({
-    conformidade,
-    km_inicio: i,
-    km_fim: i + 0.5,
-    justificativa: `[${sev}] ${desc} | Métrica: ${metrica} | Ação: ${acao}`,
-  }));
-}
-
 function renderCam(d) {
-  const evts = CAMERA_EVENT_SCREENSHOT_MODE ? eventosCameraParaPrint() : (d.eventos||[]);
+  const evts = d.eventos||[];
   if (!evts.length) {
     document.getElementById("d-cam").innerHTML = `<div class="ccard"><div class="ctitle">Diagnóstico de gravação — câmera GoPro</div>
       <div style="color:var(--success);font-family:var(--mono);font-size:12px;padding:20px 0">✓ Nenhum evento detectado. Gravação íntegra.</div></div>`;
@@ -2121,6 +2232,7 @@ function renderCam(d) {
     ].map(([id,label,total])=>`<button class="event-filter ${_filtroEventosCamera===id?"active":""}" onclick="setFiltroEventosCamera('${id}')">${label} (${total})</button>`).join("")}
   </div>`;
   const rows = filtrados.map(e=>{
+    const eventId = idEventoAlerta(e);
     const j = e.justificativa||"";
     const sev = severidadeEvento(e);
     const parts = j.split("|");
@@ -2130,17 +2242,18 @@ function renderCam(d) {
     return `<tr>
       <td><span class="sevtag ${sev}">${sev === "critica" ? "Crítico" : sev === "alta" ? "Médio" : "Moderado"}</span></td>
       <td style="font-family:var(--mono);white-space:nowrap">km ${(e.km_inicio||0).toFixed(1)}–${(e.km_fim||0).toFixed(1)}</td>
-      <td>${esc((e.conformidade||"evento").replace(/_/g," "))}</td>
+      <td>${esc(nomeEvento(e.evento || e.conformidade || "evento", e))}</td>
       <td>${esc(desc)}</td>
       <td>${esc(met||"—")}</td>
       <td>${esc(acao||"—")}</td>
+      <td class="tc"><button class="btn btn-p btn-alert-view" type="button" onclick="visualizarAlertaNoMapa('${eventId}', ${Number(e.km_inicio ?? 0)})">Visualizar</button></td>
     </tr>`;
   }).join("");
   document.getElementById("d-cam").innerHTML = `<div class="ccard"><div class="ctitle">Diagnóstico de gravação — câmera GoPro</div>
     ${toolbar}
     <div style="overflow-x:auto"><table class="dtable alerts-table">
-      <tr><th>Severidade</th><th>Trecho</th><th>Tipo</th><th>Descrição</th><th>Métrica</th><th>Ação</th></tr>
-      ${rows || `<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:18px">Nenhum evento nesse filtro.</td></tr>`}
+      <tr><th>Severidade</th><th>Trecho</th><th>Tipo</th><th>Descrição</th><th>Métrica</th><th>Ação</th><th class="tc">Mapa</th></tr>
+      ${rows || `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:18px">Nenhum evento nesse filtro.</td></tr>`}
     </table></div></div>`;
 }
 
@@ -2151,7 +2264,7 @@ function setFiltroEventosCamera(filtro) {
 
 // ── Helpers ───────────────────────────────────────────────────
 function badgeConf(v) {
-  const m={"dentro_da_tolerancia":["ok","Conforme"],"snv_desatualizado":["snv","Longe do SNV"],"sinal_gps_insuficiente":["insuf","GPS incompleto"],"inconclusivo":["inc","Inconclusivo"]};
+  const m={"dentro_da_tolerancia":["ok","Conforme"],"snv_desatualizado":["snv","Longe do SNV"],"sinal_gps_insuficiente":["insuf","Sinal de GPS degradado"],"inconclusivo":["inc","Inconclusivo"]};
   const[c,l]=m[v]||["inc",v||"—"];
   return `<span class="badge b-${c}">${l}</span>`;
 }
@@ -2168,12 +2281,13 @@ function infoHtml(rows) {
     return `<div class="irow2"><span>${k}</span><span class="ival">${esc(String(v||"—"))}</span></div>`;
   }).join("");
 }
-function swTab(name, btn) {
+function swTab(name, btn, opts = {}) {
   document.querySelectorAll(".tpanel").forEach(p=>p.classList.remove("active"));
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   document.getElementById("p-"+name).classList.add("active");
   if(btn) btn.classList.add("active");
-  if(name === "mapa") onTabMapa();
+  if(name === "mapa") return onTabMapa(opts);
+  return Promise.resolve();
 }
 function swSideMode(name, btn) {
   if (name !== "processamento") fecharAdv();
@@ -2192,18 +2306,16 @@ function spin(id, d) {
   el.value=Math.min(parseNumero(el.max||9999),Math.max(parseNumero(el.min||0.5),Math.round(v*10)/10));
 }
 function toggleAdv() {
-  const b=document.getElementById("advB"),t=document.getElementById("advT"),o=document.getElementById("advOverlay");
+  const b=document.getElementById("advB"),t=document.getElementById("advT");
   const abrir = !b.classList.contains("open");
   b.classList.toggle("open", abrir);
   b.setAttribute("aria-hidden", abrir ? "false" : "true");
-  o?.classList.toggle("open", abrir);
   t?.classList.toggle("advopen", abrir);
 }
 function fecharAdv() {
-  const b=document.getElementById("advB"),t=document.getElementById("advT"),o=document.getElementById("advOverlay");
+  const b=document.getElementById("advB"),t=document.getElementById("advT");
   b?.classList.remove("open");
   b?.setAttribute("aria-hidden", "true");
-  o?.classList.remove("open");
   t?.classList.remove("advopen");
 }
 function setStatus(tipo,txt) {
@@ -2256,6 +2368,33 @@ function getN(id) {
   return isNaN(v)?null:v;
 }
 function esc(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function normalizarTexto(v) {
+  return String(v || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w]+/g, " ")
+    .trim();
+}
+function nomeEvento(v, evento = null) {
+  const key = String(v || "").toLowerCase();
+  if (key === "encerramento_abrupto") {
+    const detalhes = normalizarTexto(`${evento?.descricao || ""} ${evento?.justificativa || ""}`);
+    return detalhes.includes("gravacao encerrada")
+      ? "encerramento abrupto no final da gravação"
+      : "encerramento abrupto";
+  }
+  const nomes = {
+    azimute_irregular: "mudança brusca de direção",
+  };
+  return nomes[key] || String(v || "evento").replace(/_/g, " ");
+}
+function idEventoAlerta(e) {
+  const kmI = Number(e?.km_inicio ?? 0).toFixed(3);
+  const kmF = Number(e?.km_fim ?? kmI).toFixed(3);
+  const tipo = String(e?.evento || e?.conformidade || e?.tipo || "evento").toLowerCase();
+  return btoa(unescape(encodeURIComponent(`${kmI}|${kmF}|${tipo}`))).replace(/=+$/,"");
+}
 function mediana(a) { if(!a.length)return 0; const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; }
 function shortP(p) { if(!p)return""; const parts=p.replace(/\\/g,"/").split("/"); return parts.slice(-2).join("/"); }
 
@@ -2285,7 +2424,7 @@ const COR_SEV = {
   "moderada":  "#D29922",
 };
 
-async function renderMapa(d) {
+async function renderMapa(d, opts = {}) {
   const segs = d.segmentos||[];
   const nOk  = segs.filter(s=>s.conformidade==="dentro_da_tolerancia").length;
   const nSnv = segs.filter(s=>s.conformidade==="snv_desatualizado").length;
@@ -2394,7 +2533,7 @@ async function renderMapa(d) {
   if (_layers["snv"]) _layers["snv"].bringToFront();
   setTimeout(() => {
     _map?.invalidateSize();
-    if (!focarPrimeiroEventoMapa()) fitMapa();
+    if (!opts.preservarFoco && !focarPrimeiroEventoMapa()) fitMapa();
   }, 100);
 }
 
@@ -2439,6 +2578,7 @@ async function carregarCamada(tipo) {
 
     } else if (tipo === "pontos") {
       const primeiroTimestamp = primeiroTimestampPontos(gj);
+      let pontoIndex = 0;
       _layers[tipo] = L.geoJSON(gj, {
         pointToLayer: (f, latlng) => {
           const iq  = f.properties?.iq_sinal || "";
@@ -2453,6 +2593,8 @@ async function carregarCamada(tipo) {
         },
         onEachFeature: (f, layer) => {
           const p = f.properties || {};
+          const fallbackPontoId = pontoIndex++;
+          const pontoId = p.ponto_id ?? p.id_ponto ?? fallbackPontoId;
           const duracaoVideo = tempoVideoDoPonto(p.timestamp, primeiroTimestamp);
           const segundosVideo = segundosVideoDoPonto(p.timestamp, primeiroTimestamp);
           const km = parseFloat(p.km || 0).toFixed(2);
@@ -2462,12 +2604,13 @@ async function carregarCamada(tipo) {
           layer._tempoCorteGps = segundosVideo;
           layer._corGpsOriginal = COR_IQ[iq] || "#888";
           layer.bindTooltip(
-            `km ${km} | Vídeo: ${duracaoVideo} | IQ: ${iq} | DOP: ${dop} | ${vel}`,
+            `Ponto ${pontoId} | km ${km} | Vídeo: ${duracaoVideo} | IQ: ${iq} | DOP: ${dop} | ${vel}`,
             {sticky:true, className:"leaflet-tooltip-dark"}
           );
           layer.bindPopup(`
             <div style="font-family:monospace;font-size:12px;min-width:190px">
               <strong>Ponto GPS</strong><br>
+              Ponto: <strong>${pontoId}</strong><br>
               Duração no vídeo: <strong>${duracaoVideo}</strong><br>
               km: ${km}<br>
               Velocidade: ${vel}<br>
@@ -2554,7 +2697,7 @@ async function carregarCamada(tipo) {
           }
           const itens = eventosGrupo.map((ev, index) => {
             const km = `km ${parseFloat(ev.km_inicio||0).toFixed(1)}–${parseFloat(ev.km_fim||0).toFixed(1)}`;
-            const tipo2 = (ev.evento || ev.conformidade || "evento").replace(/_/g," ");
+            const tipo2 = nomeEvento(ev.evento || ev.conformidade || "evento", ev);
             const sevItemRaw = (ev.severidade || "").toLowerCase();
             const sevItem = sevItemRaw.includes("criti") ? "crítica" : sevItemRaw.includes("alta") ? "alta" : "moderada";
             const corItem = COR_SEV[sevItem] || "#888";
@@ -2609,7 +2752,7 @@ function criarControleResumoMapa(nOk, nSnv, nIns, dmax) {
     div.innerHTML = `
       <div class="mstat"><div class="mstat-val" style="color:var(--success)">${nOk}</div><div class="mstat-lbl">Conforme</div></div>
       <div class="mstat"><div class="mstat-val" style="color:var(--danger)">${nSnv}</div><div class="mstat-lbl">Longe do SNV</div></div>
-      <div class="mstat"><div class="mstat-val" style="color:var(--danger)">${nIns}</div><div class="mstat-lbl">GPS incompleto</div></div>
+      <div class="mstat"><div class="mstat-val" style="color:var(--danger)">${nIns}</div><div class="mstat-lbl">Sinal de GPS degradado</div></div>
       <div class="mstat"><div class="mstat-val" style="color:var(--text)">${dmax}m</div><div class="mstat-lbl">Desvio Máx.</div></div>`;
     L.DomEvent.disableClickPropagation(div);
     L.DomEvent.disableScrollPropagation(div);
@@ -2694,13 +2837,13 @@ function toggleLayer(tipo) {
   }
 }
 
-async function onTabMapa() {
+async function onTabMapa(opts = {}) {
   if (!_map && S.resultado) {
-    await renderMapa(S.resultado);
+    await renderMapa(S.resultado, opts);
   } else if (_map) {
     setTimeout(() => {
       _map.invalidateSize();
-      if (!focarPrimeiroEventoMapa()) fitMapa();
+      if (!opts.preservarFoco && !focarPrimeiroEventoMapa()) fitMapa();
     }, 100);
   }
 }
@@ -2778,7 +2921,7 @@ function htmlResumoEventos() {
   for (const evento of _eventosMapa) {
     const grupo = Array.isArray(evento.props?.eventos_grupo) ? evento.props.eventos_grupo : [evento.props];
     for (const item of grupo) {
-      const tipo = (item?.evento || "evento").replace(/_/g, " ");
+      const tipo = nomeEvento(item?.evento || "evento", item);
       counts.set(tipo, (counts.get(tipo) || 0) + 1);
     }
   }
@@ -2824,6 +2967,56 @@ function visualizarEventoAtual() {
   if (!evento) return;
   atualizarNavegadorEventos();
   zoomEventoMapa(evento.lat, evento.lon);
+  setTimeout(() => evento.layer?.openPopup(), 250);
+}
+
+async function visualizarAlertaNoMapa(eventId, kmInicio = null) {
+  const tabMapa = document.querySelector('.tab[onclick*="mapa"]');
+  await swTab("mapa", tabMapa, { preservarFoco: true });
+  if (!_eventosMapa.length && _map) {
+    await carregarCamada("eventos_camera");
+  }
+  let index = _eventosMapa.findIndex(eventoMapaContemId(eventId));
+  if (index < 0 && Number.isFinite(Number(kmInicio))) {
+    index = indiceEventoMaisProximoKm(Number(kmInicio));
+  }
+  if (index < 0) return;
+  _eventoAtual = index;
+  const evento = _eventosMapa[index];
+  const ckEvt = document.getElementById("ckEvt");
+  if (ckEvt && !ckEvt.checked) {
+    ckEvt.checked = true;
+    toggleLayer("eventos_camera");
+  }
+  atualizarNavegadorEventos();
+  zoomEventoMapa(evento.lat, evento.lon);
+  setTimeout(() => evento.layer?.openPopup(), 250);
+}
+
+function indiceEventoMaisProximoKm(kmInicio) {
+  let melhorIndex = -1;
+  let melhorDist = Infinity;
+  _eventosMapa.forEach((evento, index) => {
+    const grupo = Array.isArray(evento.props?.eventos_grupo) && evento.props.eventos_grupo.length
+      ? evento.props.eventos_grupo
+      : [evento.props];
+    const kms = grupo.map(item => Number(item?.km_inicio)).filter(Number.isFinite);
+    const dist = Math.min(...kms.map(km => Math.abs(km - kmInicio)));
+    if (Number.isFinite(dist) && dist < melhorDist) {
+      melhorDist = dist;
+      melhorIndex = index;
+    }
+  });
+  return melhorDist <= 0.15 ? melhorIndex : -1;
+}
+
+function eventoMapaContemId(eventId) {
+  return (evento) => {
+    const grupo = Array.isArray(evento.props?.eventos_grupo) && evento.props.eventos_grupo.length
+      ? evento.props.eventos_grupo
+      : [evento.props];
+    return grupo.some(item => idEventoAlerta(item) === eventId);
+  };
 }
 
 // Quando muda o seletor de SNV no mapa — apenas habilita/desabilita botão

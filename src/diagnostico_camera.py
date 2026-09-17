@@ -392,11 +392,7 @@ def _detectar_azimute_irregular(df: pd.DataFrame) -> list:
                 f"Mudanca brusca de azimute de {delta:.0f} graus "
                 f"com deslocamento de apenas {distance:.2f}m"
             ),
-            metrica    = (
-                f"azimute anterior = {previous[0]:.1f} graus | "
-                f"azimute atual = {current[0]:.1f} graus | "
-                f"distancia combinada = {distance:.2f}m"
-            ),
+            metrica    = "",
             acao       = (
                 "Revisar a telemetria neste trecho. Pode haver jitter no GPS, "
                 "multipath, ou irregularidade no buffer GPMF da GoPro."
@@ -465,10 +461,7 @@ def _adicionar_evento_km_s_baixo(
             km_inicio  = round(km_i, 2),
             km_fim     = round(km_f, 2),
             descricao  = "Veículo parado por tempo prolongado",
-            metrica    = (
-                f"tempo parado = {tempo_parado_s:.1f}s | "
-                f"menor avanco = {valor_pico:.3f} m/s"
-            ),
+            metrica    = f"tempo parado = {tempo_parado_s:.1f}s",
             acao       = (
                 "Revisar o vídeo neste trecho. Pode ser parada real "
                 "(semáforo, pedágio, obra) ou interrupção da gravação."
