@@ -36,6 +36,8 @@ from diagnostico_camera import (
     EventoCamera, EventoDiagnostico, Severidade, diagnosticar, imprimir_diagnostico
 )
 
+MIN_PONTOS_ERRO_SNV = 3
+
 
 def calcular_distancia_ao_snv(gps_df: pd.DataFrame,
                                snv_gdf: gpd.GeoDataFrame) -> pd.DataFrame:
@@ -249,8 +251,13 @@ def _adicionar_erro_snv(
     eventos: list,
 ) -> None:
     trecho = df.iloc[inicio:fim + 1]
+    if len(trecho) < MIN_PONTOS_ERRO_SNV:
+        return
+
     pico_idx = trecho["dist_snv_m"].idxmax()
     pico = df.loc[pico_idx]
+    marcador_idx = max(inicio - 1, 0)
+    marcador = df.iloc[marcador_idx]
     km_i = float(trecho.iloc[0]["km"])
     km_f = float(trecho.iloc[-1]["km"])
     dist_max = float(pico["dist_snv_m"])
@@ -266,14 +273,13 @@ def _adicionar_erro_snv(
         ),
         metrica    = (
             f"distancia maxima ao SNV = {dist_max:.1f}m | "
-            f"media do trecho = {dist_med:.1f}m | "
-            f"amostras = {len(trecho)}"
+            f"media do trecho = {dist_med:.1f}m"
         ),
         acao       = (
             "Revisar o tracado SNV neste ponto. A rota da GoPro esta distante "
             "da geometria cadastrada no SNV."
         ),
-        km_pico    = round(float(pico["km"]), 2),
+        km_pico    = round(float(marcador["km"]), 2),
     ))
 
 
@@ -312,7 +318,7 @@ def _imprimir_sumario(conformidades, qualidades, eventos) -> None:
         print(f"  Erro no SNV            : {n_snv}/{total_seg} segmento(s) — "
               f"dist. máxima: {dist_maxima_snv:.0f}m")
     if n_insuf:
-        print(f"  Sinal GPS insuficiente : {n_insuf}/{total_seg} segmento(s)")
+        print(f"  Sinal de GPS degradado : {n_insuf}/{total_seg} segmento(s)")
     if n_inc:
         print(f"  Inconclusivo           : {n_inc}/{total_seg} segmento(s)")
 

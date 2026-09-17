@@ -199,7 +199,7 @@ CONF_SIMBOLO = {
 CONF_LABEL = {
     Conformidade.DENTRO_TOLERANCIA:      "Dentro da tolerância",
     Conformidade.SNV_DESATUALIZADO:      "Erro no SNV",
-    Conformidade.SINAL_GPS_INSUFICIENTE: "Sinal GPS insuficiente",
+    Conformidade.SINAL_GPS_INSUFICIENTE: "Sinal de GPS degradado",
     Conformidade.INCONCLUSIVO:           "Inconclusivo",
 }
 

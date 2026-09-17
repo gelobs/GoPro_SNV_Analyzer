@@ -227,7 +227,7 @@ O sistema executa 5 etapas sequenciais:
 ┌─────────────────────────────────────────────────────────────┐
 │  ETAPA 4 — Conformidade SNV (comparador_snv.py)             │
 │  dist_max × IQ → Dentro da tolerância / SNV desatualizado   │
-│              / Sinal GPS insuficiente / Inconclusivo         │
+│              / Sinal de GPS degradado / Inconclusivo         │
 └──────────────────────────┬──────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
@@ -263,7 +263,7 @@ Realiza a comparação geométrica entre a trajetória GoPro e o SNV. A decisão
 | `dist_max < 100 m` + sinal ≥ Bom | Dentro da tolerância |
 | `dist_max < 100 m` + sinal Aceitável | Inconclusivo |
 | `dist_max ≥ 100 m` + sinal ≥ Bom | SNV desatualizado |
-| Sinal Degradado | GPS insuficiente — não avaliável |
+| Sinal Degradado | Sinal de GPS degradado — não avaliável |
 
 Calcula também o P95 das distâncias (mais robusto que a média para detectar outliers geométricos) e a sistematicidade da divergência (CV < 1,2 + extensão ≥ 200 m).
 

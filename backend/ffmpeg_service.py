@@ -6,6 +6,8 @@ import subprocess
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
+from backend.subprocess_utils import hidden_subprocess_kwargs
+
 
 def check_disk_space(target_path: Path, estimated_size: int) -> Tuple[bool, str]:
     try:
@@ -70,6 +72,7 @@ def inspect_input(ffmpeg_path: str, source: Path) -> str:
         capture_output=True,
         text=True,
         check=False,
+        **hidden_subprocess_kwargs(),
     )
     return completed.stderr + completed.stdout
 
@@ -177,6 +180,7 @@ def run_command(command: List[str]) -> Tuple[bool, str]:
             capture_output=True,
             text=True,
             check=False,
+            **hidden_subprocess_kwargs(),
         )
     except Exception as exc:
         return False, str(exc)
@@ -258,6 +262,7 @@ def cut_segment(
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            **hidden_subprocess_kwargs(),
         )
     except Exception as exc:
         return False, str(exc)

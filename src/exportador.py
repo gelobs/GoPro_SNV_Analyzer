@@ -83,6 +83,7 @@ def _exportar_pontos(df: pd.DataFrame, prefixo: str) -> None:
     ] if c in df.columns]
 
     out = df[cols].copy()
+    out.insert(0, "ponto_id", range(len(out)))
     out["timestamp"]  = out["timestamp"].astype(str)
     out["cor"]        = out["conformidade"].map(CORES_CONFORMIDADE).fillna("#95A5A6")
     out["vel_kmh"]    = (out["speed2d"] * 3.6).round(1)

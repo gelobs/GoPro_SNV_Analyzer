@@ -18,6 +18,7 @@ from werkzeug.utils import secure_filename
 from backend.app_paths import BASE_DIR, CUT_UPLOAD_DIR, RAW_DIR, SNV_DIR, SRC_DIR, preparar_ambiente
 from backend.processamento_service import DEFAULTS, LOG_QUEUE, PROCESSO_ATUAL, executar_pipeline
 from backend.snv_service import coluna_rodovia_snv
+from backend.subprocess_utils import hidden_subprocess_kwargs
 from backend.video_probe_service import (
     detectar_fov_video,
     detectar_modelo_gopro,
@@ -303,7 +304,13 @@ def info_gopro():
             "-show_format", "-show_streams",
             str(mp4_path)
         ]
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        r = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=15,
+            **hidden_subprocess_kwargs(),
+        )
         info = json.loads(r.stdout) if r.stdout else {}
         fov_linear, fov_nome, fov_fonte = detectar_fov_video(mp4_path, info)
 
